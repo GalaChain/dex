@@ -19,8 +19,9 @@ import { GalaContract, GalaJSONSerializer } from "@gala-chain/chaincode";
 
 import { GalaChainTokenContract } from "./token";
 import { PublicKeyContract } from "./pk";
+import { DexV3Contract } from "./chaincode/DexV3Contract";
 
-export const contracts: { new (): GalaContract }[] = [PublicKeyContract, GalaChainTokenContract];
+export const contracts: { new (): GalaContract }[] = [PublicKeyContract, GalaChainTokenContract, DexV3Contract];
 
 export const serializers = {
   transaction: "galaJsonSerializer",

@@ -18,16 +18,16 @@ import { GalaChainContext, galaFeeGate } from "@gala-chain/chaincode";
 import { AddLiquidityDTO, BurnDto, CollectDto, CreatePoolDto, SwapDto } from "../api";
 
 export enum FeeGateCodes {
-  CreatePool = "CREATE_POOL",
-  AddLiquidity = "ADD_LIQUIDITY",
-  RemoveLiquidity = "REMOVE_LIQUIDITY",
-  Swap = "SWAP",
-  CollectPositionFees = "COLLECT_POSITION_FEES",
-  CreateSale = "CREATE_SALE",
-  BuyExactToken = "BUY_EXACT_TOKEN",
-  SellExactToken = "SELL_EXACT_TOKEN",
-  BuyWithNative = "BUY_WITH_NATIVE",
-  SellWithNative = "SELL_WITH_NATIVE"
+  CreatePool = "CreatePool",
+  AddLiquidity = "AddLiquidity",
+  Swap = "Swap",
+  RemoveLiquidity = "RemoveLiquidity",
+  CollectPositionFees = "CollectPositionFees",
+  CreateSale = "CreateSale",
+  BuyExactToken = "BuyExactToken",
+  SellExactToken = "SellExactToken",
+  BuyWithNative = "BuyWithNative",
+  SellWithNative = "SellWithNative"
 }
 
 export async function createPoolFeeGate(ctx: GalaChainContext, dto: CreatePoolDto) {

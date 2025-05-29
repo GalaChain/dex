@@ -19,19 +19,6 @@ export const ErrorCode = {
   PRECONDITION_FAILED: 412
 };
 
-export enum FeeGateCodes {
-  CreatePool = "CREATE_POOL",
-  AddLiquidity = "ADD_LIQUIDITY",
-  RemoveLiquidity = "REMOVE_LIQUIDITY",
-  Swap = "SWAP",
-  CollectPositionFees = "COLLECT_POSITION_FEES",
-  CreateSale = "CREATE_SALE",
-  BuyExactToken = "BUY_EXACT_TOKEN",
-  SellExactToken = "SELL_EXACT_TOKEN",
-  BuyWithNative = "BUY_WITH_NATIVE",
-  SellWithNative = "SELL_WITH_NATIVE"
-}
-
 export class SlippageToleranceExceededError extends ChainError {
   constructor(message: string) {
     super(message, 412);

@@ -19,6 +19,12 @@ jest.setTimeout(30000);
 
 describe("API snapshots", () => {
   const contractConfig = {
+    dex: {
+      channel: "product-channel",
+      chaincode: "basic-product",
+      contract: "GalaChainToken",
+      api: commonContractAPI
+    },
     assets: {
       channel: "product-channel",
       chaincode: "basic-product",
@@ -55,6 +61,15 @@ describe("API snapshots", () => {
   test(`Api of ${contractConfig.assets.contract}`, async () => {
     // When
     const response = await client.assets.GetContractAPI();
+
+    // Then
+    expect(response).toEqual(transactionSuccess());
+    expect({ ...response.Data, contractVersion: "?.?.?" }).toMatchSnapshot();
+  });
+
+  test(`Api of ${contractConfig.dex.contract}`, async () => {
+    // When
+    const response = await client.dex.GetContractAPI();
 
     // Then
     expect(response).toEqual(transactionSuccess());

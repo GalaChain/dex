@@ -46,7 +46,7 @@ describe("createPool", () => {
     const dexFeeConfig: DexFeeConfig = new DexFeeConfig([asValidUserAlias(users.admin.identityKey)], 2);
 
     const { ctx, contract } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
-      .callingUser(users.testUser1)
+      .registeredUsers(users.testUser1)
       .savedState(
         currencyInstance,
         currencyClass,
@@ -64,6 +64,8 @@ describe("createPool", () => {
       DexFeePercentageTypes.FEE_1_PERCENT,
       new BigNumber("1")
     );
+    dto.uniqueKey = "test";
+    dto.sign(users.testUser1.privateKey);
 
     const [token0, token1] = [dto.token0, dto.token1].map(generateKeyFromClassKey);
     const expectedPool = new Pool(token0, token1, dto.token0, dto.token1, dto.fee, dto.initialSqrtPrice, 0);
@@ -105,7 +107,7 @@ describe("createPool", () => {
     const dexFeeConfig: DexFeeConfig = new DexFeeConfig([users.admin.identityKey], 2);
 
     const { ctx, contract, getWrites } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
-      .callingUser(users.testUser1)
+      .registeredUsers(users.testUser1)
       .savedState(currencyClass, dexFeeConfig, dexClass)
       .savedRangeState([]);
 
@@ -115,6 +117,8 @@ describe("createPool", () => {
       DexFeePercentageTypes.FEE_0_05_PERCENT,
       new BigNumber("1")
     );
+    dto.uniqueKey = "test";
+    dto.sign(users.testUser1.privateKey);
 
     const expectedFeeThresholdUses = plainToInstance(FeeThresholdUses, {
       feeCode: "CreatePool",

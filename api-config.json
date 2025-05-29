@@ -6,6 +6,11 @@
       "asLocalHost": true,
       "contracts": [
         {
+          "pathFragment": "DexV3Contract",
+          "chaincodeName": "basic-product",
+          "contractName": "DexV3Contract"
+        },
+        {
           "pathFragment": "GalaChainToken",
           "chaincodeName": "basic-product",
           "contractName": "GalaChainToken"

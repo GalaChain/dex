@@ -1,0 +1,70 @@
+{
+  "name": "test-network-UsersOrg1",
+  "version": "1.0.0",
+  "client": {
+    "organization": "UsersOrg1"
+  },
+  "organizations": {
+    "CuratorOrg": {
+      "mspid": "CuratorOrg",
+      "peers": [
+        "peer0.curator.local"
+      ]
+    },
+    "PartnerOrg1": {
+      "mspid": "PartnerOrg1",
+      "peers": [
+        "peer0.partner1.local"
+      ]
+    },
+    "UsersOrg1": {
+      "mspid": "UsersOrg1",
+      "certificateAuthorities": [
+        "ca.users1.local"
+      ]
+    }
+  },
+  "peers": {
+    "peer0.curator.local": {
+      "url": "grpc://localhost:7041"
+    },
+    "peer0.partner1.local": {
+      "url": "grpc://localhost:7061"
+    }
+  },
+  "certificateAuthorities": {
+    "ca.users1.local": {
+      "url": "http://localhost:7080",
+      "caName": "ca.users1.local",
+      "httpOptions": {
+        "verify": false
+      }
+    }
+  },
+  "orderers": {
+    "orderer0.group1.orderer.local": {
+      "url": "grpc://localhost:7030"
+    }
+  },
+  "channels": {
+    "product-channel": {
+      "orderers": [
+        "orderer0.group1.orderer.local"
+      ],
+      "peers": {
+        "peer0.curator.local": {
+          "endorsingPeer": true,
+          "chaincodeQuery": true,
+          "ledgerQuery": true,
+          "eventSource": true
+        },
+        "peer0.partner1.local": {
+          "endorsingPeer": true,
+          "chaincodeQuery": true,
+          "ledgerQuery": true,
+          "eventSource": true
+        }
+      }
+    }
+  }
+}

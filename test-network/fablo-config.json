@@ -1,0 +1,86 @@
+{
+  "$schema": "https://github.com/hyperledger-labs/fablo/releases/download/2.0.0/schema.json",
+  "global": {
+    "fabricVersion": "2.5.10",
+    "tls": false,
+    "peerDevMode": true,
+    "monitoring": {
+      "loglevel": "info"
+    }
+  },
+  "orgs": [
+    {
+      "organization": {
+        "name": "OrdererOrg",
+        "mspName": "OrdererOrg",
+        "domain": "orderer.local"
+      },
+      "orderers": [
+        {
+          "groupName": "group1",
+          "type": "solo",
+          "instances": 1
+        }
+      ]
+    },
+    {
+      "organization": {
+        "name": "CuratorOrg",
+        "mspName": "CuratorOrg",
+        "domain": "curator.local"
+      },
+      "peer": {
+        "instances": 1
+      }
+    },
+    {
+      "organization": {
+        "name": "PartnerOrg1",
+        "mspName": "PartnerOrg1",
+        "domain": "partner1.local"
+      },
+      "peer": {
+        "instances": 1
+      }
+    },
+    {
+      "organization": {
+        "name": "UsersOrg1",
+        "mspName": "UsersOrg1",
+        "domain": "users1.local"
+      }
+    }
+  ],
+  "channels": [
+    {
+      "name": "product-channel",
+      "ordererGroup": "group1",
+      "orgs": [
+        {
+          "name": "CuratorOrg",
+          "peers": [
+            "peer0"
+          ]
+        },
+        {
+          "name": "PartnerOrg1",
+          "peers": [
+            "peer0"
+          ]
+        }
+      ]
+    }
+  ],
+  "chaincodes": [
+    {
+      "name": "basic-product",
+      "version": "0.0.1",
+      "lang": "node",
+      "channel": "product-channel",
+      "directory": ".."
+    }
+  ],
+  "hooks": {
+    "postGenerate": "./fablo-post-generate.sh"
+  }
+}

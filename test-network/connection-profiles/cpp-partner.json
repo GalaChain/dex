@@ -1,0 +1,61 @@
+{
+  "name": "test-network-PartnerOrg1",
+  "version": "1.0.0",
+  "client": {
+    "organization": "PartnerOrg1"
+  },
+  "organizations": {
+    "PartnerOrg1": {
+      "mspid": "PartnerOrg1",
+      "peers": [
+        "peer0.partner1.local"
+      ],
+      "certificateAuthorities": [
+        "ca.partner1.local"
+      ]
+    }
+  },
+  "peers": {
+    "peer0.curator.local": {
+      "url": "grpc://localhost:7041"
+    },
+    "peer0.partner1.local": {
+      "url": "grpc://localhost:7061"
+    }
+  },
+  "certificateAuthorities": {
+    "ca.partner1.local": {
+      "url": "http://localhost:7060",
+      "caName": "ca.partner1.local",
+      "httpOptions": {
+        "verify": false
+      }
+    }
+  },
+  "orderers": {
+    "orderer0.group1.orderer.local": {
+      "url": "grpc://localhost:7030"
+    }
+  },
+  "channels": {
+    "product-channel": {
+      "orderers": [
+        "orderer0.group1.orderer.local"
+      ],
+      "peers": {
+        "peer0.curator.local": {
+          "endorsingPeer": true,
+          "chaincodeQuery": true,
+          "ledgerQuery": true,
+          "eventSource": true
+        },
+        "peer0.partner1.local": {
+          "endorsingPeer": true,
+          "chaincodeQuery": true,
+          "ledgerQuery": true,
+          "eventSource": true
+        }
+      }
+    }
+  }
+}

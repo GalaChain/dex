@@ -1,0 +1,61 @@
+{
+  "name": "test-network-CuratorOrg",
+  "version": "1.0.0",
+  "client": {
+    "organization": "CuratorOrg"
+  },
+  "organizations": {
+    "CuratorOrg": {
+      "mspid": "CuratorOrg",
+      "peers": [
+        "peer0.curator.local"
+      ],
+      "certificateAuthorities": [
+        "ca.curator.local"
+      ]
+    }
+  },
+  "peers": {
+    "peer0.curator.local": {
+      "url": "grpc://peer0.curator.local:7041"
+    },
+    "peer0.partner1.local": {
+      "url": "grpc://peer0.partner1.local:7061"
+    }
+  },
+  "certificateAuthorities": {
+    "ca.curator.local": {
+      "url": "http://ca.curator.local:7054",
+      "caName": "ca.curator.local",
+      "httpOptions": {
+        "verify": false
+      }
+    }
+  },
+  "orderers": {
+    "orderer0.group1.orderer.local": {
+      "url": "grpc://orderer0.group1.orderer.local:7030"
+    }
+  },
+  "channels": {
+    "product-channel": {
+      "orderers": [
+        "orderer0.group1.orderer.local"
+      ],
+      "peers": {
+        "peer0.curator.local": {
+          "endorsingPeer": true,
+          "chaincodeQuery": true,
+          "ledgerQuery": true,
+          "eventSource": true
+        },
+        "peer0.partner1.local": {
+          "endorsingPeer": true,
+          "chaincodeQuery": true,
+          "ledgerQuery": true,
+          "eventSource": true
+        }
+      }
+    }
+  }
+}

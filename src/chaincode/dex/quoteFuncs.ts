@@ -12,16 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  Pool,
-  QuoteExactAmountDto,
-  QuoteExactAmountResDto,
-  SwapState,
-  sqrtPriceToTick
-} from "../../api/";
-import BigNumber from "bignumber.js";
-import { NotFoundError, ValidationFailedError, ConflictError } from "@gala-chain/api";
+import { ConflictError, NotFoundError, ValidationFailedError } from "@gala-chain/api";
 import { GalaChainContext, fetchOrCreateBalance, getObjectByKey } from "@gala-chain/chaincode";
+import BigNumber from "bignumber.js";
+
+import { Pool, QuoteExactAmountDto, QuoteExactAmountResDto, SwapState, sqrtPriceToTick } from "../../api/";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { processSwapSteps } from "./swap.helper";
 

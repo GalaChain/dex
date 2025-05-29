@@ -12,10 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { ChainObject } from "@gala-chain/api";
 import { Exclude } from "class-transformer";
 import { ArrayNotEmpty, IsNumber, IsString, Max, Min } from "class-validator";
-
-import { ChainObject } from "@gala-chain/api";
 
 export class DexFeeConfig extends ChainObject {
   @Exclude()

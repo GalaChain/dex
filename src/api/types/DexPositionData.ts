@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { BigNumberIsNotNegative, BigNumberProperty, EnumProperty } from "@gala-chain/api";
+import { ChainKey, ChainObject, TokenClassKey } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { Exclude, Type } from "class-transformer";
 import { IsInt, IsNotEmpty, IsString, Max, Min, ValidateNested } from "class-validator";
@@ -19,8 +21,6 @@ import { JSONSchema } from "class-validator-jsonschema";
 
 import { requirePosititve } from "../utils";
 import { IsLessThan } from "../validators";
-import { BigNumberIsNotNegative, BigNumberProperty, EnumProperty } from "@gala-chain/api";
-import { ChainKey, ChainObject, TokenClassKey } from "@gala-chain/api";
 import { DexFeePercentageTypes } from "./DexDtos";
 import { TickData } from "./TickData";
 

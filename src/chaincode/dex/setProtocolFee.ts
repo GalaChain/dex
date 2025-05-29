@@ -12,14 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  ConfigureDexFeeAddressDto,
-  DexFeeConfig,
-  SetProtocolFeeDto,
-  SetProtocolFeeResDto
-} from "../../api/";
 import { NotFoundError, UnauthorizedError, ValidationFailedError } from "@gala-chain/api";
 import { GalaChainContext, putChainObject } from "@gala-chain/chaincode";
+
+import { ConfigureDexFeeAddressDto, DexFeeConfig, SetProtocolFeeDto, SetProtocolFeeResDto } from "../../api/";
 import { fetchDexProtocolFeeConfig } from "./dexUtils";
 
 /**

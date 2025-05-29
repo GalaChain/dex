@@ -12,14 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  CreatePoolDto,
-  CreatePoolResDto,
-  DexFeeConfig,
-  Pool,
-} from "../../api/";
 import { ConflictError, ValidationFailedError } from "@gala-chain/api";
 import { GalaChainContext, fetchTokenClass, getObjectByKey, putChainObject } from "@gala-chain/chaincode";
+
+import { CreatePoolDto, CreatePoolResDto, DexFeeConfig, Pool } from "../../api/";
 import { generateKeyFromClassKey } from "./dexUtils";
 
 /**

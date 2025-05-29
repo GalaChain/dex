@@ -13,7 +13,12 @@
  * limitations under the License.
  */
 import deserialize from "@gala-chain/api";
-import { Primitive, generateResponseSchema, generateSchema ,getValidationErrorMessages } from "@gala-chain/api";
+import {
+  Primitive,
+  generateResponseSchema,
+  generateSchema,
+  getValidationErrorMessages
+} from "@gala-chain/api";
 import serialize from "@gala-chain/api";
 import signatures, { SigningScheme } from "@gala-chain/api";
 

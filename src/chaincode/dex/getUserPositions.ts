@@ -12,6 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { TokenInstanceKey, ValidationFailedError } from "@gala-chain/api";
+import {
+  GalaChainContext,
+  fetchTokenClass,
+  getObjectsByPartialCompositeKeyWithPagination
+} from "@gala-chain/chaincode";
+
 import {
   DexPositionData,
   DexPositionOwner,
@@ -19,8 +26,6 @@ import {
   GetUserPositionsResDto,
   IPosition
 } from "../../api/";
-import { TokenInstanceKey, ValidationFailedError } from "@gala-chain/api";
-import { GalaChainContext, fetchTokenClass, getObjectsByPartialCompositeKeyWithPagination } from "@gala-chain/chaincode";
 import { genBookMark, parseTickRange, splitBookmark } from "./dexUtils";
 import { getDexPosition } from "./position.helper";
 
@@ -101,7 +106,7 @@ export async function getUserPositions(
     }
 
     // Only update bookmark if the last position on this page was processed
-    currentPageBookmark = isLastIteration ? userPositionInfo.metadata.bookmark ?? "" : currentPageBookmark;
+    currentPageBookmark = isLastIteration ? (userPositionInfo.metadata.bookmark ?? "") : currentPageBookmark;
   } while (positionsRequired && currentPageBookmark); // Repeat while more positions are needed and more pages exist
 
   // If we still have positions to skip but ran out of data, the bookmark was invalid

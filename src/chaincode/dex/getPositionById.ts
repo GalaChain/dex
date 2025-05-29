@@ -12,8 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { DexPositionData, GetPositionByIdDto } from "../../api/";
 import { GalaChainContext, getObjectByKey } from "@gala-chain/chaincode";
+
+import { DexPositionData, GetPositionByIdDto } from "../../api/";
 
 /**
  * @dev Fetches the DexPositionData object using the provided positionId.

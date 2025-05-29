@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { TokenClassKey } from "@gala-chain/api";
 import { BigNumber } from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
@@ -19,7 +20,6 @@ import { DexFeePercentageTypes } from "./DexDtos";
 import { DexPositionData } from "./DexPositionData";
 import { Pool } from "./DexV3Pool";
 import { TickData } from "./TickData";
-import { TokenClassKey } from "@gala-chain/api";
 
 const tokenClass0Properties = {
   collection: "TEST",

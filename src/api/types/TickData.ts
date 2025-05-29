@@ -12,13 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { BigNumberProperty, ChainKey, ChainObject, ValidationFailedError } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { Exclude } from "class-transformer";
 import { IsBoolean, IsInt, IsString, Max, Min } from "class-validator";
 import { JSONSchema } from "class-validator-jsonschema";
 
 import { BigNumberIsPositive, IsBigNumber } from "../validators";
-import { BigNumberProperty, ChainObject, ChainKey, ValidationFailedError } from "@gala-chain/api";
 
 export class TickData extends ChainObject {
   @Exclude()

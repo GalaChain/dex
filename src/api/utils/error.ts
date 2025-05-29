@@ -12,8 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { ChainError, ErrorCode as BaseErrorCode } from "@gala-chain/api";
+import { ErrorCode as BaseErrorCode, ChainError } from "@gala-chain/api";
 
 export const ErrorCode = {
   ...BaseErrorCode,

@@ -12,10 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { NotImplementedError } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { ValidationArguments, ValidationOptions, registerDecorator } from "class-validator";
-
-import { NotImplementedError } from "@gala-chain/api";
 
 export function IsWholeNumber(property: string, validationOptions?: ValidationOptions) {
   return function (object: Record<string, unknown>, propertyName: string): void {

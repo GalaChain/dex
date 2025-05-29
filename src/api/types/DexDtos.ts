@@ -12,6 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {
+  BigNumberProperty,
+  EnumProperty,
+  IsBigNumber,
+  IsUserAlias,
+  SubmitCallDTO,
+  UserAlias
+} from "@gala-chain/api";
+import { ChainCallDTO, TokenBalance, TokenClassKey } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { Type } from "class-transformer";
 import {
@@ -29,15 +38,8 @@ import {
 } from "class-validator";
 
 import { PositionInPool } from "../utils";
-import {
-  BigNumberIsNegative,
-  BigNumberIsNotNegative,
-  BigNumberIsPositive,
-  IsLessThan
-} from "../validators";
-import { BigNumberProperty, EnumProperty, IsBigNumber, IsUserAlias, SubmitCallDTO, UserAlias } from "@gala-chain/api";
+import { BigNumberIsNegative, BigNumberIsNotNegative, BigNumberIsPositive, IsLessThan } from "../validators";
 import { TickData } from "./TickData";
-import { TokenBalance, TokenClassKey, ChainCallDTO } from "@gala-chain/api";
 
 const f18 = (num: BigNumber, round: BigNumber.RoundingMode = BigNumber.ROUND_DOWN): BigNumber => {
   return new BigNumber(num?.toFixed(18, round) ?? 0);
@@ -724,7 +726,12 @@ export class CollectProtocolFeesDto extends SubmitCallDTO {
   @IsUserAlias()
   public recepient: UserAlias;
 
-  constructor(token0: TokenClassKey, token1: TokenClassKey, fee: DexFeePercentageTypes, recepient: UserAlias) {
+  constructor(
+    token0: TokenClassKey,
+    token1: TokenClassKey,
+    fee: DexFeePercentageTypes,
+    recepient: UserAlias
+  ) {
     super();
     this.token0 = token0;
     this.token1 = token1;

@@ -12,6 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { ConflictError, TokenInstanceKey, ValidationFailedError } from "@gala-chain/api";
+import {
+  GalaChainContext,
+  fetchOrCreateBalance,
+  fetchTokenClass,
+  getObjectByKey,
+  putChainObject,
+  transferToken
+} from "@gala-chain/chaincode";
+import BigNumber from "bignumber.js";
+
 import {
   Pool,
   SlippageToleranceExceededError,
@@ -20,9 +31,6 @@ import {
   SwapState,
   sqrtPriceToTick
 } from "../../api/";
-import BigNumber from "bignumber.js";
-import { ConflictError, TokenInstanceKey, ValidationFailedError } from "@gala-chain/api";
-import { GalaChainContext, fetchOrCreateBalance, fetchTokenClass, getObjectByKey, putChainObject, transferToken } from "@gala-chain/chaincode";
 import { roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { processSwapSteps } from "./swap.helper";
 

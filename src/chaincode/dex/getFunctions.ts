@@ -13,6 +13,16 @@
  * limitations under the License.
  */
 import {
+  ChainCallDTO,
+  ChainError,
+  NotFoundError,
+  UnauthorizedError,
+  ValidationFailedError
+} from "@gala-chain/api";
+import { GalaChainContext, getObjectByKey } from "@gala-chain/chaincode";
+import BigNumber from "bignumber.js";
+
+import {
   DexFeeConfig,
   ErrorCode,
   GetAddLiquidityEstimationDto,
@@ -23,9 +33,6 @@ import {
   Slot0ResDto,
   sqrtPriceToTick
 } from "../../api/";
-import BigNumber from "bignumber.js";
-import { NotFoundError, UnauthorizedError, ValidationFailedError, ChainError, ChainCallDTO } from "@gala-chain/api";
-import { GalaChainContext, getObjectByKey } from "@gala-chain/chaincode";
 import { fetchDexProtocolFeeConfig, generateKeyFromClassKey, validateTokenOrder } from "./dexUtils";
 
 /**

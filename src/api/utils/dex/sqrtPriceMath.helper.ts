@@ -12,9 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import BigNumber from "bignumber.js";
-
 import { ConflictError } from "@gala-chain/api";
+import BigNumber from "bignumber.js";
 
 /**
  * Gets the amount0 delta between two prices.

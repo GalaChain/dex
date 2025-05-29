@@ -12,12 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { ChainKey, ChainObject, IsUserAlias } from "@gala-chain/api";
 import { Exclude } from "class-transformer";
 import { IsNotEmpty, IsString } from "class-validator";
 import { JSONSchema } from "class-validator-jsonschema";
 
 import { IsStringArrayRecord } from "../validators";
-import { ChainObject, ChainKey, IsUserAlias } from "@gala-chain/api";
 
 @JSONSchema({
   description:

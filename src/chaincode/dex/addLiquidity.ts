@@ -12,6 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { TokenInstanceKey, UserAlias } from "@gala-chain/api";
+import {
+  GalaChainContext,
+  fetchOrCreateBalance,
+  getObjectByKey,
+  putChainObject,
+  transferToken
+} from "@gala-chain/chaincode";
+
 import {
   AddLiquidityDTO,
   DexOperationResDto,
@@ -20,19 +29,7 @@ import {
   getLiquidityForAmounts,
   tickToSqrtPrice
 } from "../../api/";
-
-
-import {
-  TokenInstanceKey,
-  UserAlias
-} from "@gala-chain/api";
-import {
-  fetchOrCreateBalance, putChainObject, transferToken, GalaChainContext, getObjectByKey
-} from "@gala-chain/chaincode";
-import {
-  PreConditionFailedError,
-  SlippageToleranceExceededError
- } from "../../api/";
+import { PreConditionFailedError, SlippageToleranceExceededError } from "../../api/";
 import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchOrCreateDexPosition } from "./position.helper";

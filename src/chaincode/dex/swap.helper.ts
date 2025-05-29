@@ -12,6 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { ConflictError } from "@gala-chain/api";
+import { GalaChainContext } from "@gala-chain/chaincode";
+import BigNumber from "bignumber.js";
+
 import {
   Pool,
   StepComputations,
@@ -22,9 +26,6 @@ import {
   sqrtPriceToTick,
   tickToSqrtPrice
 } from "../../api/";
-import BigNumber from "bignumber.js";
-import { ConflictError } from "@gala-chain/api";
-import { GalaChainContext } from "@gala-chain/chaincode";
 import { fetchOrCreateAndCrossTick } from "./tickData.helper";
 
 export async function processSwapSteps(

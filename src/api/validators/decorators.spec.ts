@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { ArrayUniqueObjects, ChainCallDTO } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { ArrayNotEmpty, validate } from "class-validator";
 
 import { BigNumberIsNegative, IsStringArrayRecord, IsStringRecord } from "./decorators";
-import { ArrayUniqueObjects, ChainCallDTO } from "@gala-chain/api";
 
 describe("ArrayUniqueObject", () => {
   it("validation should give errors when two users have the same id", async () => {

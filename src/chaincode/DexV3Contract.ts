@@ -12,6 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { ChainCallDTO, NotFoundError } from "@gala-chain/api";
+import {
+  EVALUATE,
+  Evaluate,
+  GalaChainContext,
+  GalaContract,
+  GalaTransaction,
+  Submit
+} from "@gala-chain/chaincode";
+
+import { version } from "../../package.json";
 import {
   AddLiquidityDTO,
   BurnDto,
@@ -47,8 +58,6 @@ import {
   TickData,
   TransferDexPositionDto
 } from "../api/";
-import { ChainCallDTO, NotFoundError } from "@gala-chain/api";
-import { version } from "../../package.json";
 import {
   addLiquidity,
   burn,
@@ -78,7 +87,6 @@ import {
   removeLiquidityFeeGate,
   swapFeeGate
 } from "./dexLaunchpadFeeGate";
-import { GalaChainContext, GalaContract, EVALUATE, Evaluate, GalaTransaction, Submit } from "@gala-chain/chaincode";
 
 export class DexV3Contract extends GalaContract {
   constructor() {

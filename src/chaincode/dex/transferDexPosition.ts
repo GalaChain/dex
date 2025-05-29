@@ -12,9 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { DexPositionOwner, Pool, TransferDexPositionDto } from "../../api/";
 import { NotFoundError } from "@gala-chain/api";
 import { GalaChainContext, getObjectByKey, putChainObject } from "@gala-chain/chaincode";
+
+import { DexPositionOwner, Pool, TransferDexPositionDto } from "../../api/";
 import { getUserPositionIds } from "./dexUtils";
 
 export async function transferDexPosition(

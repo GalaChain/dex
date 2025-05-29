@@ -12,6 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { NotFoundError, TokenInstanceKey } from "@gala-chain/api";
+import {
+  GalaChainContext,
+  fetchOrCreateBalance,
+  getObjectByKey,
+  putChainObject,
+  transferToken
+} from "@gala-chain/chaincode";
+import BigNumber from "bignumber.js";
+
 import {
   BurnDto,
   DexOperationResDto,
@@ -21,13 +31,7 @@ import {
   liquidity1,
   tickToSqrtPrice
 } from "../../api/";
-import BigNumber from "bignumber.js";
-
-import { NotFoundError, TokenInstanceKey } from "@gala-chain/api";
-
 import { SlippageToleranceExceededError } from "../../api/";
-
-import { fetchOrCreateBalance, transferToken, GalaChainContext, getObjectByKey, putChainObject } from "@gala-chain/chaincode";
 import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";

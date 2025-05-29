@@ -12,9 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { DexPositionData } from "../../api/";
-import BigNumber from "bignumber.js";
 import { GalaChainContext, deleteChainObject, putChainObject } from "@gala-chain/chaincode";
+import BigNumber from "bignumber.js";
+
+import { DexPositionData } from "../../api/";
 import { genTickRange, getUserPositionIds } from "./dexUtils";
 
 /**

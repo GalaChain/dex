@@ -13,9 +13,10 @@
  * limitations under the License.
  */
 import { ChainError, ErrorCode } from "@gala-chain/api";
-import { GetTickDataDto, TickData } from "../../api/";
-import BigNumber from "bignumber.js";
 import { GalaChainContext, getObjectByKey, putChainObject } from "@gala-chain/chaincode";
+import BigNumber from "bignumber.js";
+
+import { GetTickDataDto, TickData } from "../../api/";
 
 /**
  * Fetches TickData objects for the given tickLower and tickUpper values.

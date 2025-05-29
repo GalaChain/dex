@@ -12,15 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  DexPositionData,
-  GetPositionDto,
-  getFeeGrowthInside,
-  sqrtPriceToTick
-} from "../../api/";
-import BigNumber from "bignumber.js";
 import { NotFoundError } from "@gala-chain/api";
 import { GalaChainContext } from "@gala-chain/chaincode";
+import BigNumber from "bignumber.js";
+
+import { DexPositionData, GetPositionDto, getFeeGrowthInside, sqrtPriceToTick } from "../../api/";
 import { getTokenDecimalsFromPool, roundTokenAmount } from "./dexUtils";
 import { getPoolData } from "./getFunctions";
 import { fetchUserPositionInTickRange } from "./position.helper";

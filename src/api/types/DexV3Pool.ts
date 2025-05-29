@@ -12,6 +12,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import {
+  BigNumberProperty,
+  ChainKey,
+  ChainObject,
+  ConflictError,
+  EnumProperty,
+  TokenClassKey,
+  ValidationFailedError,
+  asValidUserAlias
+} from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { Exclude, Type } from "class-transformer";
 import { IsNumber, IsString, ValidateNested } from "class-validator";
@@ -34,16 +44,6 @@ import {
   tickToSqrtPrice
 } from "../utils";
 import { BigNumberIsNotNegative, IsStringRecord } from "../validators";
-import { 
-  ChainKey,
-  ConflictError,
-  ChainObject,
-  TokenClassKey,
-  BigNumberProperty,
-  EnumProperty,
-  ValidationFailedError,
-  asValidUserAlias
-} from "@gala-chain/api";
 import { DexFeePercentageTypes } from "./DexDtos";
 import { DexPositionData } from "./DexPositionData";
 import { TickData } from "./TickData";

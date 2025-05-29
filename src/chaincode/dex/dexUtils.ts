@@ -12,15 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  DexFeeConfig,
-  DexPositionOwner,
-  ErrorCode,
-  Pool,
-} from "../../api/";
-import BigNumber from "bignumber.js";
 import { ChainError, TokenClassKey, ValidationFailedError } from "@gala-chain/api";
-import { fetchTokenClass, GalaChainContext, getObjectByKey } from "@gala-chain/chaincode";
+import { GalaChainContext, fetchTokenClass, getObjectByKey } from "@gala-chain/chaincode";
+import BigNumber from "bignumber.js";
+
+import { DexFeeConfig, DexPositionOwner, ErrorCode, Pool } from "../../api/";
 
 /**
  *

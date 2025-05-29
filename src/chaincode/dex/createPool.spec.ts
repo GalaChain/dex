@@ -13,20 +13,22 @@
  * limitations under the License.
  */
 import {
-  CreatePoolDto,
-  CreatePoolResDto,
-  DexFeeConfig,
-  DexFeePercentageTypes,
-  Pool,
-} from "../../api/";
+  FeeThresholdUses,
+  GalaChainResponse,
+  TokenBalance,
+  TokenClass,
+  TokenClassKey,
+  TokenInstance,
+  asValidUserAlias
+} from "@gala-chain/api";
+import { GalaChainContext } from "@gala-chain/chaincode";
 import { currency, fixture, users, writesMap } from "@gala-chain/test";
-import dexTestUtils from "../test/dex";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
-import { asValidUserAlias, FeeThresholdUses, GalaChainResponse, TokenBalance, TokenClass, TokenClassKey, TokenInstance } from "@gala-chain/api";
 
+import { CreatePoolDto, CreatePoolResDto, DexFeeConfig, DexFeePercentageTypes, Pool } from "../../api/";
 import { DexV3Contract } from "../DexV3Contract";
-import { GalaChainContext } from "@gala-chain/chaincode";
+import dexTestUtils from "../test/dex";
 import { generateKeyFromClassKey } from "./dexUtils";
 
 describe("createPool", () => {

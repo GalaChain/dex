@@ -12,10 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { BurnEstimateDto, GetRemoveLiqEstimationResDto, Pool } from "../../api/";
-
 import { GalaChainContext, getObjectByKey } from "@gala-chain/chaincode";
 
+import { BurnEstimateDto, GetRemoveLiqEstimationResDto, Pool } from "../../api/";
 import { getTokenDecimalsFromPool, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";

@@ -35,7 +35,7 @@ import {
   BigNumberIsPositive,
   IsLessThan
 } from "../validators";
-import { BigNumberProperty, EnumProperty, IsBigNumber, IsUserAlias } from "@gala-chain/api";
+import { BigNumberProperty, EnumProperty, IsBigNumber, IsUserAlias, SubmitCallDTO, UserAlias } from "@gala-chain/api";
 import { TickData } from "./TickData";
 import { TokenBalance, TokenClassKey, ChainCallDTO } from "@gala-chain/api";
 
@@ -49,7 +49,7 @@ export enum DexFeePercentageTypes {
   FEE_1_PERCENT = 10000 // 1%
 }
 
-export class CreatePoolDto extends ChainCallDTO {
+export class CreatePoolDto extends SubmitCallDTO {
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => TokenClassKey)
@@ -165,7 +165,7 @@ export class QuoteExactAmountDto extends ChainCallDTO {
   }
 }
 
-export class SwapDto extends ChainCallDTO {
+export class SwapDto extends SubmitCallDTO {
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => TokenClassKey)
@@ -219,7 +219,7 @@ export class SwapDto extends ChainCallDTO {
   }
 }
 
-export class BurnDto extends ChainCallDTO {
+export class BurnDto extends SubmitCallDTO {
   @IsNotEmpty()
   @IsInt()
   @Max(TickData.MAX_TICK)
@@ -393,7 +393,7 @@ export class GetPositionDto extends ChainCallDTO {
 export class GetUserPositionsDto extends ChainCallDTO {
   @IsNotEmpty()
   @IsUserAlias()
-  public user: string;
+  public user: UserAlias;
 
   @IsInt()
   @Min(1, { message: "Value cannot be zero" })
@@ -405,7 +405,7 @@ export class GetUserPositionsDto extends ChainCallDTO {
   @IsString()
   public bookmark?: string;
 
-  constructor(user: string, bookmark?: string, limit = 10) {
+  constructor(user: UserAlias, bookmark?: string, limit = 10) {
     super();
     this.user = user;
     this.bookmark = bookmark;
@@ -488,7 +488,7 @@ export class UserBalanceResDto extends ChainCallDTO {
   }
 }
 
-export class CollectDto extends ChainCallDTO {
+export class CollectDto extends SubmitCallDTO {
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => TokenClassKey)
@@ -547,7 +547,7 @@ export class CollectDto extends ChainCallDTO {
   }
 }
 
-export class AddLiquidityDTO extends ChainCallDTO {
+export class AddLiquidityDTO extends SubmitCallDTO {
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => TokenClassKey)
@@ -657,7 +657,7 @@ export class SwapResDto extends ChainCallDTO {
 
   @IsNotEmpty()
   @IsUserAlias()
-  poolAlias: string;
+  poolAlias: UserAlias;
 
   @EnumProperty(DexFeePercentageTypes)
   poolFee: DexFeePercentageTypes;
@@ -671,7 +671,7 @@ export class SwapResDto extends ChainCallDTO {
     amount1: string,
     userAddress: string,
     poolHash: string,
-    poolAlias: string,
+    poolAlias: UserAlias,
     poolFee: DexFeePercentageTypes,
     timeStamp: number
   ) {
@@ -706,7 +706,7 @@ export class GetUserPositionsResDto extends ChainCallDTO {
   }
 }
 
-export class CollectProtocolFeesDto extends ChainCallDTO {
+export class CollectProtocolFeesDto extends SubmitCallDTO {
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => TokenClassKey)
@@ -722,9 +722,9 @@ export class CollectProtocolFeesDto extends ChainCallDTO {
 
   @IsNotEmpty()
   @IsUserAlias()
-  public recepient: string;
+  public recepient: UserAlias;
 
-  constructor(token0: TokenClassKey, token1: TokenClassKey, fee: DexFeePercentageTypes, recepient: string) {
+  constructor(token0: TokenClassKey, token1: TokenClassKey, fee: DexFeePercentageTypes, recepient: UserAlias) {
     super();
     this.token0 = token0;
     this.token1 = token1;
@@ -733,7 +733,7 @@ export class CollectProtocolFeesDto extends ChainCallDTO {
   }
 }
 
-export class SetProtocolFeeDto extends ChainCallDTO {
+export class SetProtocolFeeDto extends SubmitCallDTO {
   @IsNumber()
   public protocolFee: number;
 
@@ -855,7 +855,7 @@ export class SetProtocolFeeResDto extends ChainCallDTO {
   }
 }
 
-export class ConfigureDexFeeAddressDto extends ChainCallDTO {
+export class ConfigureDexFeeAddressDto extends SubmitCallDTO {
   @IsArray()
   @ArrayMinSize(1, { message: "At least one user should be defined to provide access" })
   @IsString({ each: true })
@@ -893,7 +893,7 @@ export class BurnEstimateDto extends ChainCallDTO {
 
   @IsNotEmpty()
   @IsUserAlias()
-  public owner: string;
+  public owner: UserAlias;
 
   @IsOptional()
   @IsString()
@@ -906,7 +906,7 @@ export class BurnEstimateDto extends ChainCallDTO {
     amount: BigNumber,
     tickLower: number,
     tickUpper: number,
-    owner: string,
+    owner: UserAlias,
     positionId: string | undefined
   ) {
     super();
@@ -921,10 +921,10 @@ export class BurnEstimateDto extends ChainCallDTO {
   }
 }
 
-export class TransferDexPositionDto extends ChainCallDTO {
+export class TransferDexPositionDto extends SubmitCallDTO {
   @IsNotEmpty()
   @IsUserAlias()
-  public toAddress: string;
+  public toAddress: UserAlias;
 
   @IsNotEmpty()
   @ValidateNested()
@@ -988,22 +988,22 @@ export class DexOperationResDto extends ChainCallDTO {
 
   @IsNotEmpty()
   @IsUserAlias()
-  poolAlias: string;
+  poolAlias: UserAlias;
 
   @EnumProperty(DexFeePercentageTypes)
   poolFee: DexFeePercentageTypes;
 
   @IsNotEmpty()
   @IsUserAlias()
-  userAddress: string;
+  userAddress: UserAlias;
 
   constructor(
     userBalanceDelta: UserBalanceResDto,
     amounts: string[],
     poolHash: string,
-    poolAlias: string,
+    poolAlias: UserAlias,
     poolFee: DexFeePercentageTypes,
-    userAddress: string
+    userAddress: UserAlias
   ) {
     super();
     this.userBalanceDelta = userBalanceDelta;
@@ -1035,14 +1035,14 @@ export class CreatePoolResDto extends ChainCallDTO {
 
   @IsNotEmpty()
   @IsUserAlias()
-  poolAlias: string;
+  poolAlias: UserAlias;
 
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
     poolFee: DexFeePercentageTypes,
     poolHash: string,
-    poolAlias: string
+    poolAlias: UserAlias
   ) {
     super();
     this.token0 = token0;

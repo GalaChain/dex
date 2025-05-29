@@ -19,12 +19,13 @@ import {
   DexFeePercentageTypes,
   Pool,
 } from "../../api/";
-import { currency, dex, fixture, users, writesMap } from "@gala-chain/test";
+import { currency, fixture, users, writesMap } from "@gala-chain/test";
+import dexTestUtils from "../test/dex";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
-import { NotFoundError, TokenInstanceKey, UnauthorizedError, TokenBalance, TokenClass, TokenClassKey, TokenInstance } from "@gala-chain/api";
+import { asValidUserAlias, FeeThresholdUses, GalaChainResponse, TokenBalance, TokenClass, TokenClassKey, TokenInstance } from "@gala-chain/api";
 
-import { DexV3Contract } from "../../contracts/DexV3Contract";
+import { DexV3Contract } from "../DexV3Contract";
 import { GalaChainContext } from "@gala-chain/chaincode";
 import { generateKeyFromClassKey } from "./dexUtils";
 
@@ -35,15 +36,15 @@ describe("createPool", () => {
     const currencyClassKey: TokenClassKey = currency.tokenClassKey();
     const currencyBalance: TokenBalance = currency.tokenBalance();
 
-    const dexInstance: TokenInstance = dex.tokenInstance();
-    const dexClass: TokenClass = dex.tokenClass();
-    const dexClassKey: TokenClassKey = dex.tokenClassKey();
-    const dexBalance: TokenBalance = dex.tokenBalance();
+    const dexInstance: TokenInstance = dexTestUtils.tokenInstance();
+    const dexClass: TokenClass = dexTestUtils.tokenClass();
+    const dexClassKey: TokenClassKey = dexTestUtils.tokenClassKey();
+    const dexBalance: TokenBalance = dexTestUtils.tokenBalance();
 
-    const dexFeeConfig: DexFeeConfig = new DexFeeConfig([users.testAdminId], 2);
+    const dexFeeConfig: DexFeeConfig = new DexFeeConfig([asValidUserAlias(users.admin.identityKey)], 2);
 
     const { ctx, contract } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
-      .callingUser(users.testUser1Id)
+      .callingUser(users.testUser1)
       .savedState(
         currencyInstance,
         currencyClass,
@@ -99,10 +100,10 @@ describe("createPool", () => {
     const dexClass: TokenClass = plainToInstance(TokenClass, token1Properties);
     const dexClassKey: TokenClassKey = plainToInstance(TokenClassKey, token1Properties);
 
-    const dexFeeConfig: DexFeeConfig = new DexFeeConfig([users.testAdminId], 2);
+    const dexFeeConfig: DexFeeConfig = new DexFeeConfig([users.admin.identityKey], 2);
 
-    const { ctx, contract, writes } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
-      .callingUser(users.testUser1Id)
+    const { ctx, contract, getWrites } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
+      .callingUser(users.testUser1)
       .savedState(currencyClass, dexFeeConfig, dexClass)
       .savedRangeState([]);
 
@@ -115,7 +116,7 @@ describe("createPool", () => {
 
     const expectedFeeThresholdUses = plainToInstance(FeeThresholdUses, {
       feeCode: "CreatePool",
-      user: users.testUser1Id,
+      user: users.testUser1.identityKey,
       cumulativeUses: new BigNumber("1"),
       cumulativeFeeQuantity: new BigNumber("0")
     });
@@ -143,6 +144,6 @@ describe("createPool", () => {
 
     // Then
     expect(response).toEqual(GalaChainResponse.Success(expectedResponse));
-    expect(writes).toEqual(writesMap(expectedFeeThresholdUses, expectedPool));
+    expect(getWrites()).toEqual(writesMap(expectedFeeThresholdUses, expectedPool));
   });
 });

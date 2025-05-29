@@ -23,7 +23,8 @@ import {
 
 
 import {
-  TokenInstanceKey
+  TokenInstanceKey,
+  UserAlias
 } from "@gala-chain/api";
 import {
   fetchOrCreateBalance, putChainObject, transferToken, GalaChainContext, getObjectByKey
@@ -47,7 +48,7 @@ import { fetchOrCreateTickDataPair } from "./tickData.helper";
 export async function addLiquidity(
   ctx: GalaChainContext,
   dto: AddLiquidityDTO,
-  launchpadAddress?: string
+  launchpadAddress?: UserAlias | undefined
 ): Promise<DexOperationResDto> {
   const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
 

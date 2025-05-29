@@ -41,7 +41,8 @@ import {
   TokenClassKey,
   BigNumberProperty,
   EnumProperty,
-  ValidationFailedError
+  ValidationFailedError,
+  asValidUserAlias
 } from "@gala-chain/api";
 import { DexFeePercentageTypes } from "./DexDtos";
 import { DexPositionData } from "./DexPositionData";
@@ -475,7 +476,7 @@ export class Pool extends ChainObject {
    * @returns poolAlias
    */
   public getPoolAlias() {
-    return `service|pool_${this.genPoolHash()}`;
+    return asValidUserAlias(`service|pool_${this.genPoolHash()}`);
   }
 
   /**

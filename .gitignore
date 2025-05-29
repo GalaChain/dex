@@ -5,6 +5,8 @@ tmp
 public/
 lib
 keys
+test-network
+logs
 
 # dependencies
 node_modules

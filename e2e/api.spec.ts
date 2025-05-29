@@ -22,7 +22,7 @@ describe("API snapshots", () => {
     dex: {
       channel: "product-channel",
       chaincode: "basic-product",
-      contract: "GalaChainToken",
+      contract: "DexV3Contract",
       api: commonContractAPI
     },
     assets: {

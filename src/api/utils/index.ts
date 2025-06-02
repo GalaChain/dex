@@ -12,26 +12,5 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import deserialize from "@gala-chain/api";
-import {
-  Primitive,
-  generateResponseSchema,
-  generateSchema,
-  getValidationErrorMessages
-} from "@gala-chain/api";
-import serialize from "@gala-chain/api";
-import signatures, { SigningScheme } from "@gala-chain/api";
-
 export * from "./dex";
 export * from "./error";
-
-export {
-  deserialize,
-  serialize,
-  generateSchema,
-  generateResponseSchema,
-  getValidationErrorMessages,
-  Primitive,
-  signatures,
-  SigningScheme
-};

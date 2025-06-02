@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ChainObject } from "@gala-chain/api";
+import { ChainObject, IsUserAlias, UserAlias } from "@gala-chain/api";
 import { Exclude } from "class-transformer";
 import { ArrayNotEmpty, IsNumber, IsString, Max, Min } from "class-validator";
 
@@ -21,21 +21,21 @@ export class DexFeeConfig extends ChainObject {
   public static INDEX_KEY = "GCDPFC"; // GalaChain Dex Protocol Fee Configuration
 
   @ArrayNotEmpty()
-  @IsString({ each: true })
-  authorities: string[];
+  @IsUserAlias({ each: true })
+  authorities: UserAlias[];
 
   @IsNumber()
   @Min(0)
   @Max(1)
   public protocolFee: number;
 
-  constructor(authorities: string[], protocolFee = 0.1) {
+  constructor(authorities: UserAlias[], protocolFee = 0.1) {
     super();
     this.authorities = authorities;
     this.protocolFee = protocolFee;
   }
 
-  public addOrUpdateAuthorities(newAuthorities: string[]) {
+  public addOrUpdateAuthorities(newAuthorities: UserAlias[]) {
     this.authorities = newAuthorities;
   }
 

@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ChainKey, ChainObject, IsUserAlias } from "@gala-chain/api";
+import { ChainKey, ChainObject, IsUserRef, UserRef } from "@gala-chain/api";
 import { Exclude } from "class-transformer";
 import { IsNotEmpty, IsString } from "class-validator";
 import { JSONSchema } from "class-validator-jsonschema";
@@ -31,8 +31,8 @@ export class DexPositionOwner extends ChainObject {
 
   @ChainKey({ position: 0 })
   @IsNotEmpty()
-  @IsUserAlias()
-  owner: string;
+  @IsUserRef()
+  owner: UserRef;
 
   @ChainKey({ position: 1 })
   @IsNotEmpty()
@@ -50,7 +50,7 @@ export class DexPositionOwner extends ChainObject {
    * @param owner - User alias of the position owner.
    * @param poolHash - Unique identifier of the pool.
    */
-  constructor(owner: string, poolHash: string) {
+  constructor(owner: UserRef, poolHash: string) {
     super();
     this.owner = owner;
     this.poolHash = poolHash;

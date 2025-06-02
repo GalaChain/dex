@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ChainCallDTO } from "@gala-chain/api";
 import { GalaChainContext, galaFeeGate } from "@gala-chain/chaincode";
 
 import { AddLiquidityDTO, BurnDto, CollectDto, CreatePoolDto, SwapDto } from "../api";
@@ -23,11 +22,6 @@ export enum FeeGateCodes {
   Swap = "Swap",
   RemoveLiquidity = "RemoveLiquidity",
   CollectPositionFees = "CollectPositionFees",
-  CreateSale = "CreateSale",
-  BuyExactToken = "BuyExactToken",
-  SellExactToken = "SellExactToken",
-  BuyWithNative = "BuyWithNative",
-  SellWithNative = "SellWithNative"
 }
 
 export async function createPoolFeeGate(ctx: GalaChainContext, dto: CreatePoolDto) {
@@ -48,29 +42,4 @@ export async function swapFeeGate(ctx: GalaChainContext, dto: SwapDto) {
 
 export async function collectPositionFeesFeeGate(ctx: GalaChainContext, dto: CollectDto) {
   return galaFeeGate(ctx, { feeCode: FeeGateCodes.CollectPositionFees });
-}
-
-// Unused?
-export async function createSaleFeeGate(ctx: GalaChainContext, dto: ChainCallDTO) {
-  return galaFeeGate(ctx, { feeCode: FeeGateCodes.CreateSale });
-}
-
-// Unused?
-export async function buyExactTokenFeeGate(ctx: GalaChainContext, dto: ChainCallDTO) {
-  return galaFeeGate(ctx, { feeCode: FeeGateCodes.BuyExactToken });
-}
-
-// Unused?
-export async function sellExactTokenFeeGate(ctx: GalaChainContext, dto: ChainCallDTO) {
-  return galaFeeGate(ctx, { feeCode: FeeGateCodes.SellExactToken });
-}
-
-// Unused?
-export async function buyWithNativeFeeGate(ctx: GalaChainContext, dto: ChainCallDTO) {
-  return galaFeeGate(ctx, { feeCode: FeeGateCodes.BuyWithNative });
-}
-
-// Unused?
-export async function sellWithNativeFeeGate(ctx: GalaChainContext, dto: ChainCallDTO) {
-  return galaFeeGate(ctx, { feeCode: FeeGateCodes.SellWithNative });
 }

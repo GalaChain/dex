@@ -21,7 +21,7 @@ export enum FeeGateCodes {
   AddLiquidity = "AddLiquidity",
   Swap = "Swap",
   RemoveLiquidity = "RemoveLiquidity",
-  CollectPositionFees = "CollectPositionFees",
+  CollectPositionFees = "CollectPositionFees"
 }
 
 export async function createPoolFeeGate(ctx: GalaChainContext, dto: CreatePoolDto) {

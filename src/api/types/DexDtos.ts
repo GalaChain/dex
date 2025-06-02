@@ -728,12 +728,7 @@ export class CollectProtocolFeesDto extends SubmitCallDTO {
   @IsUserRef()
   public recepient: UserRef;
 
-  constructor(
-    token0: TokenClassKey,
-    token1: TokenClassKey,
-    fee: DexFeePercentageTypes,
-    recepient: UserRef
-  ) {
+  constructor(token0: TokenClassKey, token1: TokenClassKey, fee: DexFeePercentageTypes, recepient: UserRef) {
     super();
     this.token0 = token0;
     this.token1 = token1;

@@ -1,0 +1,16 @@
+{
+  "channels": [
+    {
+      "pathFragment": "product",
+      "channelName": "product-channel",
+      "asLocalHost": true,
+      "contracts": [
+        {
+          "pathFragment": "DexV3Contract",
+          "chaincodeName": "basic-product",
+          "contractName": "DexV3Contract"
+        }
+      ]
+    }
+  ]
+}

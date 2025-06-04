@@ -21,6 +21,9 @@ import { DexV3Contract } from "./chaincode/DexV3Contract";
 
 export const contracts: { new (): GalaContract }[] = [DexV3Contract];
 
+export * from "./api";
+export * from "./chaincode";
+
 export const serializers = {
   transaction: "galaJsonSerializer",
   serializers: {

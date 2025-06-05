@@ -30,3 +30,5 @@ export const serializers = {
     galaJsonSerializer: GalaJSONSerializer
   }
 };
+
+export { DexV3Contract };

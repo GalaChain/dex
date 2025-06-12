@@ -32,7 +32,7 @@ import {
   tickToSqrtPrice
 } from "../../api/";
 import { SlippageToleranceExceededError } from "../../api/";
-import { f18 } from "../../api/utils/dex/bigNumberFloat.helper";
+import { f18 } from "../../api/utils";
 import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";

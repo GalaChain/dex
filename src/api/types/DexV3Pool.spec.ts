@@ -16,7 +16,7 @@ import { TokenClassKey } from "@gala-chain/api";
 import { BigNumber } from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
-import { f18 } from "../utils/dex/bigNumberFloat.helper";
+import { f18 } from "../utils";
 import { DexFeePercentageTypes } from "./DexDtos";
 import { DexPositionData } from "./DexPositionData";
 import { Pool } from "./DexV3Pool";

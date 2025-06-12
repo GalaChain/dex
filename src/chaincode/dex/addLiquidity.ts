@@ -31,7 +31,7 @@ import {
 } from "../../api/";
 import { PreConditionFailedError, SlippageToleranceExceededError } from "../../api/";
 import { NegativeAmountError } from "./dexError";
-import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
+import { f18, getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchOrCreateDexPosition } from "./position.helper";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
 
@@ -62,10 +62,10 @@ export async function addLiquidity(
     tickUpper = parseInt(dto.tickUpper.toString());
 
   //calculate token amounts required for the desired liquidity
-  const amount0Desired = dto.amount0Desired.f18(),
-    amount1Desired = dto.amount1Desired.f18();
-  const amount0Min = dto.amount0Min.f18(),
-    amount1Min = dto.amount1Min.f18();
+  const amount0Desired = f18(dto.amount0Desired),
+    amount1Desired = f18(dto.amount1Desired);
+  const amount0Min = f18(dto.amount0Min),
+    amount1Min = f18(dto.amount1Min);
 
   const sqrtRatioA = tickToSqrtPrice(tickLower),
     sqrtRatioB = tickToSqrtPrice(tickUpper);
@@ -97,7 +97,7 @@ export async function addLiquidity(
     tickUpper
   );
 
-  const [amount0, amount1] = pool.mint(position, tickLowerData, tickUpperData, liquidity.f18());
+  const [amount0, amount1] = pool.mint(position, tickLowerData, tickUpperData, f18(liquidity));
 
   // Verify whether the amounts are valid
   if (amount0.lt(amount0Min) || amount1.lt(amount1Min)) {

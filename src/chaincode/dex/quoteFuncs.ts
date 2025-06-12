@@ -17,7 +17,7 @@ import { GalaChainContext, fetchOrCreateBalance, getObjectByKey } from "@gala-ch
 import BigNumber from "bignumber.js";
 
 import { Pool, QuoteExactAmountDto, QuoteExactAmountResDto, SwapState, sqrtPriceToTick } from "../../api/";
-import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
+import { f18, getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { processSwapSteps } from "./swap.helper";
 
 /**
@@ -53,7 +53,7 @@ export async function quoteExactAmount(
 
   const currentSqrtPrice = pool.sqrtPrice;
 
-  const amountSpecified = dto.amount.f18();
+  const amountSpecified = f18(dto.amount);
   if (amountSpecified.isEqualTo(0)) {
     throw new ValidationFailedError("Invalid specified amount");
   }

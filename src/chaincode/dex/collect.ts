@@ -24,7 +24,7 @@ import BigNumber from "bignumber.js";
 
 import { CollectDto, DexOperationResDto, Pool, UserBalanceResDto } from "../../api/";
 import { NegativeAmountError } from "./dexError";
-import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
+import { f18, getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";
 import { removePositionIfEmpty } from "./removePositionIfEmpty";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
@@ -70,8 +70,8 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
   );
 
   const [amount0Requested, amount1Requested] = [
-    BigNumber.min(dto.amount0Requested.f18(), poolToken0Balance.getQuantityTotal()),
-    BigNumber.min(dto.amount1Requested.f18(), poolToken1Balance.getQuantityTotal())
+    BigNumber.min(f18(dto.amount0Requested), poolToken0Balance.getQuantityTotal()),
+    BigNumber.min(f18(dto.amount1Requested), poolToken1Balance.getQuantityTotal())
   ];
 
   const tickLower = parseInt(dto.tickLower.toString()),

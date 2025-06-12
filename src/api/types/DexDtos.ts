@@ -24,6 +24,7 @@ import {
 } from "@gala-chain/api";
 import { ChainCallDTO, TokenBalance, TokenClassKey } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
+import { f18 } from "../utils/dex/bigNumberFloat.helper";
 import { Type } from "class-transformer";
 import {
   ArrayMinSize,
@@ -42,10 +43,6 @@ import {
 import { PositionInPool } from "../utils";
 import { BigNumberIsNegative, BigNumberIsNotNegative, BigNumberIsPositive, IsLessThan } from "../validators";
 import { TickData } from "./TickData";
-
-const f18 = (num: BigNumber, round: BigNumber.RoundingMode = BigNumber.ROUND_DOWN): BigNumber => {
-  return new BigNumber(num?.toFixed(18, round) ?? 0);
-};
 
 export enum DexFeePercentageTypes {
   FEE_0_05_PERCENT = 500, // 0.05%

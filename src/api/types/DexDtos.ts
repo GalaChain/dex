@@ -39,8 +39,7 @@ import {
   ValidateNested
 } from "class-validator";
 
-import { PositionInPool } from "../utils";
-import { f18 } from "../utils/dex/bigNumberFloat.helper";
+import { PositionInPool, f18 } from "../utils";
 import { BigNumberIsNegative, BigNumberIsNotNegative, BigNumberIsPositive, IsLessThan } from "../validators";
 import { TickData } from "./TickData";
 

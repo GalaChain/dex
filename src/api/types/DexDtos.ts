@@ -24,7 +24,6 @@ import {
 } from "@gala-chain/api";
 import { ChainCallDTO, TokenBalance, TokenClassKey } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
-import { f18 } from "../utils/dex/bigNumberFloat.helper";
 import { Type } from "class-transformer";
 import {
   ArrayMinSize,
@@ -41,6 +40,7 @@ import {
 } from "class-validator";
 
 import { PositionInPool } from "../utils";
+import { f18 } from "../utils/dex/bigNumberFloat.helper";
 import { BigNumberIsNegative, BigNumberIsNotNegative, BigNumberIsPositive, IsLessThan } from "../validators";
 import { TickData } from "./TickData";
 

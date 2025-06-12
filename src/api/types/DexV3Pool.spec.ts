@@ -16,11 +16,11 @@ import { TokenClassKey } from "@gala-chain/api";
 import { BigNumber } from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
+import { f18 } from "../utils/dex/bigNumberFloat.helper";
 import { DexFeePercentageTypes } from "./DexDtos";
 import { DexPositionData } from "./DexPositionData";
 import { Pool } from "./DexV3Pool";
 import { TickData } from "./TickData";
-import { f18 } from "../utils/dex/bigNumberFloat.helper";
 
 const tokenClass0Properties = {
   collection: "TEST",

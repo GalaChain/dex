@@ -32,12 +32,12 @@ import {
   tickToSqrtPrice
 } from "../../api/";
 import { SlippageToleranceExceededError } from "../../api/";
+import { f18 } from "../../api/utils/dex/bigNumberFloat.helper";
 import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";
 import { removePositionIfEmpty } from "./removePositionIfEmpty";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
-import { f18 } from "../../api/utils/dex/bigNumberFloat.helper";
 
 /**
  * @dev The burn function is responsible for removing liquidity from a Decentralized exchange pool within the GalaChain ecosystem. It executes the necessary operations to burn the liquidity position and transfer the corresponding tokens back to the user.

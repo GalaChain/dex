@@ -14,8 +14,8 @@
  */
 import { GalaChainContext, getObjectByKey } from "@gala-chain/chaincode";
 
-import { BurnEstimateDto, GetRemoveLiqEstimationResDto, Pool } from "../../api/";
-import { f18, getTokenDecimalsFromPool, validateTokenOrder } from "./dexUtils";
+import { BurnEstimateDto, GetRemoveLiqEstimationResDto, Pool, f18 } from "../../api/";
+import { getTokenDecimalsFromPool, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
 

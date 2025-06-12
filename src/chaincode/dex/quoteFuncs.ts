@@ -16,8 +16,15 @@ import { ConflictError, NotFoundError, ValidationFailedError } from "@gala-chain
 import { GalaChainContext, fetchOrCreateBalance, getObjectByKey } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
-import { Pool, QuoteExactAmountDto, QuoteExactAmountResDto, SwapState, sqrtPriceToTick } from "../../api/";
-import { f18, getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
+import {
+  Pool,
+  QuoteExactAmountDto,
+  QuoteExactAmountResDto,
+  SwapState,
+  f18,
+  sqrtPriceToTick
+} from "../../api/";
+import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { processSwapSteps } from "./swap.helper";
 
 /**

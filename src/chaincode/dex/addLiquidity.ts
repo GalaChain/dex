@@ -29,9 +29,9 @@ import {
   getLiquidityForAmounts,
   tickToSqrtPrice
 } from "../../api/";
-import { PreConditionFailedError, SlippageToleranceExceededError } from "../../api/";
+import { PreConditionFailedError, SlippageToleranceExceededError, f18 } from "../../api/";
 import { NegativeAmountError } from "./dexError";
-import { f18, getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
+import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchOrCreateDexPosition } from "./position.helper";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
 

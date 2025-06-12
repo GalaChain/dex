@@ -15,8 +15,8 @@
 import { GalaChainContext, deleteChainObject, putChainObject } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
-import { DexPositionData } from "../../api/";
-import { f18, genTickRange, getUserPositionIds } from "./dexUtils";
+import { DexPositionData, f18 } from "../../api/";
+import { genTickRange, getUserPositionIds } from "./dexUtils";
 
 /**
  * Deletes a user's position in a specific tick range if it has negligible liquidity and tokens owed.

@@ -22,9 +22,9 @@ import {
 } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
-import { CollectDto, DexOperationResDto, Pool, UserBalanceResDto } from "../../api/";
+import { CollectDto, DexOperationResDto, Pool, UserBalanceResDto, f18 } from "../../api/";
 import { NegativeAmountError } from "./dexError";
-import { f18, getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
+import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";
 import { removePositionIfEmpty } from "./removePositionIfEmpty";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";

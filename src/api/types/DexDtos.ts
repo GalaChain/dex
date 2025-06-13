@@ -29,6 +29,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsBoolean,
+  IsHash,
   IsInt,
   IsNotEmpty,
   IsNumber,
@@ -41,6 +42,7 @@ import {
 
 import { PositionInPool } from "../utils";
 import { BigNumberIsNegative, BigNumberIsNotNegative, BigNumberIsPositive, IsLessThan } from "../validators";
+import { IDexLimitOrderModel } from "./DexLimitOrderModel";
 import { TickData } from "./TickData";
 
 const f18 = (num: BigNumber, round: BigNumber.RoundingMode = BigNumber.ROUND_DOWN): BigNumber => {
@@ -1054,5 +1056,119 @@ export class CreatePoolResDto extends ChainCallDTO {
     this.poolFee = poolFee;
     this.poolHash = poolHash;
     this.poolAlias = poolAlias;
+  }
+}
+
+export interface IPlaceLimitOrderDto {
+  hash: string;
+  expires: number;
+  uniqueKey: string;
+}
+
+export class PlaceLimitOrderDto extends SubmitCallDTO {
+  @IsNotEmpty()
+  @IsHash("sha256")
+  hash: string;
+
+  @IsNumber()
+  expires: number;
+
+  constructor(args: unknown) {
+    super();
+    const data: IPlaceLimitOrderDto = args as IPlaceLimitOrderDto;
+    this.hash = data?.hash ?? "";
+    this.expires = data?.expires ?? 0;
+    this.uniqueKey = data?.uniqueKey ?? "";
+  }
+}
+
+export class PlaceLimitOrderResDto extends ChainCallDTO {
+  @IsNotEmpty()
+  @IsString()
+  id: string;
+}
+
+export class CancelLimitOrderDto extends SubmitCallDTO {
+  @IsUserRef()
+  owner: string;
+
+  @IsNotEmpty()
+  @IsString()
+  sellingToken: string;
+
+  @IsNotEmpty()
+  @IsString()
+  buyingToken: string;
+
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  sellingAmount: BigNumber;
+
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  buyingMinimum: BigNumber;
+
+  @IsNumber()
+  expires: number;
+
+  constructor(args: unknown) {
+    super();
+    const data: IDexLimitOrderModel = args as IDexLimitOrderModel;
+    this.owner = data?.owner ?? "";
+    this.sellingToken = data?.sellingToken ?? "";
+    this.buyingToken = data?.buyingToken ?? "";
+    this.sellingAmount = data?.sellingAmount ?? new BigNumber("");
+    this.buyingMinimum = data?.buyingMinimum ?? new BigNumber("");
+    this.uniqueKey = data?.uniqueKey ?? "";
+  }
+}
+
+export class FillLimitOrderDto extends SubmitCallDTO {
+  @IsUserRef()
+  owner: string;
+
+  @IsNotEmpty()
+  @IsString()
+  sellingToken: string;
+
+  @IsNotEmpty()
+  @IsString()
+  buyingToken: string;
+
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  sellingAmount: BigNumber;
+
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  buyingMinimum: BigNumber;
+
+  @IsNumber()
+  expires: number;
+
+  constructor(args: unknown) {
+    super();
+    const data: IDexLimitOrderModel = args as IDexLimitOrderModel;
+    this.owner = data?.owner ?? "";
+    this.sellingToken = data?.sellingToken ?? "";
+    this.buyingToken = data?.buyingToken ?? "";
+    this.sellingAmount = data?.sellingAmount ?? new BigNumber("");
+    this.buyingMinimum = data?.buyingMinimum ?? new BigNumber("");
+    this.uniqueKey = data?.uniqueKey ?? "";
+  }
+}
+
+export interface ISetGlobalLimitOrderConfig {
+  limitOrderAdminWallets: UserRef[];
+}
+
+export class SetGlobalLimitOrderConfigDto extends SubmitCallDTO {
+  @IsUserRef({ each: true })
+  limitOrderAdminWallets: UserRef[];
+
+  constructor(args: unknown) {
+    super();
+    const data: ISetGlobalLimitOrderConfig = args as ISetGlobalLimitOrderConfig;
+    this.limitOrderAdminWallets = data.limitOrderAdminWallets;
   }
 }

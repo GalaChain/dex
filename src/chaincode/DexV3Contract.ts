@@ -27,6 +27,7 @@ import {
   AddLiquidityDTO,
   BurnDto,
   BurnEstimateDto,
+  CancelLimitOrderDto,
   CollectDto,
   CollectProtocolFeesDto,
   CollectProtocolFeesResDto,
@@ -37,6 +38,7 @@ import {
   DexOperationResDto,
   DexPositionData,
   DexPositionOwner,
+  FillLimitOrderDto,
   GetAddLiquidityEstimationDto,
   GetAddLiquidityEstimationResDto,
   GetLiquidityResDto,
@@ -47,9 +49,12 @@ import {
   GetTickDataDto,
   GetUserPositionsDto,
   GetUserPositionsResDto,
+  PlaceLimitOrderDto,
+  PlaceLimitOrderResDto,
   Pool,
   QuoteExactAmountDto,
   QuoteExactAmountResDto,
+  SetGlobalLimitOrderConfigDto,
   SetProtocolFeeDto,
   SetProtocolFeeResDto,
   Slot0ResDto,
@@ -61,12 +66,15 @@ import {
 import {
   addLiquidity,
   burn,
+  cancelLimitOrder,
   collect,
   collectProtocolFees,
   configureDexFeeAddress,
   createPool,
+  fillLimitOrder,
   getAddLiquidityEstimation,
   getDexFeesConfigration,
+  getGlobalLimitOrderConfig,
   getLiquidity,
   getPoolData,
   getPosition,
@@ -74,7 +82,9 @@ import {
   getRemoveLiquidityEstimation,
   getSlot0,
   getUserPositions,
+  placeLimitOrder,
   quoteExactAmount,
+  setGlobalLimitOrderConfig,
   setProtocolFee,
   swap,
   transferDexPosition
@@ -295,5 +305,40 @@ export class DexV3Contract extends GalaContract {
   })
   public async GetTickData(ctx: GalaChainContext, dto: GetTickDataDto): Promise<TickData> {
     return getTickData(ctx, dto);
+  }
+
+  @Submit({
+    in: PlaceLimitOrderDto,
+    out: PlaceLimitOrderResDto
+  })
+  public async PlaceLimitOrder(
+    ctx: GalaChainContext,
+    dto: PlaceLimitOrderDto
+  ): Promise<PlaceLimitOrderResDto> {
+    return placeLimitOrder(ctx, dto);
+  }
+
+  @Submit({
+    in: CancelLimitOrderDto
+  })
+  public async CancelLimitOrder(ctx: GalaChainContext, dto: CancelLimitOrderDto): Promise<void> {
+    return cancelLimitOrder(ctx, dto);
+  }
+
+  @Submit({
+    in: FillLimitOrderDto
+  })
+  public async FillLimitOrder(ctx: GalaChainContext, dto: FillLimitOrderDto): Promise<void> {
+    return fillLimitOrder(ctx, dto);
+  }
+
+  @Submit({
+    in: SetGlobalLimitOrderConfigDto
+  })
+  public async SetGlobalLimitOrderConfig(
+    ctx: GalaChainContext,
+    dto: SetGlobalLimitOrderConfigDto
+  ): Promise<void> {
+    return setGlobalLimitOrderConfig(ctx, dto);
   }
 }

@@ -1,6 +1,7 @@
 import { ChainError, ChainObject, ErrorCode } from "@gala-chain/api";
 import { GalaChainContext, getObjectByKey } from "@gala-chain/chaincode";
-import { DexGlobalLimitOrderConfig } from "src/api";
+
+import { DexGlobalLimitOrderConfig } from "../../api";
 
 export async function getGlobalLimitOrderConfig(
   ctx: GalaChainContext

@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { BigNumberIsNotNegative, BigNumberProperty, EnumProperty } from "@gala-chain/api";
+import { BigNumberIsNotNegative, BigNumberProperty, EnumProperty, IsBigNumber } from "@gala-chain/api";
 import { ChainKey, ChainObject, TokenClassKey } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { Exclude, Type } from "class-transformer";
@@ -58,11 +58,11 @@ export class DexPositionData extends ChainObject {
   @BigNumberProperty()
   liquidity: BigNumber;
 
-  @BigNumberIsNotNegative()
+  @IsBigNumber()
   @BigNumberProperty()
   feeGrowthInside0Last: BigNumber;
 
-  @BigNumberIsNotNegative()
+  @IsBigNumber()
   @BigNumberProperty()
   feeGrowthInside1Last: BigNumber;
 

@@ -7,12 +7,10 @@ import {
   UserAlias,
   asValidUserAlias
 } from "@gala-chain/api";
-import { sha256 } from "@noble/hashes/sha2";
-import { bytesToHex, utf8ToBytes } from "@noble/hashes/utils";
 import BigNumber from "bignumber.js";
 import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 
-import { DexLimitOrderCommitment } from "./DexLimitOrderCommitment";
+import { generateDexLimitOrderCommitment, generateDexLimitOrderHash } from "./DexLimitOrderCommitment";
 import { IDexLimitOrderModel } from "./DexLimitOrderModel";
 
 export class DexLimitOrder extends ChainObject {
@@ -52,26 +50,71 @@ export class DexLimitOrder extends ChainObject {
   buyingMinimum: BigNumber;
 
   @ChainKey({ position: 5 })
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  buyingToSellingRatio: BigNumber;
+
+  @ChainKey({ position: 5 })
   @IsNumber()
   expires: number;
 
-  public concatenateCommitment(): string {
-    const { owner, sellingToken, buyingToken, sellingAmount, buyingMinimum, expires } = this;
-    const _ = DexLimitOrderCommitment.SEPARATOR;
+  /**
+   * @description
+   *
+   * When a limit order commitment is written to chain, the DTO provided to
+   * save the hash will require a `uniqueKey` property to ensure single-use
+   * and prevent replay attacks.
+   *
+   * The `commitmentNonce` property on the fulfilled `LimitOrder` represents the
+   * `uniqueKey` (also known as nonce) property from the original limit order
+   * commitment.
+   *
+   * Not to be confused with the `uniqueKey` property that must be set on the
+   * `FillLimitOrderDto` when revealing the buy.
+   */
+  @ChainKey({ position: 6 })
+  @IsNotEmpty()
+  @IsString()
+  commitmentNonce: string;
 
-    const commitment =
-      `${owner}${_}${sellingToken}${_}${buyingToken}${_}` +
-      `${sellingAmount.toString()}${_}${buyingMinimum.toString()}${_}${expires}`;
+  public limitOrderCommitmentData(): IDexLimitOrderModel {
+    const {
+      owner,
+      sellingToken,
+      buyingToken,
+      sellingAmount,
+      buyingMinimum,
+      buyingToSellingRatio,
+      expires,
+      commitmentNonce
+    } = this;
+
+    const data = {
+      owner,
+      sellingToken,
+      buyingToken,
+      sellingAmount,
+      buyingMinimum,
+      buyingToSellingRatio,
+      expires,
+      commitmentNonce
+    };
+
+    return data;
+  }
+
+  public concatenateCommitment(): string {
+    const data = this.limitOrderCommitmentData();
+
+    const commitment = generateDexLimitOrderCommitment(data);
 
     return commitment;
   }
 
   public generateHash(): string {
-    const commitment = this.concatenateCommitment();
-    const bytes = utf8ToBytes(commitment);
-    const hashedBytes = sha256(bytes);
+    const data = this.limitOrderCommitmentData();
 
-    const hashHex = bytesToHex(hashedBytes);
+    const hashHex = generateDexLimitOrderHash(data);
 
     return hashHex;
   }

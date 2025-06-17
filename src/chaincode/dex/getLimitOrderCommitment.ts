@@ -1,14 +1,13 @@
-import { ChainError, ErrorCode, NotFoundError, UnauthorizedError } from "@gala-chain/api";
-import { GalaChainContext, deleteChainObject, getObjectByKey } from "@gala-chain/chaincode";
+import { ChainError, ErrorCode, NotFoundError } from "@gala-chain/api";
+import { GalaChainContext, getObjectByKey } from "@gala-chain/chaincode";
 
-import { DexLimitOrderCommitment, FillLimitOrderDto, IDexLimitOrderModel } from "../../api";
-import { getGlobalLimitOrderConfig } from "./getGlobalLimitOrderConfig";
+import { DexLimitOrderCommitment, IDexLimitOrderModel, generateDexLimitOrderHash } from "../../api";
 
 export async function getLimitOrderCommitment(
   ctx: GalaChainContext,
   data: IDexLimitOrderModel
 ): Promise<DexLimitOrderCommitment> {
-  const inputHash = DexLimitOrderCommitment.generateHash(data);
+  const inputHash = generateDexLimitOrderHash(data);
 
   const priorCommitment = await getObjectByKey(
     ctx,
@@ -17,14 +16,26 @@ export async function getLimitOrderCommitment(
   ).catch((e) => {
     const chainError = ChainError.from(e);
     if (chainError.code === ErrorCode.NOT_FOUND) {
-      const { owner, sellingToken, buyingToken, sellingAmount, buyingMinimum, expires } = data;
+      const {
+        owner,
+        sellingToken,
+        buyingToken,
+        sellingAmount,
+        buyingMinimum,
+        buyingToSellingRatio,
+        expires,
+        commitmentNonce
+      } = data;
+
       const inputs = [
         owner,
         sellingToken,
         buyingToken,
         sellingAmount?.toString(),
         buyingMinimum?.toString(),
-        expires
+        buyingToSellingRatio?.toString(),
+        expires,
+        commitmentNonce
       ];
 
       throw new NotFoundError(

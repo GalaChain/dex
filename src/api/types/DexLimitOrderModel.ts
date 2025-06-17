@@ -8,6 +8,8 @@ export interface IDexLimitOrderModel {
   buyingToken?: string;
   sellingAmount?: BigNumber;
   buyingMinimum?: BigNumber;
+  buyingToSellingRatio?: BigNumber;
   expires?: number;
+  commitmentNonce?: string;
   uniqueKey?: string;
 }

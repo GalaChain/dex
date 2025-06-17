@@ -1108,8 +1108,16 @@ export class CancelLimitOrderDto extends SubmitCallDTO {
   @BigNumberProperty()
   buyingMinimum: BigNumber;
 
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  buyingToSellingRatio: BigNumber;
+
   @IsNumber()
   expires: number;
+
+  @IsNotEmpty()
+  @IsString()
+  commitmentNonce: string;
 
   constructor(args: unknown) {
     super();
@@ -1119,6 +1127,9 @@ export class CancelLimitOrderDto extends SubmitCallDTO {
     this.buyingToken = data?.buyingToken ?? "";
     this.sellingAmount = data?.sellingAmount ?? new BigNumber("");
     this.buyingMinimum = data?.buyingMinimum ?? new BigNumber("");
+    this.buyingToSellingRatio = data?.buyingToSellingRatio ?? new BigNumber("");
+    this.expires = data?.expires ?? 0;
+    this.commitmentNonce = data?.commitmentNonce ?? "";
     this.uniqueKey = data?.uniqueKey ?? "";
   }
 }
@@ -1143,8 +1154,16 @@ export class FillLimitOrderDto extends SubmitCallDTO {
   @BigNumberProperty()
   buyingMinimum: BigNumber;
 
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  buyingToSellingRatio: BigNumber;
+
   @IsNumber()
   expires: number;
+
+  @IsNotEmpty()
+  @IsString()
+  commitmentNonce: string;
 
   constructor(args: unknown) {
     super();
@@ -1154,6 +1173,9 @@ export class FillLimitOrderDto extends SubmitCallDTO {
     this.buyingToken = data?.buyingToken ?? "";
     this.sellingAmount = data?.sellingAmount ?? new BigNumber("");
     this.buyingMinimum = data?.buyingMinimum ?? new BigNumber("");
+    this.buyingToSellingRatio = data?.buyingToSellingRatio ?? new BigNumber("");
+    this.expires = data?.expires ?? 0;
+    this.commitmentNonce = data?.commitmentNonce ?? "";
     this.uniqueKey = data?.uniqueKey ?? "";
   }
 }

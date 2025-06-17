@@ -44,23 +44,40 @@ export class DexLimitOrderCommitment extends ChainObject {
     this.hash = data?.hash ?? "";
     this.expires = data?.expires ?? 0;
   }
+}
 
-  public static generateHash(data: IDexLimitOrderModel) {
-    const { owner, sellingToken, buyingToken, sellingAmount, buyingMinimum, expires, uniqueKey } = data;
+export function generateDexLimitOrderCommitment(data: IDexLimitOrderModel) {
+  const {
+    owner,
+    sellingToken,
+    buyingToken,
+    sellingAmount,
+    buyingMinimum,
+    buyingToSellingRatio,
+    expires,
+    commitmentNonce
+  } = data;
 
-    const _ = DexLimitOrderCommitment.SEPARATOR;
+  const _ = DexLimitOrderCommitment.SEPARATOR;
 
-    const sellAmt = sellingAmount ? sellingAmount.toString() : "";
-    const buyAmt = buyingMinimum ? buyingMinimum.toString() : "";
+  const sellAmt = sellingAmount ? sellingAmount.toString() : "";
+  const buyAmt = buyingMinimum ? buyingMinimum.toString() : "";
+  const buyToSellRatio = buyingToSellingRatio ? buyingToSellingRatio.toString() : "";
 
-    const commitment =
-      `${owner}${_}${sellingToken}${_}${buyingToken}${_}${sellAmt}${_}` +
-      `${buyAmt}${_}${expires}${_}${uniqueKey}`;
+  const commitment =
+    `${owner}${_}${sellingToken}${_}${buyingToken}${_}${sellAmt}${_}` +
+    `${buyAmt}${_}${buyToSellRatio}${_}${expires}${_}${commitmentNonce}`;
 
-    const bytes = utf8ToBytes(commitment);
-    const hashedBytes = sha256(bytes);
-    const hashHex = bytesToHex(hashedBytes);
+  return commitment;
+}
 
-    return hashHex;
-  }
+// todo: eventually move this logic to a re-useable module, like `@gala-chain/api`
+export function generateDexLimitOrderHash(data: IDexLimitOrderModel) {
+  const commitment = generateDexLimitOrderCommitment(data);
+
+  const bytes = utf8ToBytes(commitment);
+  const hashedBytes = sha256(bytes);
+  const hashHex = bytesToHex(hashedBytes);
+
+  return hashHex;
 }

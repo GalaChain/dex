@@ -14,7 +14,7 @@
  */
 import { GalaChainContext, getObjectByKey } from "@gala-chain/chaincode";
 
-import { BurnEstimateDto, GetRemoveLiqEstimationResDto, Pool } from "../../api/";
+import { BurnEstimateDto, GetRemoveLiqEstimationResDto, Pool, f18 } from "../../api/";
 import { getTokenDecimalsFromPool, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
@@ -53,7 +53,7 @@ export async function getRemoveLiquidityEstimation(
     tickLower,
     tickUpper
   );
-  const amounts = pool.burn(position, tickLowerData, tickUpperData, dto.amount.f18());
+  const amounts = pool.burn(position, tickLowerData, tickUpperData, f18(dto.amount));
 
   const [token0Decimal, token1Decimal] = await getTokenDecimalsFromPool(ctx, pool);
 

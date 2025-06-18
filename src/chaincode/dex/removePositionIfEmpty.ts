@@ -15,7 +15,7 @@
 import { GalaChainContext, deleteChainObject, putChainObject } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
-import { DexPositionData } from "../../api/";
+import { DexPositionData, f18 } from "../../api/";
 import { genTickRange, getUserPositionIds } from "./dexUtils";
 
 /**
@@ -35,9 +35,9 @@ export async function removePositionIfEmpty(
 
   // Check if given position needs to be deleted
   const deleteUserPos =
-    new BigNumber(position.tokensOwed0).f18().isLessThan(new BigNumber("0.00000001")) &&
-    new BigNumber(position.tokensOwed1).f18().isLessThan(new BigNumber("0.00000001")) &&
-    new BigNumber(position.liquidity).f18().isLessThan(new BigNumber("0.00000001"));
+    f18(new BigNumber(position.tokensOwed0)).isLessThan(new BigNumber("0.00000001")) &&
+    f18(new BigNumber(position.tokensOwed1)).isLessThan(new BigNumber("0.00000001")) &&
+    f18(new BigNumber(position.liquidity)).isLessThan(new BigNumber("0.00000001"));
 
   // Remove position
   if (deleteUserPos) {

@@ -32,6 +32,7 @@ import {
   tickToSqrtPrice
 } from "../../api/";
 import { SlippageToleranceExceededError } from "../../api/";
+import { f18 } from "../../api/utils";
 import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";
@@ -73,7 +74,7 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
   const tokenDecimals = await getTokenDecimalsFromPool(ctx, pool);
 
   // Estimate how much liquidity can actually be burned based on current pool balances and prices
-  let amountToBurn = dto.amount.f18();
+  let amountToBurn = f18(dto.amount);
   const amountsEstimated = pool.burnEstimate(amountToBurn, tickLower, tickUpper);
   const sqrtPriceA = tickToSqrtPrice(tickLower),
     sqrtPriceB = tickToSqrtPrice(tickUpper);

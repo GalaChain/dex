@@ -1178,6 +1178,7 @@ export class FillLimitOrderDto extends SubmitCallDTO {
 
 export interface ISetGlobalLimitOrderConfig {
   limitOrderAdminWallets: UserRef[];
+  uniqueKey: string;
 }
 
 export class SetGlobalLimitOrderConfigDto extends SubmitCallDTO {
@@ -1187,6 +1188,7 @@ export class SetGlobalLimitOrderConfigDto extends SubmitCallDTO {
   constructor(args: unknown) {
     super();
     const data: ISetGlobalLimitOrderConfig = args as ISetGlobalLimitOrderConfig;
-    this.limitOrderAdminWallets = data.limitOrderAdminWallets;
+    this.limitOrderAdminWallets = data?.limitOrderAdminWallets;
+    this.uniqueKey = data?.uniqueKey;
   }
 }

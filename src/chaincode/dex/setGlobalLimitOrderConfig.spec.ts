@@ -47,7 +47,6 @@ describe("setGlobalLimitOrderConfig chaincode call", () => {
     const newAdmin = randomUser();
     const newAdminRef = asValidUserRef(newAdmin.identityKey);
 
-    // Create existing config with the existingAdmin as an admin
     const existingConfig = new DexGlobalLimitOrderConfig({
       limitOrderAdminWallets: [existingAdminRef]
     });
@@ -57,7 +56,6 @@ describe("setGlobalLimitOrderConfig chaincode call", () => {
       uniqueKey: randomUniqueKey()
     }).signed(existingAdmin.privateKey);
 
-    // Expected config that will be stored (with new admin)
     const expectedConfig = new DexGlobalLimitOrderConfig({
       limitOrderAdminWallets: [newAdminRef]
     });
@@ -86,7 +84,6 @@ describe("setGlobalLimitOrderConfig chaincode call", () => {
     const newAdmin = randomUser();
     const newAdminRef = asValidUserRef(newAdmin.identityKey);
 
-    // Create existing config with the existingAdmin as an admin (not including nonAdmin)
     const existingConfig = new DexGlobalLimitOrderConfig({
       limitOrderAdminWallets: [existingAdminRef]
     });
@@ -120,7 +117,6 @@ describe("setGlobalLimitOrderConfig chaincode call", () => {
       uniqueKey: randomUniqueKey()
     }).signed(user.privateKey);
 
-    // Expected config that will be stored with calling user added
     const expectedConfig = new DexGlobalLimitOrderConfig({
       limitOrderAdminWallets: [userRef]
     });
@@ -143,7 +139,6 @@ describe("setGlobalLimitOrderConfig chaincode call", () => {
   test("non-admin cannot create config when no config exists", async () => {
     // Given
     const nonAdmin = randomUser();
-    const nonAdminRef = asValidUserRef(nonAdmin.identityKey);
     const newAdmin = randomUser();
     const newAdminRef = asValidUserRef(newAdmin.identityKey);
 
@@ -179,7 +174,6 @@ describe("setGlobalLimitOrderConfig chaincode call", () => {
       uniqueKey: randomUniqueKey()
     }).signed(user.privateKey);
 
-    // Expected config that will be stored
     const expectedConfig = new DexGlobalLimitOrderConfig({
       limitOrderAdminWallets: [admin1Ref, admin2Ref]
     });

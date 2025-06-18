@@ -8,12 +8,16 @@ import {
   asValidUserAlias
 } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
+import { Exclude } from "class-transformer";
 import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 import { generateDexLimitOrderCommitment, generateDexLimitOrderHash } from "./DexLimitOrderCommitment";
 import { IDexLimitOrderModel } from "./DexLimitOrderModel";
 
 export class DexLimitOrder extends ChainObject {
+  @Exclude()
+  public static INDEX_KEY = "GCDXDLO";
+
   constructor(args: unknown) {
     super();
     const data: IDexLimitOrderModel = args as IDexLimitOrderModel;
@@ -22,7 +26,9 @@ export class DexLimitOrder extends ChainObject {
     this.buyingToken = data?.buyingToken ?? "";
     this.sellingAmount = data?.sellingAmount ?? new BigNumber("");
     this.buyingMinimum = data?.buyingMinimum ?? new BigNumber("");
+    this.buyingToSellingRatio = data?.buyingToSellingRatio ?? new BigNumber("");
     this.expires = data?.expires ?? 0;
+    this.commitmentNonce = data?.commitmentNonce ?? "";
   }
 
   @ChainKey({ position: 0 })

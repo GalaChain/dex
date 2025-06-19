@@ -14,8 +14,12 @@
  */
 
 export * from "./DexDtos";
-export * from "./DexV3Pool";
+export * from "./DexFeeConfig";
+export * from "./DexGlobalLimitOrderConfig";
+export * from "./DexLimitOrder";
+export * from "./DexLimitOrderCommitment";
+export * from "./DexLimitOrderModel";
 export * from "./DexPositionData";
 export * from "./DexPositionOwner";
-export * from "./DexFeeConfig";
+export * from "./DexV3Pool";
 export * from "./TickData";

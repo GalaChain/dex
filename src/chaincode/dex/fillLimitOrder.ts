@@ -1,7 +1,9 @@
-import { ChainError, UnauthorizedError, asValidUserAlias } from "@gala-chain/api";
+import { ChainError, TokenClass, UnauthorizedError, asValidUserAlias } from "@gala-chain/api";
 import {
   GalaChainContext,
   deleteChainObject,
+  fetchTokenClass,
+  getObjectByKey,
   getObjectsByPartialCompositeKey,
   putChainObject
 } from "@gala-chain/chaincode";
@@ -22,7 +24,7 @@ import { swap } from "./swap";
 export async function fillLimitOrder(ctx: GalaChainContext, dto: FillLimitOrderDto): Promise<void> {
   const caller = ctx.callingUser;
 
-  const { owner } = dto;
+  const { owner, sellingToken } = dto;
 
   const priorCommitment: DexLimitOrderCommitment = await getLimitOrderCommitment(ctx, dto);
 
@@ -64,7 +66,7 @@ export async function fillLimitOrder(ctx: GalaChainContext, dto: FillLimitOrderD
     const lp = liquidityPools[index];
     const { token0ClassKey, token1ClassKey, fee } = lp;
 
-    const zeroForOne = false;
+    const zeroForOne = sellingToken === lp.token0;
 
     const swapData = new SwapDto(
       token0ClassKey,
@@ -97,8 +99,14 @@ export async function fillLimitOrder(ctx: GalaChainContext, dto: FillLimitOrderD
       ctx.stub.setWrites(sandboxCtx.stub.getWrites());
       ctx.stub.setDeletes(sandboxCtx.stub.getDeletes());
 
-      quantityBought = quantityBought.plus(swapResult.amount1);
-      remainingSaleQuantity = remainingSaleQuantity.minus(swapResult.amount0);
+      const sellResult = zeroForOne ? swapResult.amount0 : swapResult.amount1;
+
+      const buyResult = zeroForOne ? swapResult.amount1 : swapResult.amount0;
+
+      // swap() seems to return negative numbers, for token out, from the pool's perspective,
+      // so we use abs() to ensure absolute values in our addition/subtraction
+      quantityBought = quantityBought.plus(new BigNumber(buyResult).abs());
+      remainingSaleQuantity = remainingSaleQuantity.minus(new BigNumber(sellResult).abs());
     } catch (e) {
       const error = ChainError.from(e);
       errors.push(error);

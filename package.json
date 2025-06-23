@@ -1,6 +1,6 @@
 {
   "name": "@gala-chain/dex",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "GalaChain DEX Chaincode",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -23,8 +23,8 @@
     "update-snapshot": "jest --updateSnapshot"
   },
   "dependencies": {
-    "@gala-chain/api": "2.3.1",
-    "@gala-chain/chaincode": "2.3.1",
+    "@gala-chain/api": "~2.3.4",
+    "@gala-chain/chaincode": "~2.3.4",
     "@grpc/grpc-js": "1.10.10",
     "@noble/hashes": "^1.8.0",
     "dotenv": "^16.0.1",
@@ -32,9 +32,9 @@
     "fabric-shim": "2.5.6"
   },
   "devDependencies": {
-    "@gala-chain/cli": "2.3.1",
-    "@gala-chain/client": "2.3.1",
-    "@gala-chain/test": "2.3.1",
+    "@gala-chain/cli": "~2.3.4",
+    "@gala-chain/client": "~2.3.4",
+    "@gala-chain/test": "~2.3.4",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/jest": "^29.5.12",
     "@types/node": "18.11.9",

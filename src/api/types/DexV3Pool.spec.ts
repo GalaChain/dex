@@ -319,7 +319,7 @@ describe("DexV3Pool", () => {
     pool.protocolFeesToken1 = new BigNumber(200);
 
     // When
-    const [fee0, fee1] = pool.collectProtocolFees();
+    const [fee0, fee1] = pool.collectProtocolFees(new BigNumber(100), new BigNumber(200));
 
     // Then
     expect(fee0.isEqualTo(100)).toBe(true);

@@ -89,15 +89,7 @@ The contract includes a fee gate system (`dexLaunchpadFeeGate.ts`) that controls
 
 ### Unit Tests
 - Jest with TypeScript support
-- RBAC enabled for tests (`USE_RBAC=true`)
 - Test files: `*.spec.ts` pattern
-- Separate test configuration in `tsconfig.spec.json`
-
-### E2E Tests
-- Located in `e2e/` directory
-- API integration tests with snapshot testing
-- Mocked chaincode option for faster testing
-- Run in band (sequential) for consistency
 
 ### Test Structure Convention
 All tests should follow the Given/When/Then structure with concise comments:
@@ -106,10 +98,10 @@ All tests should follow the Given/When/Then structure with concise comments:
 it("should do something meaningful", () => {
   // Given
   const testData = createTestSetup();
-  
+
   // When
   const result = performAction(testData);
-  
+
   // Then
   expect(result).toBe(expectedValue);
 });

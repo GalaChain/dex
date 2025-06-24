@@ -33,7 +33,7 @@ export class DexLimitOrder extends ChainObject {
   constructor(args: unknown) {
     super();
     const data: IDexLimitOrderModel = args as IDexLimitOrderModel;
-    this.owner = asValidUserAlias(data?.owner ?? "");
+    this.owner = asValidUserAlias(data?.owner ?? "service|null");
     this.sellingToken = data?.sellingToken ?? "";
     this.buyingToken = data?.buyingToken ?? "";
     this.sellingAmount = data?.sellingAmount ?? new BigNumber("");

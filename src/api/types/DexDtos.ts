@@ -39,6 +39,7 @@ import {
   Min,
   ValidateNested
 } from "class-validator";
+import { JSONSchema } from "class-validator-jsonschema";
 
 import { PositionInPool, f18 } from "../utils";
 import { BigNumberIsNegative, BigNumberIsNotNegative, BigNumberIsPositive, IsLessThan } from "../validators";
@@ -1062,10 +1063,12 @@ export interface IPlaceLimitOrderDto {
 }
 
 export class PlaceLimitOrderDto extends SubmitCallDTO {
+  @JSONSchema({ description: "SHA256 hash of the committed limit order details" })
   @IsNotEmpty()
   @IsHash("sha256")
   hash: string;
 
+  @JSONSchema({ description: "Unix timestamp when this limit order commitment expires" })
   @IsNumber()
   expires: number;
 
@@ -1079,38 +1082,47 @@ export class PlaceLimitOrderDto extends SubmitCallDTO {
 }
 
 export class PlaceLimitOrderResDto extends ChainCallDTO {
+  @JSONSchema({ description: "Unique identifier for the placed limit order commitment" })
   @IsNotEmpty()
   @IsString()
   id: string;
 }
 
 export class CancelLimitOrderDto extends SubmitCallDTO {
+  @JSONSchema({ description: "Owner of the limit order to cancel" })
   @IsUserRef()
   owner: string;
 
+  @JSONSchema({ description: "Token being sold in the limit order" })
   @IsNotEmpty()
   @IsString()
   sellingToken: string;
 
+  @JSONSchema({ description: "Token being bought in the limit order" })
   @IsNotEmpty()
   @IsString()
   buyingToken: string;
 
+  @JSONSchema({ description: "Amount of selling token" })
   @BigNumberIsPositive()
   @BigNumberProperty()
   sellingAmount: BigNumber;
 
+  @JSONSchema({ description: "Minimum amount of buying token to receive" })
   @BigNumberIsPositive()
   @BigNumberProperty()
   buyingMinimum: BigNumber;
 
+  @JSONSchema({ description: "Ratio of buying token to selling token (price)" })
   @BigNumberIsPositive()
   @BigNumberProperty()
   buyingToSellingRatio: BigNumber;
 
+  @JSONSchema({ description: "Unix timestamp when the order expires" })
   @IsNumber()
   expires: number;
 
+  @JSONSchema({ description: "Unique nonce from the original commitment" })
   @IsNotEmpty()
   @IsString()
   commitmentNonce: string;
@@ -1131,32 +1143,40 @@ export class CancelLimitOrderDto extends SubmitCallDTO {
 }
 
 export class FillLimitOrderDto extends SubmitCallDTO {
+  @JSONSchema({ description: "Owner of the limit order to fill" })
   @IsUserRef()
   owner: string;
 
+  @JSONSchema({ description: "Token being sold in the limit order" })
   @IsNotEmpty()
   @IsString()
   sellingToken: string;
 
+  @JSONSchema({ description: "Token being bought in the limit order" })
   @IsNotEmpty()
   @IsString()
   buyingToken: string;
 
+  @JSONSchema({ description: "Amount of selling token" })
   @BigNumberIsPositive()
   @BigNumberProperty()
   sellingAmount: BigNumber;
 
+  @JSONSchema({ description: "Minimum amount of buying token to receive" })
   @BigNumberIsPositive()
   @BigNumberProperty()
   buyingMinimum: BigNumber;
 
+  @JSONSchema({ description: "Ratio of buying token to selling token (price)" })
   @BigNumberIsPositive()
   @BigNumberProperty()
   buyingToSellingRatio: BigNumber;
 
+  @JSONSchema({ description: "Unix timestamp when the order expires" })
   @IsNumber()
   expires: number;
 
+  @JSONSchema({ description: "Unique nonce from the original commitment" })
   @IsNotEmpty()
   @IsString()
   commitmentNonce: string;
@@ -1182,6 +1202,7 @@ export interface ISetGlobalLimitOrderConfig {
 }
 
 export class SetGlobalLimitOrderConfigDto extends SubmitCallDTO {
+  @JSONSchema({ description: "List of wallet addresses authorized to perform limit order operations" })
   @IsUserRef({ each: true })
   limitOrderAdminWallets: UserRef[];
 

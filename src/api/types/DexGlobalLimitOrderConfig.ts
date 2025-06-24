@@ -20,10 +20,24 @@ export interface IDexGlobalLimitOrderConfig {
   limitOrderAdminWallets: string[];
 }
 
+/**
+ * Global configuration for limit order functionality in the DEX.
+ *
+ * This ChainObject stores system-wide settings for limit orders, including
+ * the list of authorized wallets that can execute limit order operations
+ * such as filling orders through batching services.
+ */
 export class DexGlobalLimitOrderConfig extends ChainObject {
   @Exclude()
   public static INDEX_KEY = "GCDPGLOC"; // GalaChain Dex Protocol Global Limit Order Config
 
+  /**
+   * List of wallet addresses authorized to perform limit order operations.
+   *
+   * These wallets can execute operations like filling limit orders through
+   * batching services. Only wallets in this list are permitted to perform
+   * administrative limit order functions.
+   */
   @ArrayNotEmpty()
   @IsUserAlias({ each: true })
   limitOrderAdminWallets: UserAlias[];

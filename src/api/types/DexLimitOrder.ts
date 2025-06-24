@@ -14,6 +14,18 @@ import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 import { generateDexLimitOrderCommitment, generateDexLimitOrderHash } from "./DexLimitOrderCommitment";
 import { IDexLimitOrderModel } from "./DexLimitOrderModel";
 
+/**
+ * On-chain representation of a revealed limit order in the DEX.
+ *
+ * This ChainObject contains the complete details of a limit order that has been
+ * revealed from its commitment. It stores all the order parameters including
+ * tokens, amounts, ratios, and expiration. The order can be executed by
+ * authorized batching services when market conditions are favorable.
+ *
+ * The limit order uses a commit-reveal protocol where users first commit to
+ * order parameters via a hash, and later reveal the actual parameters when
+ * the order is ready to be executed.
+ */
 export class DexLimitOrder extends ChainObject {
   @Exclude()
   public static INDEX_KEY = "GCDXDLO";
@@ -31,35 +43,42 @@ export class DexLimitOrder extends ChainObject {
     this.commitmentNonce = data?.commitmentNonce ?? "";
   }
 
+  /** The user who owns this limit order */
   @ChainKey({ position: 0 })
   @IsUserRef()
   owner: UserAlias;
 
+  /** Token being sold in this limit order */
   @ChainKey({ position: 1 })
   @IsNotEmpty()
   @IsString()
   sellingToken: string;
 
+  /** Token being bought in this limit order */
   @ChainKey({ position: 2 })
   @IsNotEmpty()
   @IsString()
   buyingToken: string;
 
+  /** Amount of selling token to sell */
   @ChainKey({ position: 3 })
   @BigNumberIsPositive()
   @BigNumberProperty()
   sellingAmount: BigNumber;
 
+  /** Minimum amount of buying token to receive */
   @ChainKey({ position: 4 })
   @BigNumberIsPositive()
   @BigNumberProperty()
   buyingMinimum: BigNumber;
 
+  /** Ratio of buying token to selling token (price) */
   @ChainKey({ position: 5 })
   @BigNumberIsPositive()
   @BigNumberProperty()
   buyingToSellingRatio: BigNumber;
 
+  /** Unix timestamp when this order expires */
   @ChainKey({ position: 5 })
   @IsNumber()
   expires: number;
@@ -83,6 +102,11 @@ export class DexLimitOrder extends ChainObject {
   @IsString()
   commitmentNonce: string;
 
+  /**
+   * Extracts limit order data for commitment generation.
+   *
+   * @returns Object containing all order parameters needed for hashing
+   */
   public limitOrderCommitmentData(): IDexLimitOrderModel {
     const {
       owner,
@@ -109,6 +133,11 @@ export class DexLimitOrder extends ChainObject {
     return data;
   }
 
+  /**
+   * Creates a concatenated commitment string from this order's parameters.
+   *
+   * @returns String representation of order parameters for hashing
+   */
   public concatenateCommitment(): string {
     const data = this.limitOrderCommitmentData();
 
@@ -117,6 +146,11 @@ export class DexLimitOrder extends ChainObject {
     return commitment;
   }
 
+  /**
+   * Generates the SHA256 hash for this limit order.
+   *
+   * @returns Hexadecimal hash string of this order's parameters
+   */
   public generateHash(): string {
     const data = this.limitOrderCommitmentData();
 
@@ -125,6 +159,12 @@ export class DexLimitOrder extends ChainObject {
     return hashHex;
   }
 
+  /**
+   * Verifies that a given hash matches this order's computed hash.
+   *
+   * @param hash - Hash to verify against this order
+   * @returns True if the hash matches, false otherwise
+   */
   public verifyHash(hash: string): boolean {
     const expectedHash = this.generateHash();
 

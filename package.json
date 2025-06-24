@@ -26,6 +26,7 @@
     "@gala-chain/api": "~2.3.4",
     "@gala-chain/chaincode": "~2.3.4",
     "@grpc/grpc-js": "1.10.10",
+    "@noble/hashes": "^1.8.0",
     "dotenv": "^16.0.1",
     "fabric-contract-api": "2.5.6",
     "fabric-shim": "2.5.6"

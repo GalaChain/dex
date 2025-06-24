@@ -27,6 +27,7 @@ import {
   AddLiquidityDTO,
   BurnDto,
   BurnEstimateDto,
+  CancelLimitOrderDto,
   CollectDto,
   CollectProtocolFeesDto,
   CollectProtocolFeesResDto,
@@ -37,6 +38,7 @@ import {
   DexOperationResDto,
   DexPositionData,
   DexPositionOwner,
+  FillLimitOrderDto,
   GetAddLiquidityEstimationDto,
   GetAddLiquidityEstimationResDto,
   GetLiquidityResDto,
@@ -47,9 +49,12 @@ import {
   GetTickDataDto,
   GetUserPositionsDto,
   GetUserPositionsResDto,
+  PlaceLimitOrderDto,
+  PlaceLimitOrderResDto,
   Pool,
   QuoteExactAmountDto,
   QuoteExactAmountResDto,
+  SetGlobalLimitOrderConfigDto,
   SetProtocolFeeDto,
   SetProtocolFeeResDto,
   Slot0ResDto,
@@ -61,12 +66,15 @@ import {
 import {
   addLiquidity,
   burn,
+  cancelLimitOrder,
   collect,
   collectProtocolFees,
   configureDexFeeAddress,
   createPool,
+  fillLimitOrder,
   getAddLiquidityEstimation,
   getDexFeesConfigration,
+  getGlobalLimitOrderConfig,
   getLiquidity,
   getPoolData,
   getPosition,
@@ -74,7 +82,9 @@ import {
   getRemoveLiquidityEstimation,
   getSlot0,
   getUserPositions,
+  placeLimitOrder,
   quoteExactAmount,
+  setGlobalLimitOrderConfig,
   setProtocolFee,
   swap,
   transferDexPosition
@@ -295,5 +305,85 @@ export class DexV3Contract extends GalaContract {
   })
   public async GetTickData(ctx: GalaChainContext, dto: GetTickDataDto): Promise<TickData> {
     return getTickData(ctx, dto);
+  }
+
+  /**
+   * Places a commitment for a limit order using a commit-reveal protocol.
+   *
+   * This method allows users to commit to a limit order by submitting a hash
+   * of the order details along with an expiration time. The actual order
+   * parameters remain hidden until execution time, providing privacy and
+   * preventing front-running.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - The limit order commitment data
+   * @returns Response containing the commitment ID
+   */
+  @Submit({
+    in: PlaceLimitOrderDto,
+    out: PlaceLimitOrderResDto
+  })
+  public async PlaceLimitOrder(
+    ctx: GalaChainContext,
+    dto: PlaceLimitOrderDto
+  ): Promise<PlaceLimitOrderResDto> {
+    return placeLimitOrder(ctx, dto);
+  }
+
+  /**
+   * Cancels an existing limit order by revealing its parameters.
+   *
+   * This method allows users to cancel their limit orders by providing
+   * the complete order details that match a previously placed commitment.
+   * The order parameters are verified against the committed hash before
+   * cancellation is allowed.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - The complete limit order details for cancellation
+   */
+  @Submit({
+    in: CancelLimitOrderDto
+  })
+  public async CancelLimitOrder(ctx: GalaChainContext, dto: CancelLimitOrderDto): Promise<void> {
+    return cancelLimitOrder(ctx, dto);
+  }
+
+  /**
+   * Executes a limit order by revealing its parameters and performing the trade.
+   *
+   * This method allows authorized parties (typically batching services) to
+   * execute limit orders by revealing the complete order details and performing
+   * the actual token swap. The order parameters are verified against the
+   * committed hash before execution.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - The complete limit order details for execution
+   */
+  @Submit({
+    in: FillLimitOrderDto
+  })
+  public async FillLimitOrder(ctx: GalaChainContext, dto: FillLimitOrderDto): Promise<void> {
+    return fillLimitOrder(ctx, dto);
+  }
+
+  /**
+   * Configures global settings for limit order functionality.
+   *
+   * This method allows authorized administrators to set system-wide
+   * configuration for limit orders, including which wallets are permitted
+   * to execute limit order operations such as filling orders through
+   * batching services.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - The global limit order configuration
+   */
+  @Submit({
+    in: SetGlobalLimitOrderConfigDto
+  })
+  public async SetGlobalLimitOrderConfig(
+    ctx: GalaChainContext,
+    dto: SetGlobalLimitOrderConfigDto
+  ): Promise<void> {
+    return setGlobalLimitOrderConfig(ctx, dto);
   }
 }

@@ -46,7 +46,7 @@ import { processSwapSteps } from "./swap.helper";
   - zeroForOne - Boolean value for swap direction
   - Pool Identifiers – Identifier for the liquidity pool facilitating the swap.
   - sqrtPriceLimit – The square root price limit to protect against excessive price impact.
- * @returns 
+ * @returns
  */
 export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapResDto> {
   const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);

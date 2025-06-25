@@ -90,6 +90,8 @@ The contract includes a fee gate system (`dexLaunchpadFeeGate.ts`) that controls
 ### Unit Tests
 - Jest with TypeScript support
 - Test files: `*.spec.ts` pattern
+- Current coverage: 227 tests across 21 test suites
+- Focus on testing business logic rather than framework functionality
 
 ### Test Structure Convention
 All tests should follow the Given/When/Then structure with concise comments:
@@ -115,6 +117,19 @@ it("should do something meaningful", () => {
 - Keep comments concise - avoid explanatory text that restates the code
 - Add contextual comments only when the scenario or expectation is non-obvious
 
+### Test Coverage Philosophy
+- **Prioritize Business Logic**: Focus on DEX-specific functionality (swaps, liquidity, fees)
+- **Avoid Over-Coverage**: Don't extensively test GalaChain SDK functionality (already tested upstream)
+- **Test Edge Cases**: Include boundary conditions, error handling, and invalid inputs
+- **Utility Function Coverage**: Ensure mathematical helpers and data transformations are well-tested
+
+### Key Test Areas
+- **Mathematical Operations**: Price calculations, liquidity math, fee distributions
+- **Data Validation**: Input sanitization, token order validation, range checks
+- **State Transformations**: Position updates, pool state changes, bitmap operations
+- **Error Handling**: Invalid parameters, insufficient liquidity, access control
+- **Utility Functions**: String manipulation, number formatting, key generation
+
 ## Development Notes
 
 ### GalaChain Framework
@@ -135,3 +150,60 @@ Built on GalaChain framework with:
 - Docker-based test environment
 - Connection profiles for different organizations
 - Automated chaincode deployment scripts
+
+## Documentation Standards
+
+### TypeDoc Annotations
+All public functions, classes, and interfaces should include comprehensive TypeDoc documentation:
+
+```typescript
+/**
+ * Brief description of what the function does.
+ * 
+ * Longer description explaining the purpose, algorithm, or important notes.
+ * Include details about side effects, assumptions, or complex logic.
+ * 
+ * @param paramName - Description of parameter including type constraints
+ * @param optionalParam - Optional parameter description with default behavior
+ * @returns Description of return value and its structure
+ * @throws ErrorType when specific error conditions occur
+ * 
+ * @example
+ * ```typescript
+ * const result = functionName(input);
+ * ```
+ */
+```
+
+**Documentation Guidelines:**
+- **Contract Methods**: Include purpose, parameters, return values, and access control
+- **Utility Functions**: Explain mathematical operations and edge cases
+- **Data Models**: Document property meanings and validation rules
+- **Error Conditions**: Specify when functions throw exceptions
+- **Complex Logic**: Add inline comments for non-obvious algorithms
+
+### Code Organization Insights
+
+#### Function Parameter Patterns
+- **GalaChain Context**: Always first parameter for chaincode functions
+- **DTO Parameters**: Use structured DTOs for complex parameter sets
+- **Type Safety**: Leverage TypeScript for compile-time validation
+- **BigNumber Usage**: Prefer BigNumber for all monetary and mathematical operations
+
+#### Common Utility Patterns
+- **Token Ordering**: Always validate and normalize token pairs lexicographically
+- **Key Generation**: Use consistent patterns for composite keys (pipe-separated, colon-transformed)
+- **Amount Rounding**: Always round down token amounts to match decimals
+- **Validation**: Separate validation logic into reusable decorators
+
+#### Error Handling Conventions
+- **ValidationFailedError**: For input validation failures
+- **ConflictError**: For business logic violations (insufficient funds, etc.)
+- **ChainError**: For blockchain-specific errors
+- **NotFoundError**: For missing entities or data
+
+#### Testing Anti-Patterns to Avoid
+- **Framework Over-Testing**: Don't test GalaChain SDK methods extensively
+- **Implementation Details**: Test behavior, not internal structure
+- **Complex Mocking**: Prefer simple test data over elaborate mock setups
+- **Brittle Assertions**: Use meaningful assertions rather than exact string matches

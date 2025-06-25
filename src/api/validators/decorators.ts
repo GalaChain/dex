@@ -16,6 +16,13 @@ import { NotImplementedError } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { ValidationArguments, ValidationOptions, registerDecorator } from "class-validator";
 
+/**
+ * Validates that a related property value is a whole number (integer).
+ *
+ * @param property - The name of the related property to validate
+ * @param validationOptions - Optional validation configuration
+ * @returns Validation decorator function
+ */
 export function IsWholeNumber(property: string, validationOptions?: ValidationOptions) {
   return function (object: Record<string, unknown>, propertyName: string): void {
     registerDecorator({
@@ -37,6 +44,14 @@ export function IsWholeNumber(property: string, validationOptions?: ValidationOp
   };
 }
 
+/**
+ * Validates that the current property value is different from a related property value.
+ * Only works with string or undefined values.
+ *
+ * @param property - The name of the related property to compare against
+ * @param validationOptions - Optional validation configuration
+ * @returns Validation decorator function
+ */
 export function IsDifferentValue(property: string, validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string): void {
     registerDecorator({
@@ -109,6 +124,12 @@ export function ArrayUniqueObjects(property: string, validationOptions?: Validat
   };
 }
 
+/**
+ * Validates that a property value is a valid BigNumber instance.
+ *
+ * @param validationOptions - Optional validation configuration
+ * @returns Validation decorator function
+ */
 export function IsBigNumber(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({
@@ -146,6 +167,12 @@ function validateBigNumberOrIgnore(obj: unknown, fn: (bn: BigNumber) => boolean)
   }
 }
 
+/**
+ * Validates that a BigNumber property value is positive (greater than zero).
+ *
+ * @param validationOptions - Optional validation configuration
+ * @returns Validation decorator function
+ */
 export function BigNumberIsPositive(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     IsBigNumber(validationOptions)(object, propertyName);
@@ -209,6 +236,12 @@ export function BigNumberIsNotInfinity(validationOptions?: ValidationOptions) {
   };
 }
 
+/**
+ * Validates that a BigNumber property value is not negative (greater than or equal to zero).
+ *
+ * @param validationOptions - Optional validation configuration
+ * @returns Validation decorator function
+ */
 export function BigNumberIsNotNegative(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     IsBigNumber(validationOptions)(object, propertyName);

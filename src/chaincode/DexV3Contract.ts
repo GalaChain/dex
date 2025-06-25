@@ -98,11 +98,34 @@ import {
   swapFeeGate
 } from "./dexLaunchpadFeeGate";
 
+/**
+ * DexV3Contract provides Uniswap V3-style decentralized exchange functionality
+ * including concentrated liquidity, limit orders, and automated market making.
+ *
+ * This contract implements a complete DEX with the following features:
+ * - Liquidity pools with concentrated liquidity positions
+ * - Token swapping with price impact calculations
+ * - Limit order placement and execution using commit-reveal protocol
+ * - Fee collection for liquidity providers and protocol
+ * - Position management and transfers
+ *
+ * @extends GalaContract
+ */
 export class DexV3Contract extends GalaContract {
+  /**
+   * Creates a new DexV3Contract instance.
+   */
   constructor() {
     super("DexV3Contract", version);
   }
 
+  /**
+   * Creates a new liquidity pool for a token pair with specified fee tier.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Pool creation parameters including tokens, fee tier, and initial price
+   * @returns Response containing the created pool details
+   */
   @Submit({
     in: CreatePoolDto,
     out: CreatePoolResDto,
@@ -112,6 +135,13 @@ export class DexV3Contract extends GalaContract {
     return await createPool(ctx, dto);
   }
 
+  /**
+   * Adds liquidity to an existing pool within a specified price range.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Liquidity addition parameters including amounts and tick range
+   * @returns Operation result with transaction details
+   */
   @Submit({
     in: AddLiquidityDTO,
     out: DexOperationResDto,
@@ -121,6 +151,13 @@ export class DexV3Contract extends GalaContract {
     return await addLiquidity(ctx, dto);
   }
 
+  /**
+   * Executes a token swap through the automated market maker.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Swap parameters including tokens, amounts, and slippage protection
+   * @returns Swap result with executed amounts and fees
+   */
   @Submit({
     in: SwapDto,
     out: SwapResDto,
@@ -130,6 +167,13 @@ export class DexV3Contract extends GalaContract {
     return await swap(ctx, dto);
   }
 
+  /**
+   * Removes liquidity from a position and returns tokens to the user.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Liquidity removal parameters including position and amount
+   * @returns Operation result with withdrawn token amounts
+   */
   @Submit({
     in: BurnDto,
     out: DexOperationResDto,
@@ -139,6 +183,13 @@ export class DexV3Contract extends GalaContract {
     return await burn(ctx, dto);
   }
 
+  /**
+   * Retrieves the current price and tick information for a pool.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Pool identifier parameters
+   * @returns Current slot0 data including sqrt price and active tick
+   */
   @GalaTransaction({
     type: EVALUATE,
     in: GetPoolDto,
@@ -148,6 +199,13 @@ export class DexV3Contract extends GalaContract {
     return await getSlot0(ctx, dto);
   }
 
+  /**
+   * Gets the total active liquidity in a pool.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Pool identifier parameters
+   * @returns Current liquidity amount in the pool
+   */
   @GalaTransaction({
     type: EVALUATE,
     in: GetPoolDto,
@@ -157,6 +215,13 @@ export class DexV3Contract extends GalaContract {
     return await getLiquidity(ctx, dto);
   }
 
+  /**
+   * Retrieves all liquidity positions owned by a specific user.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - User position query parameters
+   * @returns List of user's liquidity positions with details
+   */
   @GalaTransaction({
     type: EVALUATE,
     in: GetUserPositionsDto,

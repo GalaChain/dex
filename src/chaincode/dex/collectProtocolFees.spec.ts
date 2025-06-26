@@ -116,7 +116,7 @@ describe("GetPosition", () => {
 
     // When
     const response = await collectProtocolFees(ctx, collectProtocolFeesDto);
-     await collectProtocolFees(ctx, collectProtocolFeesDto)
+    await collectProtocolFees(ctx, collectProtocolFeesDto)
       .then(() => ctx.stub.flushWrites())
       .catch((e) => e);
 
@@ -215,7 +215,7 @@ describe("GetPosition", () => {
 
     // When
     const response = await collectProtocolFees(ctx, dto);
-     await collectProtocolFees(ctx, dto)
+    await collectProtocolFees(ctx, dto)
       .then(() => ctx.stub.flushWrites())
       .catch((e) => e);
 

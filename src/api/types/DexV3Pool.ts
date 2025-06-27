@@ -53,7 +53,7 @@ import { TickData } from "./TickData";
 })
 export class Pool extends ChainObject {
   @Exclude()
-  static INDEX_KEY = "GCDXCHLP"; //GalaChain Decentralised Exchange Liquidity Pool
+  static INDEX_KEY = "GCDXCHLPL"; //GalaChain Decentralised Exchange Liquidity Pool
 
   @ChainKey({ position: 0 })
   @IsString()

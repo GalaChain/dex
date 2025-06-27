@@ -22,7 +22,7 @@ import { BigNumberIsPositive, IsBigNumber } from "../validators";
 
 export class TickData extends ChainObject {
   @Exclude()
-  static INDEX_KEY = "GCDXCHLTD"; //GalaChain Decentralised Exchange Liqudity Tick Data
+  static INDEX_KEY = "GCDXCHLTDA"; //GalaChain Decentralised Exchange Liqudity Tick Data
 
   @JSONSchema({
     description: "Minimum tick value allowed for the pool"

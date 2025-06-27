@@ -66,7 +66,7 @@ describe("tick.helper", () => {
       flipTick(bitmap, tick, tickSpacing);
 
       // Then
-      const word = Math.floor(tick / tickSpacing / 256);
+      const word = Math.trunc(tick / tickSpacing / 256);
       expect(BigInt(bitmap[word])).toBe(BigInt(2));
     });
   });

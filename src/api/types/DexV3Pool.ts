@@ -53,7 +53,7 @@ import { TickData } from "./TickData";
 })
 export class Pool extends ChainObject {
   @Exclude()
-  static INDEX_KEY = "GCDXCHLP"; //GalaChain Decentralised Exchange Liquidity Pool
+  static INDEX_KEY = "GCDXCHLPL"; //GalaChain Decentralised Exchange Liquidity Pool
 
   @ChainKey({ position: 0 })
   @IsString()
@@ -226,9 +226,11 @@ export class Pool extends ChainObject {
   ) {
     const tickLower = tickLowerData.tick;
     const tickUpper = tickUpperData.tick;
+    let flippedLower = false,
+      flippedUpper = false;
     if (!liquidityDelta.isEqualTo(0)) {
       //update ticks
-      const flippedLower = tickLowerData.updateTick(
+      flippedLower = tickLowerData.updateTick(
         tickCurrent,
         liquidityDelta,
         false,
@@ -236,7 +238,7 @@ export class Pool extends ChainObject {
         this.feeGrowthGlobal1,
         this.maxLiquidityPerTick
       );
-      const flippedUpper = tickUpperData.updateTick(
+      flippedUpper = tickUpperData.updateTick(
         tickCurrent,
         liquidityDelta,
         true,
@@ -261,6 +263,15 @@ export class Pool extends ChainObject {
 
     //Update position
     position.updatePosition(liquidityDelta, feeGrowthInside0, feeGrowthInside1);
+
+    if (liquidityDelta.lt(0)) {
+      if (flippedLower) {
+        tickLowerData.clear();
+      }
+      if (flippedUpper) {
+        tickUpperData.clear();
+      }
+    }
   }
 
   /**
@@ -376,11 +387,11 @@ export class Pool extends ChainObject {
    * @dev this will bring the state of protocolFeesTokens and reset them to 0
    * @returns [protocolFeeToken0,protocolFeesToken1]
    */
-  public collectProtocolFees() {
-    const protocolFeesToken0 = this.protocolFeesToken0,
-      protocolFeesToken1 = this.protocolFeesToken1;
-    this.protocolFeesToken0 = new BigNumber(0);
-    this.protocolFeesToken1 = new BigNumber(0);
+  public collectProtocolFees(token0PoolBalance: BigNumber, token1PoolBalance: BigNumber) {
+    const protocolFeesToken0 = BigNumber.min(this.protocolFeesToken0, token0PoolBalance),
+      protocolFeesToken1 = BigNumber.min(this.protocolFeesToken1, token1PoolBalance);
+    this.protocolFeesToken0 = this.protocolFeesToken0.minus(protocolFeesToken0);
+    this.protocolFeesToken1 = this.protocolFeesToken1.minus(protocolFeesToken1);
     return [protocolFeesToken0, protocolFeesToken1];
   }
   /**

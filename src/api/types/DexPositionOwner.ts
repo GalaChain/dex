@@ -27,7 +27,7 @@ import { IsStringArrayRecord } from "../validators";
 })
 export class DexPositionOwner extends ChainObject {
   @Exclude()
-  static INDEX_KEY = "GCDXCLPO"; //GalaChain Decentralised Exchange Liquidity Position Owner
+  static INDEX_KEY = "GCDXCLPOR"; //GalaChain Decentralised Exchange Liquidity Position Owner
 
   @ChainKey({ position: 0 })
   @IsNotEmpty()

@@ -28,6 +28,25 @@ import {
 } from "../../api/";
 import { fetchOrCreateAndCrossTick } from "./tickData.helper";
 
+/**
+ * Processes swap steps through liquidity ticks until the swap is complete or hits price limits.
+ *
+ * This function implements the core logic for executing token swaps in a concentrated liquidity pool.
+ * It iterates through price ticks, computing swap amounts at each step while respecting:
+ * - Available liquidity at each tick
+ * - Protocol and liquidity provider fees
+ * - Price impact and slippage limits
+ * - Exact input vs exact output semantics
+ *
+ * @param ctx - The GalaChain context for blockchain operations
+ * @param state - Current swap state including price, liquidity, and remaining amounts
+ * @param pool - The liquidity pool being traded against
+ * @param sqrtPriceLimit - Maximum price impact allowed (slippage protection)
+ * @param exactInput - Whether this is an exact input (true) or exact output (false) swap
+ * @param zeroForOne - Swap direction: token0→token1 (true) or token1→token0 (false)
+ * @returns Updated swap state after processing all possible steps
+ * @throws ConflictError when insufficient liquidity is available
+ */
 export async function processSwapSteps(
   ctx: GalaChainContext,
   state: SwapState,

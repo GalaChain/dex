@@ -73,8 +73,8 @@ export async function collectProtocolFees(
   // Round amounts according to token decimals
   const [token0Decimal, token1Decimal] = await getTokenDecimalsFromPool(ctx, pool);
   const roundedAmount = [
-    roundTokenAmount(amounts[0], token0Decimal),
-    roundTokenAmount(amounts[1], token1Decimal)
+    roundTokenAmount(amounts[0], token0Decimal, false),
+    roundTokenAmount(amounts[1], token1Decimal, false)
   ];
 
   // Transfer collected protocol fees to recipient

@@ -14,8 +14,8 @@
  */
 import { NotFoundError, UnauthorizedError } from "@gala-chain/api";
 import { GalaChainContext, getObjectByKey, putChainObject } from "@gala-chain/chaincode";
-import { ConfigurePoolDexFeeDto, ConfigurePoolDexFeeResDto, Pool } from "../../api";
 
+import { ConfigurePoolDexFeeDto, ConfigurePoolDexFeeResDto, Pool } from "../../api";
 import { fetchDexProtocolFeeConfig, validateTokenOrder } from "./dexUtils";
 
 /**

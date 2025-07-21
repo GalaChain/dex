@@ -32,6 +32,8 @@ import {
   CollectProtocolFeesDto,
   CollectProtocolFeesResDto,
   ConfigureDexFeeAddressDto,
+  ConfigurePoolDexFeeDto,
+  ConfigurePoolDexFeeResDto,
   CreatePoolDto,
   CreatePoolResDto,
   DexFeeConfig,
@@ -70,6 +72,7 @@ import {
   collect,
   collectProtocolFees,
   configureDexFeeAddress,
+  configurePoolDexFee,
   createPool,
   fillLimitOrder,
   getAddLiquidityEstimation,
@@ -95,7 +98,8 @@ import {
   collectPositionFeesFeeGate,
   createPoolFeeGate,
   removeLiquidityFeeGate,
-  swapFeeGate
+  swapFeeGate,
+  transferDexPositionFeeGate
 } from "./dexLaunchpadFeeGate";
 
 /**
@@ -313,6 +317,18 @@ export class DexV3Contract extends GalaContract {
     return await setProtocolFee(ctx, dto);
   }
 
+  @Submit({
+    in: ConfigurePoolDexFeeDto,
+    out: ConfigurePoolDexFeeResDto,
+    allowedOrgs: ["CuratorOrg"]
+  })
+  public async ConfigurePoolDexFee(
+    ctx: GalaChainContext,
+    dto: ConfigurePoolDexFeeDto
+  ): Promise<ConfigurePoolDexFeeResDto> {
+    return await configurePoolDexFee(ctx, dto);
+  }
+
   @Evaluate({
     in: ChainCallDTO,
     out: DexFeeConfig,
@@ -336,7 +352,8 @@ export class DexV3Contract extends GalaContract {
 
   @Submit({
     in: TransferDexPositionDto,
-    out: DexPositionOwner
+    out: DexPositionOwner,
+    before: transferDexPositionFeeGate
   })
   public async TransferDexPosition(
     ctx: GalaChainContext,

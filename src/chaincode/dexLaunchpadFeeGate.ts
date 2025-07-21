@@ -15,13 +15,15 @@
 import { GalaChainContext, galaFeeGate } from "@gala-chain/chaincode";
 
 import { AddLiquidityDTO, BurnDto, CollectDto, CreatePoolDto, SwapDto } from "../api";
+import { TransferDexPositionDto } from "./../api/types/DexDtos";
 
 export enum FeeGateCodes {
   CreatePool = "CreatePool",
   AddLiquidity = "AddLiquidity",
   Swap = "Swap",
   RemoveLiquidity = "RemoveLiquidity",
-  CollectPositionFees = "CollectPositionFees"
+  CollectPositionFees = "CollectPositionFees",
+  TransferDexPosition = "TransferDexPosition"
 }
 
 export async function createPoolFeeGate(ctx: GalaChainContext, dto: CreatePoolDto) {
@@ -42,4 +44,8 @@ export async function swapFeeGate(ctx: GalaChainContext, dto: SwapDto) {
 
 export async function collectPositionFeesFeeGate(ctx: GalaChainContext, dto: CollectDto) {
   return galaFeeGate(ctx, { feeCode: FeeGateCodes.CollectPositionFees });
+}
+
+export async function transferDexPositionFeeGate(ctx: GalaChainContext, dto: TransferDexPositionDto) {
+  return galaFeeGate(ctx, { feeCode: FeeGateCodes.TransferDexPosition });
 }

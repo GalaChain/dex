@@ -26,8 +26,8 @@ import { CollectDto, DexOperationResDto, Pool, UserBalanceResDto, f18 } from "..
 import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";
-import { removePositionIfEmpty } from "./removePositionIfEmpty";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
+import { updateOrRemovePosition } from "./updateOrRemovePosition";
 
 /**
  * @dev The collect function allows a user to claim and withdraw accrued fee tokens from a specific liquidity position in a Decentralized exchange pool within the GalaChain ecosystem. It retrieves earned fees based on the user's position details and transfers them to the user's account.
@@ -86,17 +86,14 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
   );
   const amounts = pool.collect(position, tickLowerData, tickUpperData, amount0Requested, amount1Requested);
 
-  // Remove position if empty and save updated pool
-  await removePositionIfEmpty(ctx, poolHash, position);
-
   // Round down the tokens and transfer the tokens to position holder
   const roundedToken0Amount = BigNumber.min(
-    roundTokenAmount(amounts[0], tokenDecimals[0]),
+    roundTokenAmount(amounts[0], tokenDecimals[0], false),
     poolToken0Balance.getQuantityTotal()
   );
 
   const roundedToken1Amount = BigNumber.min(
-    roundTokenAmount(amounts[1], tokenDecimals[1]),
+    roundTokenAmount(amounts[1], tokenDecimals[1], false),
     poolToken1Balance.getQuantityTotal()
   );
 
@@ -118,8 +115,8 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
     });
   }
 
+  await updateOrRemovePosition(ctx, poolHash, position,tokenDecimals[0],tokenDecimals[1]);
   await putChainObject(ctx, pool);
-  await putChainObject(ctx, position);
 
   // Return position holder's new token balances
   const liquidityProviderToken0Balance = await fetchOrCreateBalance(

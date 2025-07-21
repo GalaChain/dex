@@ -36,7 +36,7 @@ import { f18 } from "../../api/utils";
 import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";
-import { removePositionIfEmpty } from "./removePositionIfEmpty";
+import { updateOrRemovePosition } from "./updateOrRemovePosition";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
 
 /**
@@ -89,7 +89,7 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
       throw new NegativeAmountError(index, amount.toString());
     }
 
-    const roundedAmount = roundTokenAmount(amount, tokenDecimals[index]);
+    const roundedAmount = roundTokenAmount(amount, tokenDecimals[index],false);
 
     if (
       roundedAmount.isGreaterThan(
@@ -123,11 +123,6 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
   );
   const amounts = pool.burn(position, tickLowerData, tickUpperData, amountToBurn);
 
-  if (amounts[0].lt(dto.amount0Min) || amounts[1].lt(dto.amount1Min)) {
-    throw new SlippageToleranceExceededError(
-      `Slippage tolerance exceeded: expected minimums (amount0 ≥ ${dto.amount0Min.toString()}, amount1 ≥ ${dto.amount1Min.toString()}), but received (amount0 = ${amounts[0].toString()}, amount1 = ${amounts[1].toString()})`
-    );
-  }
   if (amounts[0].isLessThan(0)) {
     throw new NegativeAmountError(0, amounts[0].toString());
   }
@@ -135,17 +130,20 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
     throw new NegativeAmountError(1, amounts[1].toString());
   }
 
-  await removePositionIfEmpty(ctx, poolHash, position);
-
   const roundedToken0Amount = BigNumber.min(
-    roundTokenAmount(amounts[0], tokenDecimals[0]),
+    roundTokenAmount(amounts[0], tokenDecimals[0],false),
     poolToken0Balance.getQuantityTotal()
   );
 
   const roundedToken1Amount = BigNumber.min(
-    roundTokenAmount(amounts[1], tokenDecimals[1]),
+    roundTokenAmount(amounts[1], tokenDecimals[1],false),
     poolToken1Balance.getQuantityTotal()
   );
+  if (roundedToken0Amount.lt(dto.amount0Min) || roundedToken1Amount.lt(dto.amount1Min)) {
+    throw new SlippageToleranceExceededError(
+      `Slippage tolerance exceeded: expected minimums (amount0 ≥ ${dto.amount0Min.toString()}, amount1 ≥ ${dto.amount1Min.toString()}), but received (amount0 = ${roundedToken0Amount.toString()}, amount1 = ${roundedToken1Amount.toString()})`
+    );
+  }
 
   // Transfer tokens to positon holder
   await transferToken(ctx, {
@@ -172,6 +170,7 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
     }
   });
 
+  await updateOrRemovePosition(ctx, poolHash, position,tokenDecimals[0],tokenDecimals[1]);
   await putChainObject(ctx, pool);
   await putChainObject(ctx, position);
   await putChainObject(ctx, tickUpperData);

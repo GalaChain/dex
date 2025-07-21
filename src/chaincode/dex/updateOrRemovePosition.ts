@@ -15,8 +15,9 @@
 import { GalaChainContext, deleteChainObject, putChainObject } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
-import { DexPositionData, f18 } from "../../api/";
-import { genTickRange, getUserPositionIds } from "./dexUtils";
+import { BurnEstimateDto, DexPositionData, f18 } from "../../api";
+import { getRemoveLiquidityEstimation } from "./burnEstimate";
+import { genTickRange, getUserPositionIds, roundTokenAmount } from "./dexUtils";
 
 /**
  * Deletes a user's position in a specific tick range if it has negligible liquidity and tokens owed.
@@ -25,25 +26,48 @@ import { genTickRange, getUserPositionIds } from "./dexUtils";
  * @param poolHash - Identifier for the pool.
  * @param position - The DexPositionData object representing the position to evaluate and possibly delete.
  */
-export async function removePositionIfEmpty(
+export async function updateOrRemovePosition(
   ctx: GalaChainContext,
   poolHash: string,
-  position: DexPositionData
+  position: DexPositionData,
+  token0Decimal: number,
+  token1Decimal: number
 ) {
   //  Fetch user positions
   const userPositions = await getUserPositionIds(ctx, ctx.callingUser, poolHash);
 
+  // Fetch the amount of tokens left in the position's liquidity
+  const burnEstimateDto = new BurnEstimateDto(
+    position.token0ClassKey,
+    position.token1ClassKey,
+    position.fee,
+    position.liquidity,
+    position.tickLower,
+    position.tickUpper,
+    ctx.callingUser,
+    position.positionId
+  );
+
+  const burnEstimateRes = await getRemoveLiquidityEstimation(ctx, burnEstimateDto);
+
   // Check if given position needs to be deleted
   const deleteUserPos =
-    f18(new BigNumber(position.tokensOwed0)).isLessThan(new BigNumber("0.00000001")) &&
-    f18(new BigNumber(position.tokensOwed1)).isLessThan(new BigNumber("0.00000001")) &&
-    f18(new BigNumber(position.liquidity)).isLessThan(new BigNumber("0.00000001"));
+    f18(roundTokenAmount(position.tokensOwed0, token0Decimal, false)).isLessThan(
+      new BigNumber("0.00000001")
+    ) &&
+    f18(roundTokenAmount(position.tokensOwed1, token1Decimal, false)).isLessThan(
+      new BigNumber("0.00000001")
+    ) &&
+    f18(new BigNumber(burnEstimateRes.amount0)).isLessThan(new BigNumber("0.00000001")) &&
+    f18(new BigNumber(burnEstimateRes.amount1)).isLessThan(new BigNumber("0.00000001"));
 
-  // Remove position
+  // Remove position if empty and commit it if its not
   if (deleteUserPos) {
     const tickRange = genTickRange(position.tickLower, position.tickUpper);
     userPositions.removePosition(tickRange, position.positionId);
     await deleteChainObject(ctx, position);
     await putChainObject(ctx, userPositions);
+  } else {
+    await putChainObject(ctx, position);
   }
 }

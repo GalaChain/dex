@@ -36,8 +36,8 @@ import { f18 } from "../../api/utils";
 import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";
-import { updateOrRemovePosition } from "./updateOrRemovePosition";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
+import { updateOrRemovePosition } from "./updateOrRemovePosition";
 
 /**
  * @dev The burn function is responsible for removing liquidity from a Decentralized exchange pool within the GalaChain ecosystem. It executes the necessary operations to burn the liquidity position and transfer the corresponding tokens back to the user.
@@ -89,7 +89,7 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
       throw new NegativeAmountError(index, amount.toString());
     }
 
-    const roundedAmount = roundTokenAmount(amount, tokenDecimals[index],false);
+    const roundedAmount = roundTokenAmount(amount, tokenDecimals[index], false);
 
     if (
       roundedAmount.isGreaterThan(
@@ -131,12 +131,12 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
   }
 
   const roundedToken0Amount = BigNumber.min(
-    roundTokenAmount(amounts[0], tokenDecimals[0],false),
+    roundTokenAmount(amounts[0], tokenDecimals[0], false),
     poolToken0Balance.getQuantityTotal()
   );
 
   const roundedToken1Amount = BigNumber.min(
-    roundTokenAmount(amounts[1], tokenDecimals[1],false),
+    roundTokenAmount(amounts[1], tokenDecimals[1], false),
     poolToken1Balance.getQuantityTotal()
   );
   if (roundedToken0Amount.lt(dto.amount0Min) || roundedToken1Amount.lt(dto.amount1Min)) {
@@ -170,7 +170,7 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
     }
   });
 
-  await updateOrRemovePosition(ctx, poolHash, position,tokenDecimals[0],tokenDecimals[1]);
+  await updateOrRemovePosition(ctx, poolHash, position, tokenDecimals[0], tokenDecimals[1]);
   await putChainObject(ctx, pool);
   await putChainObject(ctx, position);
   await putChainObject(ctx, tickUpperData);

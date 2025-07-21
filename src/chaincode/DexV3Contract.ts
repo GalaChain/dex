@@ -353,7 +353,7 @@ export class DexV3Contract extends GalaContract {
   @Submit({
     in: TransferDexPositionDto,
     out: DexPositionOwner,
-    before : transferDexPositionFeeGate
+    before: transferDexPositionFeeGate
   })
   public async TransferDexPosition(
     ctx: GalaChainContext,

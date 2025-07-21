@@ -13,12 +13,12 @@
  * limitations under the License.
  */
 import { GalaChainContext, getObjectByKey } from "@gala-chain/chaincode";
+import BigNumber from "bignumber.js";
 
 import { BurnEstimateDto, GetRemoveLiqEstimationResDto, Pool, f18 } from "../../api/";
 import { getTokenDecimalsFromPool, validateTokenOrder } from "./dexUtils";
 import { fetchUserPositionInTickRange } from "./position.helper";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
-import BigNumber from "bignumber.js";
 
 /**
  * @dev The getRemoveLiquidityEstimation function estimates the amount of tokens a user will receive when removing liquidity from a Decentralized exchange pool within the GalaChain ecosystem. It calculates the expected token amounts based on the user's liquidity position and market conditions.

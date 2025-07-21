@@ -144,7 +144,7 @@ describe("dexUtils", () => {
       const result = genBookMark(...params);
 
       // Then
-      expect(result).toBe("param1|param2|param3");
+      expect(result).toBe("param1@param2@param3");
     });
 
     it("should handle numeric parameters", () => {
@@ -155,7 +155,7 @@ describe("dexUtils", () => {
       const result = genBookMark(...params);
 
       // Then
-      expect(result).toBe("1|2|3");
+      expect(result).toBe("1@2@3");
     });
 
     it("should handle string parameters with numeric content", () => {
@@ -166,7 +166,7 @@ describe("dexUtils", () => {
       const result = genBookMark(...params);
 
       // Then
-      expect(result).toBe("test|123|more");
+      expect(result).toBe("test@123@more");
     });
 
     it("should handle empty parameters", () => {
@@ -181,7 +181,7 @@ describe("dexUtils", () => {
   describe("splitBookmark", () => {
     it("should split bookmark into chain and local parts", () => {
       // Given
-      const bookmark = "chainpart|localpart";
+      const bookmark = "chainpart@localpart";
 
       // When
       const result = splitBookmark(bookmark);
@@ -193,7 +193,7 @@ describe("dexUtils", () => {
 
     it("should handle bookmark with only chain part", () => {
       // Given
-      const bookmark = "chainpart|";
+      const bookmark = "chainpart@";
 
       // When
       const result = splitBookmark(bookmark);
@@ -273,7 +273,7 @@ describe("dexUtils", () => {
       const decimals = 2;
 
       // When
-      const result = roundTokenAmount(amount, decimals);
+      const result = roundTokenAmount(amount, decimals, false);
 
       // Then
       expect(result.toString()).toBe("123.56");
@@ -285,7 +285,7 @@ describe("dexUtils", () => {
       const decimals = 2;
 
       // When
-      const result = roundTokenAmount(amount, decimals);
+      const result = roundTokenAmount(amount, decimals, false);
 
       // Then
       expect(result.toString()).toBe("123.56");
@@ -297,7 +297,7 @@ describe("dexUtils", () => {
       const decimals = 4;
 
       // When
-      const result = roundTokenAmount(amount, decimals);
+      const result = roundTokenAmount(amount, decimals, false);
 
       // Then
       expect(result.toString()).toBe("123.5");
@@ -309,7 +309,7 @@ describe("dexUtils", () => {
       const decimals = 0;
 
       // When
-      const result = roundTokenAmount(amount, decimals);
+      const result = roundTokenAmount(amount, decimals, false);
 
       // Then
       expect(result.toString()).toBe("123");
@@ -321,7 +321,7 @@ describe("dexUtils", () => {
       const decimals = 2;
 
       // When
-      const result = roundTokenAmount(amount, decimals);
+      const result = roundTokenAmount(amount, decimals, false);
 
       // Then
       expect(result.toString()).toBe("123.99");

@@ -159,7 +159,7 @@ describe("GetPosition", () => {
         dexClass
       );
 
-    const getUserPositionsDto = new GetUserPositionsDto(users.testUser1.identityKey, "|1", 1);
+    const getUserPositionsDto = new GetUserPositionsDto(users.testUser1.identityKey, "@1", 1);
 
     // When
     const response = await contract.GetUserPositions(ctx, getUserPositionsDto);
@@ -190,7 +190,7 @@ describe("GetPosition", () => {
         dexClass
       );
 
-    const getUserPositionsDto = new GetUserPositionsDto(users.testUser1.identityKey, "|4", 1);
+    const getUserPositionsDto = new GetUserPositionsDto(users.testUser1.identityKey, "@4", 1);
 
     // When
     const response = await contract.GetUserPositions(ctx, getUserPositionsDto);

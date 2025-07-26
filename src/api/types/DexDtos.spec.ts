@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 import { TokenClassKey, UserRef, asValidUserRef } from "@gala-chain/api";
+import { ChainUser } from "@gala-chain/api";
+import { signatures } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
@@ -46,7 +48,7 @@ describe("DexDtos", () => {
 
   const mockToken1 = plainToInstance(TokenClassKey, {
     collection: "TOWN",
-    category: "Unit", 
+    category: "Unit",
     type: "none",
     additionalKey: "none"
   });
@@ -211,6 +213,186 @@ describe("DexDtos", () => {
 
       // Then
       expect(validationErrors.length).toBeGreaterThan(0);
+    });
+
+    it("should sign SwapDto and verify signature with test user", async () => {
+      // Given
+      const testUser = ChainUser.withRandomKeys("test-user");
+      const dto = new SwapDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_3_PERCENT,
+        new BigNumber("1000"),
+        true,
+        new BigNumber("500000000000000000"),
+        new BigNumber("1100"),
+        new BigNumber("-900")
+      );
+
+      // When
+      dto.sign(testUser.privateKey);
+
+      // Then
+      expect(dto.signature).toBeDefined();
+      expect(dto.signature?.length).toBeGreaterThanOrEqual(128); // ECDSA signature in hex format
+      expect(dto.isSignatureValid(testUser.publicKey)).toBe(true);
+
+      // Verify we can recover the public key from the signed DTO
+      const recoveredPublicKey = signatures.recoverPublicKey(dto.signature!, dto);
+      expect(recoveredPublicKey).toBe(testUser.publicKey);
+    });
+
+    it("should create signed SwapDto using signed() method and verify identity", async () => {
+      // Given
+      const testUser = ChainUser.withRandomKeys("swap-user");
+      const dto = new SwapDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_1_PERCENT,
+        new BigNumber("2000"),
+        false,
+        new BigNumber("400000000000000000"),
+        new BigNumber("2200"),
+        new BigNumber("-1800")
+      );
+
+      // When
+      const signedDto = dto.signed(testUser.privateKey);
+
+      // Then
+      expect(signedDto).not.toBe(dto); // Should be a copy
+      expect(signedDto.signature).toBeDefined();
+      expect(signedDto.signature?.length).toBeGreaterThanOrEqual(128);
+      expect(signedDto.isSignatureValid(testUser.publicKey)).toBe(true);
+
+      // Verify we can recover the correct public key from the signed DTO
+      const recoveredPublicKey = signatures.recoverPublicKey(signedDto.signature!, signedDto);
+      expect(recoveredPublicKey).toBe(testUser.publicKey);
+
+      // Verify original DTO is not modified
+      expect(dto.signature).toBeUndefined();
+
+      // Verify signature fails with different public key
+      const differentUser = ChainUser.withRandomKeys("different-user");
+      expect(signedDto.isSignatureValid(differentUser.publicKey)).toBe(false);
+
+      // Verify recovered public key is different from a different user's key
+      expect(recoveredPublicKey).not.toBe(differentUser.publicKey);
+    });
+
+    it("should fail signature verification when DTO is modified after signing", async () => {
+      // Given
+      const testUser = ChainUser.withRandomKeys("tamper-user");
+      const dto = new SwapDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_3_PERCENT,
+        new BigNumber("1000"),
+        true,
+        new BigNumber("500000000000000000"),
+        new BigNumber("1100"),
+        new BigNumber("-900")
+      );
+
+      // When
+      dto.sign(testUser.privateKey);
+
+      // Tamper with the DTO after signing
+      dto.amount = new BigNumber("2000");
+
+      // Then
+      expect(dto.isSignatureValid(testUser.publicKey)).toBe(false);
+    });
+
+    it("should create valid SwapDto with omitted amountInMaximum and verify signature recovery", async () => {
+      // Given
+      const testUser = ChainUser.withRandomKeys("test-user-no-max-in");
+      const dto = new SwapDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_3_PERCENT,
+        new BigNumber("1000"),
+        true,
+        new BigNumber("500000000000000000"),
+        undefined, // amountInMaximum omitted
+        new BigNumber("-900")
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+      dto.sign(testUser.privateKey);
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.amountInMaximum).toBeUndefined();
+      expect(dto.signature).toBeDefined();
+      expect(dto.signature?.length).toBeGreaterThanOrEqual(128);
+      expect(dto.isSignatureValid(testUser.publicKey)).toBe(true);
+
+      // Verify we can recover the public key from the signed DTO with omitted property
+      const recoveredPublicKey = signatures.recoverPublicKey(dto.signature!, dto);
+      expect(recoveredPublicKey).toBe(testUser.publicKey);
+    });
+
+    it("should create valid SwapDto with omitted amountOutMinimum and verify signature recovery", async () => {
+      // Given
+      const testUser = ChainUser.withRandomKeys("test-user-no-min-out");
+      const dto = new SwapDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_1_PERCENT,
+        new BigNumber("2000"),
+        false,
+        new BigNumber("400000000000000000"),
+        new BigNumber("2200"),
+        undefined // amountOutMinimum omitted
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+      dto.sign(testUser.privateKey);
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.amountOutMinimum).toBeUndefined();
+      expect(dto.signature).toBeDefined();
+      expect(dto.signature?.length).toBeGreaterThanOrEqual(128);
+      expect(dto.isSignatureValid(testUser.publicKey)).toBe(true);
+
+      // Verify we can recover the public key from the signed DTO with omitted property
+      const recoveredPublicKey = signatures.recoverPublicKey(dto.signature!, dto);
+      expect(recoveredPublicKey).toBe(testUser.publicKey);
+    });
+
+    it("should create valid SwapDto with both optional amounts omitted and verify signature recovery", async () => {
+      // Given
+      const testUser = ChainUser.withRandomKeys("test-user-no-optionals");
+      const dto = new SwapDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_05_PERCENT,
+        new BigNumber("1500"),
+        true,
+        new BigNumber("450000000000000000"),
+        undefined, // amountInMaximum omitted
+        undefined // amountOutMinimum omitted
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+      dto.sign(testUser.privateKey);
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.amountInMaximum).toBeUndefined();
+      expect(dto.amountOutMinimum).toBeUndefined();
+      expect(dto.signature).toBeDefined();
+      expect(dto.signature?.length).toBeGreaterThanOrEqual(128);
+      expect(dto.isSignatureValid(testUser.publicKey)).toBe(true);
+
+      // Verify we can recover the public key from the signed DTO with both optional properties omitted
+      const recoveredPublicKey = signatures.recoverPublicKey(dto.signature!, dto);
+      expect(recoveredPublicKey).toBe(testUser.publicKey);
     });
   });
 

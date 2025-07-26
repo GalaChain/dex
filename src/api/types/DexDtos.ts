@@ -194,9 +194,9 @@ export class SwapDto extends SubmitCallDTO {
   @BigNumberProperty()
   public amount: BigNumber;
 
+  @IsOptional()
   @BigNumberIsPositive()
   @BigNumberProperty()
-  @IsOptional()
   public amountInMaximum?: BigNumber;
 
   @BigNumberProperty()
@@ -221,8 +221,12 @@ export class SwapDto extends SubmitCallDTO {
     this.amount = amount;
     this.zeroForOne = zeroForOne;
     this.sqrtPriceLimit = sqrtPriceLimit;
-    this.amountInMaximum = amountInMaximum;
-    this.amountOutMinimum = amountOutMinimum;
+    if (amountInMaximum !== undefined) {
+      this.amountInMaximum = amountInMaximum;
+    }
+    if (amountOutMinimum !== undefined) {
+      this.amountOutMinimum = amountOutMinimum;
+    }
   }
 }
 

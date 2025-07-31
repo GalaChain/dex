@@ -23,3 +23,5 @@ export * from "./DexPositionData";
 export * from "./DexPositionOwner";
 export * from "./DexV3Pool";
 export * from "./TickData";
+export * from "./BatchSubmitAuthorities";
+export * from "./BatchSubmitDtos";

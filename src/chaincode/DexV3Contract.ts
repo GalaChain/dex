@@ -12,19 +12,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ChainCallDTO, NotFoundError } from "@gala-chain/api";
+import { BatchDto, ChainCallDTO, GalaChainResponse, NotFoundError, UnauthorizedError } from "@gala-chain/api";
 import {
+  BatchWriteLimitExceededError,
   EVALUATE,
   Evaluate,
   GalaChainContext,
   GalaContract,
   GalaTransaction,
-  Submit
+  SUBMIT,
+  Submit,
+  getApiMethod
 } from "@gala-chain/chaincode";
 
 import { version } from "../../package.json";
 import {
   AddLiquidityDTO,
+  AuthorizeBatchSubmitterDto,
+  BatchSubmitAuthoritiesResDto,
   BurnDto,
   BurnEstimateDto,
   CancelLimitOrderDto,
@@ -36,10 +41,12 @@ import {
   ConfigurePoolDexFeeResDto,
   CreatePoolDto,
   CreatePoolResDto,
+  DeauthorizeBatchSubmitterDto,
   DexFeeConfig,
   DexOperationResDto,
   DexPositionData,
   DexPositionOwner,
+  FetchBatchSubmitAuthoritiesDto,
   FillLimitOrderDto,
   GetAddLiquidityEstimationDto,
   GetAddLiquidityEstimationResDto,
@@ -67,6 +74,7 @@ import {
 } from "../api/";
 import {
   addLiquidity,
+  authorizeBatchSubmitter,
   burn,
   cancelLimitOrder,
   collect,
@@ -74,10 +82,12 @@ import {
   configureDexFeeAddress,
   configurePoolDexFee,
   createPool,
+  deauthorizeBatchSubmitter,
+  fetchBatchSubmitAuthorities,
   fillLimitOrder,
   getAddLiquidityEstimation,
+  getBatchSubmitAuthorities,
   getDexFeesConfigration,
-  getGlobalLimitOrderConfig,
   getLiquidity,
   getPoolData,
   getPosition,
@@ -121,6 +131,62 @@ export class DexV3Contract extends GalaContract {
    */
   constructor() {
     super("DexV3Contract", version);
+  }
+
+  @GalaTransaction({
+    type: SUBMIT,
+    in: BatchDto,
+    out: "object",
+    description: "Submit a batch of transactions",
+    allowedOrgs: [process.env.CURATOR_ORG_MSP ?? "CuratorOrg"],
+    verifySignature: true
+  })
+  public async BatchSubmit(ctx: GalaChainContext, batchDto: BatchDto): Promise<GalaChainResponse<unknown>[]> {
+    // Check if the calling user is authorized to submit batches
+    const batchAuthorities = await fetchBatchSubmitAuthorities(ctx);
+    if (!batchAuthorities.isAuthorized(ctx.callingUser)) {
+      throw new UnauthorizedError(
+        `CallingUser ${ctx.callingUser} is not authorized to submit batches. ` +
+          `Authorized users: ${batchAuthorities.getAuthorities().join(", ")}`
+      );
+    }
+
+    const responses: GalaChainResponse<unknown>[] = [];
+
+    const softWritesLimit = batchDto.writesLimit ?? BatchDto.WRITES_DEFAULT_LIMIT;
+    const writesLimit = Math.min(softWritesLimit, BatchDto.WRITES_HARD_LIMIT);
+    let writesCount = ctx.stub.getWritesCount();
+
+    for (const [index, op] of batchDto.operations.entries()) {
+      // Use sandboxed context to avoid flushes of writes and deletes, and populate
+      // the stub with current writes and deletes.
+      const sandboxCtx = ctx.createReadOnlyContext(index);
+      sandboxCtx.stub.setWrites(ctx.stub.getWrites());
+      sandboxCtx.stub.setDeletes(ctx.stub.getDeletes());
+
+      // Execute the operation. Collect both successful and failed responses.
+      let response: GalaChainResponse<unknown>;
+      try {
+        if (writesCount >= writesLimit) {
+          throw new BatchWriteLimitExceededError(writesLimit);
+        }
+
+        const method = getApiMethod(this, op.method, (m) => m.isWrite && m.methodName !== "BatchSubmit");
+        response = await this[method.methodName](sandboxCtx, op.dto);
+      } catch (error) {
+        response = GalaChainResponse.Error(error);
+      }
+      responses.push(response);
+
+      // Update the current context with the writes and deletes if the operation
+      // is successful.
+      if (GalaChainResponse.isSuccess(response)) {
+        ctx.stub.setWrites(sandboxCtx.stub.getWrites());
+        ctx.stub.setDeletes(sandboxCtx.stub.getDeletes());
+        writesCount = ctx.stub.getWritesCount();
+      }
+    }
+    return responses;
   }
 
   /**
@@ -467,5 +533,41 @@ export class DexV3Contract extends GalaContract {
     dto: SetGlobalLimitOrderConfigDto
   ): Promise<void> {
     return setGlobalLimitOrderConfig(ctx, dto);
+  }
+
+  @Submit({
+    in: AuthorizeBatchSubmitterDto,
+    out: BatchSubmitAuthoritiesResDto,
+    allowedOrgs: [process.env.CURATOR_ORG_MSP ?? "CuratorOrg"]
+  })
+  public async AuthorizeBatchSubmitter(
+    ctx: GalaChainContext,
+    dto: AuthorizeBatchSubmitterDto
+  ): Promise<BatchSubmitAuthoritiesResDto> {
+    return await authorizeBatchSubmitter(ctx, dto);
+  }
+
+  @Submit({
+    in: DeauthorizeBatchSubmitterDto,
+    out: BatchSubmitAuthoritiesResDto,
+    allowedOrgs: [process.env.CURATOR_ORG_MSP ?? "CuratorOrg"]
+  })
+  public async DeauthorizeBatchSubmitter(
+    ctx: GalaChainContext,
+    dto: DeauthorizeBatchSubmitterDto
+  ): Promise<BatchSubmitAuthoritiesResDto> {
+    return await deauthorizeBatchSubmitter(ctx, dto);
+  }
+
+  @GalaTransaction({
+    type: EVALUATE,
+    in: FetchBatchSubmitAuthoritiesDto,
+    out: BatchSubmitAuthoritiesResDto
+  })
+  public async GetBatchSubmitAuthorities(
+    ctx: GalaChainContext,
+    dto: FetchBatchSubmitAuthoritiesDto
+  ): Promise<BatchSubmitAuthoritiesResDto> {
+    return await getBatchSubmitAuthorities(ctx, dto);
   }
 }

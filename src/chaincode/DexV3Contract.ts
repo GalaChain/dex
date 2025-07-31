@@ -138,8 +138,8 @@ export class DexV3Contract extends GalaContract {
     in: BatchDto,
     out: "object",
     description: "Submit a batch of transactions",
-    allowedOrgs: [process.env.CURATOR_ORG_MSP ?? "CuratorOrg"],
-    verifySignature: true
+    verifySignature: true,
+    enforceUniqueKey: true
   })
   public async BatchSubmit(ctx: GalaChainContext, batchDto: BatchDto): Promise<GalaChainResponse<unknown>[]> {
     // Check if the calling user is authorized to submit batches

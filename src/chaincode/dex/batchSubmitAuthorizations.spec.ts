@@ -30,7 +30,8 @@ import {
 } from "./batchSubmitAuthorizations";
 
 // Mock the utils module
-jest.mock("../utils", () => ({
+jest.mock("@gala-chain/chaincode", () => ({
+  ...jest.requireActual("@gala-chain/chaincode"),
   getObjectByKey: jest.fn(),
   putChainObject: jest.fn()
 }));

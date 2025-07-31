@@ -14,13 +14,14 @@
  */
 import { ChainError, ErrorCode } from "@gala-chain/api";
 import { GalaChainContext, getObjectByKey, putChainObject } from "@gala-chain/chaincode";
+
 import {
   AuthorizeBatchSubmitterDto,
   BatchSubmitAuthorities,
   BatchSubmitAuthoritiesResDto,
   DeauthorizeBatchSubmitterDto,
   FetchBatchSubmitAuthoritiesDto
-} from "src/api";
+} from "../../api";
 
 /**
  * Fetches the batch submit authorities from the chain.

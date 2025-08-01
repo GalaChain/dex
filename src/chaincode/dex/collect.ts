@@ -135,6 +135,7 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
     userBalances,
     [roundedToken0Amount.toFixed(), roundedToken1Amount.toFixed()],
     poolHash,
+    position.positionId,
     poolAlias,
     pool.fee,
     ctx.callingUser

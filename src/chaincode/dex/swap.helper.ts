@@ -89,13 +89,22 @@ export async function processSwapSteps(
     // Compute the sqrt price for the next tick
     step.sqrtPriceNext = tickToSqrtPrice(step.tickNext);
 
+    // Check if the next tick is actually in the wrong direction
+    // This can happen when we're at extreme prices and all initialized ticks are on the wrong side
+    const isWrongDirection = zeroForOne 
+      ? step.sqrtPriceNext.isGreaterThan(state.sqrtPrice) // Should go down but would go up
+      : step.sqrtPriceNext.isLessThan(state.sqrtPrice);   // Should go up but would go down
+
     // Compute the result of the swap step based on price movement
     [state.sqrtPrice, step.amountIn, step.amountOut, step.feeAmount] = computeSwapStep(
       state.sqrtPrice,
       (
-        zeroForOne
-          ? step.sqrtPriceNext.isLessThan(sqrtPriceLimit)
-          : step.sqrtPriceNext.isGreaterThan(sqrtPriceLimit)
+        isWrongDirection ||
+        (
+          zeroForOne
+            ? step.sqrtPriceNext.isLessThan(sqrtPriceLimit)
+            : step.sqrtPriceNext.isGreaterThan(sqrtPriceLimit)
+        )
       )
         ? sqrtPriceLimit
         : step.sqrtPriceNext,

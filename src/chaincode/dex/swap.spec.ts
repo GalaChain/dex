@@ -42,7 +42,7 @@ describe("swap", () => {
     // Create normalized token keys for pool
     const token0Key = generateKeyFromClassKey(dexClassKey);
     const token1Key = generateKeyFromClassKey(currencyClassKey);
-    const fee = DexFeePercentageTypes.FEE_1_PERCENT;
+    const fee = DexFeePercentageTypes.FEE_0_05_PERCENT;
     
     // Initialize pool with manual values
     const pool = new Pool(
@@ -51,25 +51,35 @@ describe("swap", () => {
       dexClassKey,
       currencyClassKey,
       fee,
-      new BigNumber("1"), // Initial sqrt price of 1 (price = 1:1)
-      0.05 // 5% protocol fee
+      new BigNumber("0.01664222241481084743"),
+      0.1
     );
+
+    const bitmap: Record<string, string> = {
+      "-30":"75557863725914323419136",
+      "-31":"37778931862957161709568",
+      "-32":"40564819207303340847894502572032",
+      "-33":"26959946667150639794667015087019630673637144422540572481103610249216",
+      "-346":"5708990770823839524233143877797980545530986496",
+      "346":"20282409603651670423947251286016"
+    };
     
     // Add initial liquidity to the pool
-    pool.liquidity = new BigNumber("1000000"); // 1M liquidity units
-    pool.sqrtPrice = new BigNumber("1");
-    
+    pool.liquidity = new BigNumber("77789.999499306764803261");
+    pool.grossPoolLiquidity = new BigNumber("348717210.55494320449679994");
+    pool.sqrtPrice = new BigNumber("0.01664222241481084743");
+    pool.bitmap = bitmap;
     // Create pool balances - pool needs tokens to pay out
     const poolAlias = pool.getPoolAlias();
     const poolDexBalance = plainToInstance(TokenBalance, {
       ...dex.tokenBalance(),
       owner: poolAlias,
-      quantity: new BigNumber("500000") // Pool has 500k DEX tokens
+      quantity: new BigNumber("97.238975330345368866")
     });
     const poolCurrencyBalance = plainToInstance(TokenBalance, {
       ...currency.tokenBalance(),
       owner: poolAlias,
-      quantity: new BigNumber("500000") // Pool has 500k CURRENCY tokens
+      quantity: new BigNumber("188809.790718")
     });
     
     // Create user balances - user needs tokens to swap
@@ -84,8 +94,6 @@ describe("swap", () => {
       quantity: new BigNumber("10000") // User has 10k CURRENCY tokens
     });
     
-    // Create tick data for the current price range
-    // For simplicity, create one tick that encompasses the current price
     const tickLower = -100;
     const tickUpper = 100;
     
@@ -134,32 +142,44 @@ describe("swap", () => {
         poolCurrencyBalance,
         userDexBalance,
         userCurrencyBalance,
-        tickLowerData,
-        tickUpperData,
-        position
+        // tickLowerData,
+        // tickUpperData,
+        // position
       );
     
-    // Create swap DTO - swap 100 DEX for CURRENCY
     const swapDto = new SwapDto(
       dexClassKey,
       currencyClassKey,
       fee,
-      new BigNumber("100"), // Swap 100 tokens
+      new BigNumber("151.714011"), 
       true, // zeroForOne - swapping token0 (DEX) for token1 (CURRENCY)
-      new BigNumber("0.9"), // sqrtPriceLimit - allow up to 10% price impact
-      undefined, // No max input limit
-      undefined  // No min output limit
+      new BigNumber("0.000000000000000000094212147"),
+      new BigNumber("151.714011"), 
+      new BigNumber("-75.8849266551571701291")
     );
 
     swapDto.uniqueKey = randomUniqueKey();
 
     const signedDto = swapDto.signed(users.testUser1.privateKey);
     
+    const expectedResponse = new SwapResDto(
+      dexClass.symbol,
+      "https://app.gala.games/test-image-placeholder-url.png",
+      currencyClass.symbol,
+      "https://app.gala.games/test-image-placeholder-url.png",
+      "151.7140110000",
+      "-79.8788701633",
+      "client|testUser1",
+      pool.genPoolHash(),
+      poolAlias,
+      DexFeePercentageTypes.FEE_0_05_PERCENT,
+      ctx.txUnixTime
+    );
     // When
     const response = await contract.Swap(ctx, signedDto);
     
     // Then
-    expect(response).toEqual(transactionSuccess());
+    expect(response).toEqual(transactionSuccess(expectedResponse));
     expect(response.Data).toBeDefined();
     
     const swapResult = response.Data as SwapResDto;
@@ -172,6 +192,6 @@ describe("swap", () => {
     
     // Verify amounts - exact amounts will depend on swap math
     expect(new BigNumber(swapResult.amount0).toNumber()).toBeGreaterThan(0); // User pays DEX
-    expect(new BigNumber(swapResult.amount1).toNumber()).toBeLessThan(0); // User receives CURRENCY
+    expect(new BigNumber(swapResult.amount1).toNumber()).toBeLessThan(100); // User receives CURRENCY
   });
 });

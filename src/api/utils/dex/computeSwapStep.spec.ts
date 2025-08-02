@@ -132,4 +132,119 @@ describe("computeSwapStep", () => {
     expect(amountOut.toNumber()).toBe(0);
     expect(feeAmount.toNumber()).toBe(0);
   });
+  
+  test("should compute swap at negative tick prices", () => {
+    // Given - prices less than 1:1 represent negative ticks
+    const sqrtPriceCurrent = new BigNumber("0.5"); // Negative tick
+    const sqrtPriceTarget = new BigNumber("0.4"); // Even more negative
+    const liquidity = new BigNumber("2000000");
+    const amountRemaining = new BigNumber("500");
+    const fee = 3000;
+    
+    // When
+    const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
+      sqrtPriceCurrent,
+      sqrtPriceTarget,
+      liquidity,
+      amountRemaining,
+      fee
+    );
+    
+    // Then
+    expect(sqrtPriceNext).toBeDefined();
+    expect(amountIn.toNumber()).toBeGreaterThan(0);
+    expect(amountOut.toNumber()).toBeGreaterThan(0);
+    expect(feeAmount.toNumber()).toBeGreaterThan(0);
+    
+    // Price should move towards target
+    expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceCurrent.toNumber());
+    expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceTarget.toNumber());
+  });
+  
+  test("should handle swap crossing from negative to positive price", () => {
+    // Given - crossing from price < 1 to price > 1
+    const sqrtPriceCurrent = new BigNumber("0.8"); // Negative tick
+    const sqrtPriceTarget = new BigNumber("1.2"); // Positive tick
+    const liquidity = new BigNumber("5000000");
+    const amountRemaining = new BigNumber("1000");
+    const fee = 500; // 0.05% fee
+    
+    // When
+    const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
+      sqrtPriceCurrent,
+      sqrtPriceTarget,
+      liquidity,
+      amountRemaining,
+      fee
+    );
+    
+    // Then
+    expect(sqrtPriceNext).toBeDefined();
+    expect(amountIn.toNumber()).toBeGreaterThan(0);
+    expect(amountOut.toNumber()).toBeGreaterThan(0);
+    
+    // Price should move towards target (upward in this case)
+    expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceCurrent.toNumber());
+    expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceTarget.toNumber());
+    
+    // Fee should be proportional to input
+    expect(feeAmount.toNumber()).toBeCloseTo(amountIn.toNumber() * 0.0005, 2);
+  });
+  
+  test("should handle exact output swap at negative ticks", () => {
+    // Given - negative amount for exact output, negative tick prices
+    const sqrtPriceCurrent = new BigNumber("0.6");
+    const sqrtPriceTarget = new BigNumber("0.7");
+    const liquidity = new BigNumber("3000000");
+    const amountRemaining = new BigNumber("-250"); // Negative for exact output
+    const fee = 10000; // 1% fee
+    
+    // When
+    const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
+      sqrtPriceCurrent,
+      sqrtPriceTarget,
+      liquidity,
+      amountRemaining,
+      fee
+    );
+    
+    // Then
+    expect(amountIn.toNumber()).toBeGreaterThan(0);
+    expect(amountOut.toNumber()).toBeGreaterThan(0);
+    expect(feeAmount.toNumber()).toBeGreaterThan(0);
+    
+    // For exact output, output should not exceed requested amount
+    expect(amountOut.toNumber()).toBeLessThanOrEqual(250);
+    
+    // Price should move in correct direction
+    expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceCurrent.toNumber());
+    expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceTarget.toNumber());
+  });
+  
+  test("should handle very small negative tick prices", () => {
+    // Given - very small prices representing very negative ticks
+    const sqrtPriceCurrent = new BigNumber("0.001"); // Very negative tick
+    const sqrtPriceTarget = new BigNumber("0.0009"); // Even more negative
+    const liquidity = new BigNumber("10000000");
+    const amountRemaining = new BigNumber("10000");
+    const fee = 3000;
+    
+    // When
+    const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
+      sqrtPriceCurrent,
+      sqrtPriceTarget,
+      liquidity,
+      amountRemaining,
+      fee
+    );
+    
+    // Then
+    expect(sqrtPriceNext).toBeDefined();
+    expect(amountIn.toNumber()).toBeGreaterThan(0);
+    expect(amountOut.toNumber()).toBeGreaterThan(0);
+    
+    // Verify price moves correctly at extreme values
+    expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceCurrent.toNumber());
+    expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceTarget.toNumber());
+  });
 });

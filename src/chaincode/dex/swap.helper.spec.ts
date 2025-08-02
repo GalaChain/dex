@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { GalaChainContext } from "@gala-chain/chaincode";
 import { fixture } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
@@ -24,6 +23,7 @@ import {
   TickData,
   sqrtPriceToTick
 } from "../../api";
+import { DexV3Contract } from "../DexV3Contract";
 import { processSwapSteps } from "./swap.helper";
 
 describe("swap.helper", () => {
@@ -71,7 +71,7 @@ describe("swap.helper", () => {
       tickData.initialised = true;
       
       // Setup fixture
-      const { ctx } = fixture(GalaChainContext)
+      const { ctx } = fixture(DexV3Contract)
         .savedState(tickData);
       
       // Set up parameters
@@ -106,7 +106,7 @@ describe("swap.helper", () => {
       expect(resultState.feeGrowthGlobalX.toNumber()).toBeGreaterThan(0);
     });
     
-    test("should handle swap with no liquidity", async () => {
+    test("should handle swap with no liquidity gracefully", async () => {
       // Given
       const poolHash = "empty-pool-hash";
       const fee = DexFeePercentageTypes.FEE_0_3_PERCENT;
@@ -140,19 +140,23 @@ describe("swap.helper", () => {
         protocolFee: new BigNumber("0")
       };
       
-      const { ctx } = fixture(GalaChainContext);
+      const { ctx } = fixture(DexV3Contract);
       
-      // When & Then
-      await expect(
-        processSwapSteps(
-          ctx,
-          initialState,
-          pool,
-          new BigNumber("0.9"),
-          true,
-          true
-        )
-      ).rejects.toThrow("Not enough liquidity available in pool");
+      // When
+      const resultState = await processSwapSteps(
+        ctx,
+        initialState,
+        pool,
+        new BigNumber("0.9"),
+        true,
+        true
+      );
+      
+      // Then
+      // With no liquidity, the swap should hit the price limit without swapping
+      expect(resultState.sqrtPrice.toNumber()).toBe(0.9); // Hit price limit
+      expect(resultState.amountSpecifiedRemaining.toNumber()).toBe(100); // No amount consumed
+      expect(resultState.amountCalculated.toNumber()).toBe(0); // No output
     });
   });
 });

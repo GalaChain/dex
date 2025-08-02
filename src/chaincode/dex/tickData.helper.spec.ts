@@ -12,11 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { GalaChainContext } from "@gala-chain/chaincode";
 import { fixture } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 
 import { TickData } from "../../api";
+import { DexV3Contract } from "../DexV3Contract";
 import { fetchOrCreateAndCrossTick, fetchOrCreateTickDataPair } from "./tickData.helper";
 
 describe("tickData.helper", () => {
@@ -32,7 +32,7 @@ describe("tickData.helper", () => {
       existingTickData.feeGrowthOutside0 = new BigNumber("0");
       existingTickData.feeGrowthOutside1 = new BigNumber("0");
       
-      const { ctx } = fixture(GalaChainContext)
+      const { ctx } = fixture(DexV3Contract)
         .savedState(existingTickData);
       
       const feeGrowthGlobal0 = new BigNumber("100");
@@ -57,7 +57,7 @@ describe("tickData.helper", () => {
       const poolHash = "test-pool";
       const tick = 200;
       
-      const { ctx } = fixture(GalaChainContext);
+      const { ctx } = fixture(DexV3Contract);
       
       const feeGrowthGlobal0 = new BigNumber("100");
       const feeGrowthGlobal1 = new BigNumber("50");
@@ -92,7 +92,7 @@ describe("tickData.helper", () => {
       tickUpperData.liquidityNet = new BigNumber("-1000");
       tickUpperData.initialised = true;
       
-      const { ctx } = fixture(GalaChainContext)
+      const { ctx } = fixture(DexV3Contract)
         .savedState(tickLowerData, tickUpperData);
       
       // When
@@ -118,7 +118,7 @@ describe("tickData.helper", () => {
       const tickLower = -200;
       const tickUpper = 200;
       
-      const { ctx } = fixture(GalaChainContext);
+      const { ctx } = fixture(DexV3Contract);
       
       // When
       const result = await fetchOrCreateTickDataPair(
@@ -150,7 +150,7 @@ describe("tickData.helper", () => {
       tickLowerData.liquidityNet = new BigNumber("500");
       tickLowerData.initialised = true;
       
-      const { ctx } = fixture(GalaChainContext)
+      const { ctx } = fixture(DexV3Contract)
         .savedState(tickLowerData);
       
       // When

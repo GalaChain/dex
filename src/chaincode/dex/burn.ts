@@ -172,7 +172,6 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
 
   await updateOrRemovePosition(ctx, poolHash, position, tokenDecimals[0], tokenDecimals[1]);
   await putChainObject(ctx, pool);
-  await putChainObject(ctx, position);
   await putChainObject(ctx, tickUpperData);
   await putChainObject(ctx, tickLowerData);
 

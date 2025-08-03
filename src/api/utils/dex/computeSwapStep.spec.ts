@@ -17,14 +17,14 @@ import BigNumber from "bignumber.js";
 import { computeSwapStep } from "./swapMath.helper";
 
 describe("computeSwapStep", () => {
-  test("should compute swap step for exact input swap", () => {
+  test("should compute swap step for exact input swap (token1 → token0)", () => {
     // Given
     const sqrtPriceCurrent = new BigNumber("1"); // Starting at 1:1 price
-    const sqrtPriceTarget = new BigNumber("0.9"); // Target price
+    const sqrtPriceTarget = new BigNumber("1.1"); // Target price higher (token1 → token0 increases sqrt price)
     const liquidity = new BigNumber("1000000"); // 1M liquidity
     const amountRemaining = new BigNumber("100"); // 100 tokens remaining to swap
     const fee = 3000; // 0.3% fee
-    const zeroForOne = false;
+    const zeroForOne = false; // token1 → token0
 
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -50,19 +50,19 @@ describe("computeSwapStep", () => {
     // Verify fee calculation
     expect(feeAmount.toNumber()).toBeCloseTo(amountIn.toNumber() * 0.003, 2);
     
-    // Verify price moved in correct direction
-    expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceCurrent.toNumber());
-    expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceTarget.toNumber());
+    // Verify price moved in correct direction (token1 → token0 increases sqrt price)
+    expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceCurrent.toNumber());
+    expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceTarget.toNumber());
   });
   
-  test("should compute swap step for exact output swap", () => {
+  test("should compute swap step for exact output swap (token0 → token1)", () => {
     // Given
     const sqrtPriceCurrent = new BigNumber("1");
-    const sqrtPriceTarget = new BigNumber("1.1");
+    const sqrtPriceTarget = new BigNumber("0.9"); // Target price lower (token0 → token1 decreases sqrt price)
     const liquidity = new BigNumber("1000000");
     const amountRemaining = new BigNumber("-50"); // Negative for exact output
     const fee = 3000;
-     const zeroForOne = true;
+    const zeroForOne = true; // token0 → token1
     
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -79,19 +79,19 @@ describe("computeSwapStep", () => {
     expect(amountOut.toNumber()).toBeGreaterThan(0);
     expect(feeAmount.toNumber()).toBeGreaterThan(0);
     
-    // Verify price moved in correct direction for opposite swap
-    expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceCurrent.toNumber());
-    expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceTarget.toNumber());
+    // Verify price moved in correct direction (token0 → token1 decreases sqrt price)
+    expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceCurrent.toNumber());
+    expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceTarget.toNumber());
   });
   
   test("should handle swap with sufficient amount and liquidity", () => {
     // Given
     const sqrtPriceCurrent = new BigNumber("1");
-    const sqrtPriceTarget = new BigNumber("0.99"); // Small price movement
+    const sqrtPriceTarget = new BigNumber("0.99"); // Small price movement downward
     const liquidity = new BigNumber("10000000"); // Large liquidity
     const amountRemaining = new BigNumber("1000"); // Large amount to swap
     const fee = 3000;
-     const zeroForOne = true;
+    const zeroForOne = true; // token0 → token1 (decreases sqrt price)
     
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -144,11 +144,11 @@ describe("computeSwapStep", () => {
   test("should compute swap at negative tick prices", () => {
     // Given - prices less than 1:1 represent negative ticks
     const sqrtPriceCurrent = new BigNumber("0.5"); // Negative tick
-    const sqrtPriceTarget = new BigNumber("0.4"); // Even more negative
+    const sqrtPriceTarget = new BigNumber("0.4"); // Even more negative (price decreasing)
     const liquidity = new BigNumber("2000000");
     const amountRemaining = new BigNumber("500");
     const fee = 3000;
-    const zeroForOne = true;
+    const zeroForOne = true; // token0 → token1 (decreases sqrt price)
     
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -166,7 +166,7 @@ describe("computeSwapStep", () => {
     expect(amountOut.toNumber()).toBeGreaterThan(0);
     expect(feeAmount.toNumber()).toBeGreaterThan(0);
     
-    // Price should move towards target
+    // Price should move towards target (downward for zeroForOne=true)
     expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceCurrent.toNumber());
     expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceTarget.toNumber());
   });
@@ -174,11 +174,11 @@ describe("computeSwapStep", () => {
   test("should handle swap crossing from negative to positive price", () => {
     // Given - crossing from price < 1 to price > 1
     const sqrtPriceCurrent = new BigNumber("0.8"); // Negative tick
-    const sqrtPriceTarget = new BigNumber("1.2"); // Positive tick
+    const sqrtPriceTarget = new BigNumber("1.2"); // Positive tick (price increasing)
     const liquidity = new BigNumber("5000000");
     const amountRemaining = new BigNumber("1000");
     const fee = 500; // 0.05% fee
-    const zeroForOne = true;
+    const zeroForOne = false; // token1 → token0 (increases sqrt price)
     
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -195,7 +195,7 @@ describe("computeSwapStep", () => {
     expect(amountIn.toNumber()).toBeGreaterThan(0);
     expect(amountOut.toNumber()).toBeGreaterThan(0);
     
-    // Price should move towards target (upward in this case)
+    // Price should move towards target (upward for zeroForOne=false)
     expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceCurrent.toNumber());
     expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceTarget.toNumber());
     
@@ -206,11 +206,11 @@ describe("computeSwapStep", () => {
   test("should handle exact output swap at negative ticks", () => {
     // Given - negative amount for exact output, negative tick prices
     const sqrtPriceCurrent = new BigNumber("0.6");
-    const sqrtPriceTarget = new BigNumber("0.7");
+    const sqrtPriceTarget = new BigNumber("0.7"); // Price increasing
     const liquidity = new BigNumber("3000000");
     const amountRemaining = new BigNumber("-250"); // Negative for exact output
     const fee = 10000; // 1% fee
-    const zeroForOne = true;
+    const zeroForOne = false; // token1 → token0 (increases sqrt price)
 
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -230,7 +230,7 @@ describe("computeSwapStep", () => {
     // For exact output, output should not exceed requested amount
     expect(amountOut.toNumber()).toBeLessThanOrEqual(250);
     
-    // Price should move in correct direction
+    // Price should move in correct direction (upward for zeroForOne=false)
     expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceCurrent.toNumber());
     expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceTarget.toNumber());
   });
@@ -238,11 +238,11 @@ describe("computeSwapStep", () => {
   test("should handle very small negative tick prices", () => {
     // Given - very small prices representing very negative ticks
     const sqrtPriceCurrent = new BigNumber("0.001"); // Very negative tick
-    const sqrtPriceTarget = new BigNumber("0.0009"); // Even more negative
+    const sqrtPriceTarget = new BigNumber("0.0009"); // Even more negative (price decreasing)
     const liquidity = new BigNumber("10000000");
     const amountRemaining = new BigNumber("10000");
     const fee = 3000;
-    const zeroForOne = true;
+    const zeroForOne = true; // token0 → token1 (decreases sqrt price)
     
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -259,7 +259,7 @@ describe("computeSwapStep", () => {
     expect(amountIn.toNumber()).toBeGreaterThan(0);
     expect(amountOut.toNumber()).toBeGreaterThan(0);
     
-    // Verify price moves correctly at extreme values
+    // Verify price moves correctly at extreme values (downward for zeroForOne=true)
     expect(sqrtPriceNext.toNumber()).toBeLessThanOrEqual(sqrtPriceCurrent.toNumber());
     expect(sqrtPriceNext.toNumber()).toBeGreaterThanOrEqual(sqrtPriceTarget.toNumber());
   });

@@ -24,14 +24,16 @@ describe("computeSwapStep", () => {
     const liquidity = new BigNumber("1000000"); // 1M liquidity
     const amountRemaining = new BigNumber("100"); // 100 tokens remaining to swap
     const fee = 3000; // 0.3% fee
-    
+    const zeroForOne = false;
+
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
       sqrtPriceCurrent,
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
     
     // Then
@@ -60,6 +62,7 @@ describe("computeSwapStep", () => {
     const liquidity = new BigNumber("1000000");
     const amountRemaining = new BigNumber("-50"); // Negative for exact output
     const fee = 3000;
+     const zeroForOne = true;
     
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -67,7 +70,8 @@ describe("computeSwapStep", () => {
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
     
     // Then
@@ -87,6 +91,7 @@ describe("computeSwapStep", () => {
     const liquidity = new BigNumber("10000000"); // Large liquidity
     const amountRemaining = new BigNumber("1000"); // Large amount to swap
     const fee = 3000;
+     const zeroForOne = true;
     
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -94,7 +99,8 @@ describe("computeSwapStep", () => {
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
     
     // Then
@@ -115,6 +121,7 @@ describe("computeSwapStep", () => {
     const liquidity = new BigNumber("0"); // No liquidity
     const amountRemaining = new BigNumber("100");
     const fee = 3000;
+    const zeroForOne = true;
     
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -122,7 +129,8 @@ describe("computeSwapStep", () => {
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
     
     // Then
@@ -140,6 +148,7 @@ describe("computeSwapStep", () => {
     const liquidity = new BigNumber("2000000");
     const amountRemaining = new BigNumber("500");
     const fee = 3000;
+    const zeroForOne = true;
     
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -147,7 +156,8 @@ describe("computeSwapStep", () => {
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
     
     // Then
@@ -168,6 +178,7 @@ describe("computeSwapStep", () => {
     const liquidity = new BigNumber("5000000");
     const amountRemaining = new BigNumber("1000");
     const fee = 500; // 0.05% fee
+    const zeroForOne = true;
     
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -175,7 +186,8 @@ describe("computeSwapStep", () => {
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
     
     // Then
@@ -198,14 +210,16 @@ describe("computeSwapStep", () => {
     const liquidity = new BigNumber("3000000");
     const amountRemaining = new BigNumber("-250"); // Negative for exact output
     const fee = 10000; // 1% fee
-    
+    const zeroForOne = true;
+
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
       sqrtPriceCurrent,
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
     
     // Then
@@ -228,6 +242,7 @@ describe("computeSwapStep", () => {
     const liquidity = new BigNumber("10000000");
     const amountRemaining = new BigNumber("10000");
     const fee = 3000;
+    const zeroForOne = true;
     
     // When
     const [sqrtPriceNext, amountIn, amountOut, feeAmount] = computeSwapStep(
@@ -235,7 +250,8 @@ describe("computeSwapStep", () => {
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
     
     // Then

@@ -38,6 +38,7 @@ describe("computeSwapStep", () => {
     const sqrtPriceCurrent = new BigNumber(2);
     const sqrtPriceTarget = new BigNumber(1.5);
     const amountRemaining = new BigNumber(100);
+    const zeroForOne = true;
 
     (getAmount0Delta as jest.Mock).mockReturnValue(new BigNumber(90));
     (getNextSqrtPriceFromInput as jest.Mock).mockReturnValue(sqrtPriceTarget);
@@ -49,7 +50,8 @@ describe("computeSwapStep", () => {
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
 
     // Then
@@ -64,6 +66,7 @@ describe("computeSwapStep", () => {
     const sqrtPriceCurrent = new BigNumber(2);
     const sqrtPriceTarget = new BigNumber(1.5);
     const amountRemaining = new BigNumber(60);
+    const zeroForOne = true;
 
     (getNextSqrtPriceFromInput as jest.Mock).mockReturnValue(new BigNumber(1.6));
     (getAmount0Delta as jest.Mock).mockReturnValue(new BigNumber(60));
@@ -75,7 +78,8 @@ describe("computeSwapStep", () => {
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
 
     // Then
@@ -90,6 +94,7 @@ describe("computeSwapStep", () => {
     const sqrtPriceCurrent = new BigNumber(2);
     const sqrtPriceTarget = new BigNumber(1.5);
     const amountRemaining = new BigNumber(-50);
+    const zeroForOne = true;
 
     (getAmount1Delta as jest.Mock).mockReturnValue(new BigNumber(40));
     (getAmount0Delta as jest.Mock).mockReturnValue(new BigNumber(70));
@@ -100,7 +105,8 @@ describe("computeSwapStep", () => {
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
 
     // Then
@@ -115,6 +121,7 @@ describe("computeSwapStep", () => {
     const sqrtPriceCurrent = new BigNumber(2);
     const sqrtPriceTarget = new BigNumber(1.5);
     const amountRemaining = new BigNumber(-25);
+    const zeroForOne = true;
 
     (getAmount1Delta as jest.Mock).mockReturnValue(new BigNumber(40));
     (getNextSqrtPriceFromOutput as jest.Mock).mockReturnValue(new BigNumber(1.6));
@@ -126,7 +133,8 @@ describe("computeSwapStep", () => {
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
 
     // Then
@@ -141,6 +149,7 @@ describe("computeSwapStep", () => {
     const sqrtPriceCurrent = new BigNumber(1.5);
     const sqrtPriceTarget = new BigNumber(2); // implies zeroForOne = false
     const amountRemaining = new BigNumber(100);
+    const zeroForOne = false;
 
     (getAmount1Delta as jest.Mock).mockReturnValue(new BigNumber(80));
     (getNextSqrtPriceFromInput as jest.Mock).mockReturnValue(sqrtPriceTarget);
@@ -152,7 +161,8 @@ describe("computeSwapStep", () => {
       sqrtPriceTarget,
       liquidity,
       amountRemaining,
-      fee
+      fee,
+      zeroForOne
     );
 
     // Then

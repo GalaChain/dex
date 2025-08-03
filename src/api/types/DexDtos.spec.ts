@@ -21,6 +21,7 @@ import { plainToInstance } from "class-transformer";
 import {
   AddLiquidityDTO,
   BurnDto,
+  BurnEstimateDto,
   CollectDto,
   CollectProtocolFeesDto,
   CreatePoolDto,
@@ -29,6 +30,8 @@ import {
   GetPoolDto,
   GetPositionDto,
   GetUserPositionsDto,
+  GetUserPositionsResDto,
+  IPosition,
   PlaceLimitOrderDto,
   PositionDto,
   QuoteExactAmountDto,
@@ -511,6 +514,56 @@ describe("DexDtos", () => {
       expect(dto.owner).toBe("owner-address");
       expect(dto.positionId).toBe("position-456");
     });
+
+    it("should create valid GetPositionDto with optional positionId undefined", async () => {
+      // Given
+      const dto = new GetPositionDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_3_PERCENT,
+        -500,
+        1000,
+        "test-owner",
+        undefined
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.owner).toBe("test-owner");
+      expect(dto.positionId).toBeUndefined();
+    });
+
+    it("should serialize GetPositionDto correctly with undefined positionId", async () => {
+      // Given
+      const testUser = ChainUser.withRandomKeys("get-position-test-user");
+      const dto = new GetPositionDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_1_PERCENT,
+        -100,
+        300,
+        "serialization-test-owner",
+        undefined
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+      dto.sign(testUser.privateKey);
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.positionId).toBeUndefined();
+      expect(dto.signature).toBeDefined();
+      expect(dto.signature?.length).toBeGreaterThanOrEqual(128);
+      expect(dto.isSignatureValid(testUser.publicKey)).toBe(true);
+
+      // Verify signature recovery with undefined optional property
+      const recoveredPublicKey = signatures.recoverPublicKey(dto.signature!, dto);
+      expect(recoveredPublicKey).toBe(testUser.publicKey);
+    });
   });
 
   describe("GetUserPositionsDto", () => {
@@ -547,6 +600,70 @@ describe("DexDtos", () => {
 
       // Then
       expect(validationErrors.length).toBeGreaterThan(0);
+    });
+
+    it("should create valid GetUserPositionsDto with bookmark undefined", async () => {
+      // Given
+      const dto = new GetUserPositionsDto(mockUserRef, undefined, 7);
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.bookmark).toBeUndefined();
+      expect(dto.limit).toBe(7);
+      expect(dto.user).toBe(mockUserRef);
+    });
+
+    it("should serialize GetUserPositionsDto correctly with undefined bookmark", async () => {
+      // Given
+      const testUser = ChainUser.withRandomKeys("get-user-positions-test-user");
+      const dto = new GetUserPositionsDto(
+        asValidUserRef("client|get-user-positions-test"),
+        undefined, // bookmark omitted
+        3
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+      dto.sign(testUser.privateKey);
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.bookmark).toBeUndefined();
+      expect(dto.signature).toBeDefined();
+      expect(dto.signature?.length).toBeGreaterThanOrEqual(128);
+      expect(dto.isSignatureValid(testUser.publicKey)).toBe(true);
+
+      // Verify signature recovery with undefined optional property
+      const recoveredPublicKey = signatures.recoverPublicKey(dto.signature!, dto);
+      expect(recoveredPublicKey).toBe(testUser.publicKey);
+    });
+
+    it("should create GetUserPositionsDto with bookmark defined and verify serialization", async () => {
+      // Given
+      const testUser = ChainUser.withRandomKeys("get-user-positions-bookmark-test");
+      const dto = new GetUserPositionsDto(
+        asValidUserRef("client|bookmark-test"),
+        "test-bookmark-abc123", // bookmark provided
+        8
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+      dto.sign(testUser.privateKey);
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.bookmark).toBe("test-bookmark-abc123");
+      expect(dto.signature).toBeDefined();
+      expect(dto.signature?.length).toBeGreaterThanOrEqual(128);
+      expect(dto.isSignatureValid(testUser.publicKey)).toBe(true);
+
+      // Verify signature recovery with defined optional property
+      const recoveredPublicKey = signatures.recoverPublicKey(dto.signature!, dto);
+      expect(recoveredPublicKey).toBe(testUser.publicKey);
     });
   });
 
@@ -668,6 +785,206 @@ describe("DexDtos", () => {
     it("should fail validation with negative fee", async () => {
       // Given
       const dto = new SetProtocolFeeDto(-0.1);
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("GetUserPositionsResDto", () => {
+    const mockPosition: IPosition = {
+      poolHash: "test-pool-hash",
+      tickUpper: 1000,
+      tickLower: -1000,
+      liquidity: "500000",
+      positionId: "test-position-123",
+      token0Img: "https://example.com/token0.png",
+      token1Img: "https://example.com/token1.png",
+      token0ClassKey: mockToken0,
+      token1ClassKey: mockToken1,
+      fee: DexFeePercentageTypes.FEE_0_3_PERCENT,
+      token0Symbol: "GALA",
+      token1Symbol: "TOWN"
+    };
+
+    it("should create valid GetUserPositionsResDto with constructor", async () => {
+      // Given
+      const positions = [mockPosition];
+      const dto = new GetUserPositionsResDto(positions, "next-bookmark-456");
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.positions).toHaveLength(1);
+      expect(dto.positions[0]).toBe(mockPosition);
+      expect(dto.nextBookMark).toBe("next-bookmark-456");
+    });
+
+    it("should create valid GetUserPositionsResDto with undefined nextBookMark", async () => {
+      // Given
+      const positions = [mockPosition];
+      // Note: The constructor signature shows nextBookMark as required, but the property is optional
+      // This suggests there might be a mismatch. Let me test both scenarios.
+      const dto = new GetUserPositionsResDto(positions, undefined as any);
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.positions).toHaveLength(1);
+      expect(dto.nextBookMark).toBeUndefined();
+    });
+
+    it("should create GetUserPositionsResDto with empty positions array", async () => {
+      // Given
+      const dto = new GetUserPositionsResDto([], "bookmark-empty-results");
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.positions).toHaveLength(0);
+      expect(dto.nextBookMark).toBe("bookmark-empty-results");
+    });
+
+    it("should serialize GetUserPositionsResDto correctly with undefined nextBookMark", async () => {
+      // Given
+      const testUser = ChainUser.withRandomKeys("get-user-positions-res-test");
+      const positions = [mockPosition];
+      const dto = new GetUserPositionsResDto(positions, undefined as any);
+
+      // When
+      const validationErrors = await dto.validate();
+      dto.sign(testUser.privateKey);
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.nextBookMark).toBeUndefined();
+      expect(dto.signature).toBeDefined();
+      expect(dto.signature?.length).toBeGreaterThanOrEqual(128);
+      expect(dto.isSignatureValid(testUser.publicKey)).toBe(true);
+
+      // Verify signature recovery with undefined optional property
+      const recoveredPublicKey = signatures.recoverPublicKey(dto.signature!, dto);
+      expect(recoveredPublicKey).toBe(testUser.publicKey);
+    });
+
+    it("should handle multiple positions with nextBookMark", async () => {
+      // Given
+      const position2: IPosition = {
+        poolHash: "test-pool-hash-2",
+        tickUpper: 2000,
+        tickLower: -500,
+        liquidity: "750000",
+        positionId: "test-position-456"
+      };
+      const positions = [mockPosition, position2];
+      const dto = new GetUserPositionsResDto(positions, "has-more-results-bookmark");
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.positions).toHaveLength(2);
+      expect(dto.nextBookMark).toBe("has-more-results-bookmark");
+    });
+  });
+
+  describe("BurnEstimateDto", () => {
+    it("should create valid BurnEstimateDto with constructor", async () => {
+      // Given
+      const dto = new BurnEstimateDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_3_PERCENT,
+        new BigNumber("1000"),
+        -200,
+        200,
+        mockUserRef,
+        "burn-estimate-position-123"
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.amount.toString()).toBe("1000");
+      expect(dto.positionId).toBe("burn-estimate-position-123");
+    });
+
+    it("should create valid BurnEstimateDto with optional positionId undefined", async () => {
+      // Given
+      const dto = new BurnEstimateDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_1_PERCENT,
+        new BigNumber("2500"),
+        -1000,
+        500,
+        mockUserRef,
+        undefined
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.amount.toString()).toBe("2500");
+      expect(dto.positionId).toBeUndefined();
+    });
+
+    it("should serialize BurnEstimateDto correctly with undefined positionId", async () => {
+      // Given
+      const testUser = ChainUser.withRandomKeys("burn-estimate-test-user");
+      const dto = new BurnEstimateDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_05_PERCENT,
+        new BigNumber("750"),
+        -300,
+        400,
+        asValidUserRef("client|burn-estimate-test"),
+        undefined
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+      dto.sign(testUser.privateKey);
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.positionId).toBeUndefined();
+      expect(dto.signature).toBeDefined();
+      expect(dto.signature?.length).toBeGreaterThanOrEqual(128);
+      expect(dto.isSignatureValid(testUser.publicKey)).toBe(true);
+
+      // Verify signature recovery with undefined optional property
+      const recoveredPublicKey = signatures.recoverPublicKey(dto.signature!, dto);
+      expect(recoveredPublicKey).toBe(testUser.publicKey);
+    });
+
+    it("should fail validation with negative amount", async () => {
+      // Given
+      const dto = new BurnEstimateDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_3_PERCENT,
+        new BigNumber("-100"), // Negative amount should fail
+        -100,
+        100,
+        mockUserRef,
+        undefined
+      );
 
       // When
       const validationErrors = await dto.validate();

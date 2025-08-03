@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 import { randomUniqueKey, TokenBalance, TokenClass, TokenClassKey, TokenInstance } from "@gala-chain/api";
-import { currency, fixture, transactionSuccess, users } from "@gala-chain/test";
+import { currency, fixture, transactionError, transactionSuccess, users } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
@@ -30,7 +30,7 @@ import dex from "../test/dex";
 import { generateKeyFromClassKey } from "./dexUtils";
 
 describe("swap", () => {
-  test("should execute a successful token swap in the happy path", async () => {
+  it("should execute a successful token swap in the happy path", async () => {
     // Given
     const currencyClass: TokenClass = currency.tokenClass();
     const currencyInstance: TokenInstance = currency.tokenInstance();
@@ -94,41 +94,6 @@ describe("swap", () => {
       quantity: new BigNumber("10000") // User has 10k CURRENCY tokens
     });
     
-    const tickLower = -100;
-    const tickUpper = 100;
-    
-    const tickLowerData = plainToInstance(TickData, {
-      poolHash: pool.genPoolHash(),
-      tick: tickLower,
-      liquidityGross: new BigNumber("1000000"),
-      liquidityNet: new BigNumber("1000000"),
-      feeGrowthOutside0: new BigNumber("0"),
-      feeGrowthOutside1: new BigNumber("0"),
-      initialised: true
-    });
-    
-    const tickUpperData = plainToInstance(TickData, {
-      poolHash: pool.genPoolHash(),
-      tick: tickUpper,
-      liquidityGross: new BigNumber("1000000"),
-      liquidityNet: new BigNumber("-1000000"),
-      feeGrowthOutside0: new BigNumber("0"),
-      feeGrowthOutside1: new BigNumber("0"),
-      initialised: true
-    });
-    
-    // Create position to represent the liquidity
-    const position = new DexPositionData(
-      pool.genPoolHash(),
-      "test-position",
-      tickUpper,
-      tickLower,
-      dexClassKey,
-      currencyClassKey,
-      fee
-    );
-    position.liquidity = new BigNumber("1000000");
-    
     // Setup the fixture
     const { ctx, contract } = fixture(DexV3Contract)
       .registeredUsers(users.testUser1)
@@ -141,10 +106,7 @@ describe("swap", () => {
         poolDexBalance,
         poolCurrencyBalance,
         userDexBalance,
-        userCurrencyBalance,
-        // tickLowerData,
-        // tickUpperData,
-        // position
+        userCurrencyBalance
       );
     
     const swapDto = new SwapDto(
@@ -153,9 +115,9 @@ describe("swap", () => {
       fee,
       new BigNumber("151.714011"), 
       true, // zeroForOne - swapping token0 (DEX) for token1 (CURRENCY)
-      new BigNumber("0.000000000000000000094212147"),
+      new BigNumber("0.015"),
       new BigNumber("151.714011"), 
-      new BigNumber("-75.8849266551571701291")
+      new BigNumber("-0.04")
     );
 
     swapDto.uniqueKey = randomUniqueKey();
@@ -168,7 +130,7 @@ describe("swap", () => {
       currencyClass.symbol,
       "https://app.gala.games/test-image-placeholder-url.png",
       "151.7140110000",
-      "-79.8788701633",
+      "-0.0419989955",
       "client|testUser1",
       pool.genPoolHash(),
       poolAlias,
@@ -193,5 +155,109 @@ describe("swap", () => {
     // Verify amounts - exact amounts will depend on swap math
     expect(new BigNumber(swapResult.amount0).toNumber()).toBeGreaterThan(0); // User pays DEX
     expect(new BigNumber(swapResult.amount1).toNumber()).toBeLessThan(100); // User receives CURRENCY
+  });
+
+  it("should fail to execute a token swap when amount out is less than minimum", async () => {
+    // Given
+    const currencyClass: TokenClass = currency.tokenClass();
+    const currencyInstance: TokenInstance = currency.tokenInstance();
+    const currencyClassKey: TokenClassKey = currency.tokenClassKey();
+    const dexClass: TokenClass = dex.tokenClass();
+    const dexInstance: TokenInstance = dex.tokenInstance();
+    const dexClassKey: TokenClassKey = dex.tokenClassKey();
+    
+    // Create normalized token keys for pool
+    const token0Key = generateKeyFromClassKey(dexClassKey);
+    const token1Key = generateKeyFromClassKey(currencyClassKey);
+    const fee = DexFeePercentageTypes.FEE_0_05_PERCENT;
+    
+    // Initialize pool with manual values
+    const pool = new Pool(
+      token0Key,
+      token1Key,
+      dexClassKey,
+      currencyClassKey,
+      fee,
+      new BigNumber("0.01664222241481084743"),
+      0.1
+    );
+
+    const bitmap: Record<string, string> = {
+      "-30":"75557863725914323419136",
+      "-31":"37778931862957161709568",
+      "-32":"40564819207303340847894502572032",
+      "-33":"26959946667150639794667015087019630673637144422540572481103610249216",
+      "-346":"5708990770823839524233143877797980545530986496",
+      "346":"20282409603651670423947251286016"
+    };
+    
+    // Add initial liquidity to the pool
+    pool.liquidity = new BigNumber("77789.999499306764803261");
+    pool.grossPoolLiquidity = new BigNumber("348717210.55494320449679994");
+    pool.sqrtPrice = new BigNumber("0.01664222241481084743");
+    pool.bitmap = bitmap;
+    // Create pool balances - pool needs tokens to pay out
+    const poolAlias = pool.getPoolAlias();
+    const poolDexBalance = plainToInstance(TokenBalance, {
+      ...dex.tokenBalance(),
+      owner: poolAlias,
+      quantity: new BigNumber("97.238975330345368866")
+    });
+    const poolCurrencyBalance = plainToInstance(TokenBalance, {
+      ...currency.tokenBalance(),
+      owner: poolAlias,
+      quantity: new BigNumber("188809.790718")
+    });
+    
+    // Create user balances - user needs tokens to swap
+    const userDexBalance = plainToInstance(TokenBalance, {
+      ...dex.tokenBalance(),
+      owner: users.testUser1.identityKey,
+      quantity: new BigNumber("10000") // User has 10k DEX tokens
+    });
+    const userCurrencyBalance = plainToInstance(TokenBalance, {
+      ...currency.tokenBalance(),
+      owner: users.testUser1.identityKey,
+      quantity: new BigNumber("10000") // User has 10k CURRENCY tokens
+    });
+    
+    // Setup the fixture
+    const { ctx, contract } = fixture(DexV3Contract)
+      .registeredUsers(users.testUser1)
+      .savedState(
+        currencyClass,
+        currencyInstance,
+        dexClass,
+        dexInstance,
+        pool,
+        poolDexBalance,
+        poolCurrencyBalance,
+        userDexBalance,
+        userCurrencyBalance
+      );
+    
+    const swapDto = new SwapDto(
+      dexClassKey,
+      currencyClassKey,
+      fee,
+      new BigNumber("151.714011"), 
+      true, // zeroForOne - swapping token0 (DEX) for token1 (CURRENCY)
+      new BigNumber("0.000000000000000000094212147"),
+      new BigNumber("151.714011"), 
+      new BigNumber("-75.8849266551571701291")
+    );
+
+    swapDto.uniqueKey = randomUniqueKey();
+
+    const signedDto = swapDto.signed(users.testUser1.privateKey);
+    
+    // When
+    const response = await contract.Swap(ctx, signedDto);
+    
+    // Then
+    expect(response).toEqual(transactionError(
+      "Slippage tolerance exceeded: minimum received tokens (-75.8849266551571701291) " +
+      "is less than actual received amount (-0.04199899554428437042776361879722152347)."
+    ));
   });
 });

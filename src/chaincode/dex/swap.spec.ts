@@ -123,7 +123,7 @@ describe("swap", () => {
       currencyClass.symbol,
       "https://app.gala.games/test-image-placeholder-url.png",
       "151.7140110000",
-      "-0.0419989955",
+      "-0.0419968816",
       "client|testUser1",
       pool.genPoolHash(),
       poolAlias,
@@ -251,7 +251,7 @@ describe("swap", () => {
     expect(response).toEqual(
       transactionError(
         "Slippage tolerance exceeded: minimum received tokens (-75.8849266551571701291) " +
-          "is less than actual received amount (-0.04199899554428437042776361879722152347)."
+          "is less than actual received amount (-0.04199688158254951488549494150933105767)."
       )
     );
   });

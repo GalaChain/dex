@@ -49,9 +49,13 @@ describe("tick.helper", () => {
 
       // When
       const tick = sqrtPriceToTick(sqrtPrice);
+      const tickPrice = tickToSqrtPrice(tick);
+      const higherTickPrice = tickToSqrtPrice(tick + 1);
 
       // Then
       expect(tick).toBe(200);
+      expect(tickPrice.toNumber()).toBeLessThanOrEqual(sqrtPrice.toNumber());
+      expect(higherTickPrice.toNumber()).toBeGreaterThan(sqrtPrice.toNumber());
     });
   });
 

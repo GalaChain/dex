@@ -41,7 +41,8 @@ export function computeSwapStep(
   sqrtPriceTarget: BigNumber,
   liquidity: BigNumber,
   amountRemaining: BigNumber,
-  fee: number
+  fee: number,
+  zeroForOne: boolean
 ): BigNumber[] {
   //returns
   let amountIn = new BigNumber(0),
@@ -49,8 +50,6 @@ export function computeSwapStep(
     sqrtPriceNext: BigNumber,
     feeAmount: BigNumber;
 
-  //define direction
-  const zeroForOne = sqrtPriceCurrent.isGreaterThanOrEqualTo(sqrtPriceTarget);
   const exactInput = amountRemaining.isGreaterThanOrEqualTo(0);
   if (exactInput) {
     const amountRemainingLessFee = amountRemaining.times(FEE_PIPS - fee).dividedBy(FEE_PIPS);
@@ -58,27 +57,32 @@ export function computeSwapStep(
     amountIn = zeroForOne
       ? getAmount0Delta(sqrtPriceTarget, sqrtPriceCurrent, liquidity)
       : getAmount1Delta(sqrtPriceCurrent, sqrtPriceTarget, liquidity);
-    if (amountRemainingLessFee.isGreaterThanOrEqualTo(amountIn)) sqrtPriceNext = sqrtPriceTarget;
-    else
+
+    if (amountRemainingLessFee.isGreaterThanOrEqualTo(amountIn)) {
+      sqrtPriceNext = sqrtPriceTarget;
+    } else {
       sqrtPriceNext = getNextSqrtPriceFromInput(
         sqrtPriceCurrent,
         liquidity,
         amountRemainingLessFee,
         zeroForOne
       );
+    }
   } else {
     amountOut = zeroForOne
       ? getAmount1Delta(sqrtPriceTarget, sqrtPriceCurrent, liquidity)
       : getAmount0Delta(sqrtPriceCurrent, sqrtPriceTarget, liquidity);
 
-    if (amountRemaining.multipliedBy(-1).isGreaterThanOrEqualTo(amountOut)) sqrtPriceNext = sqrtPriceTarget;
-    else
+    if (amountRemaining.multipliedBy(-1).isGreaterThanOrEqualTo(amountOut)) {
+      sqrtPriceNext = sqrtPriceTarget;
+    } else {
       sqrtPriceNext = getNextSqrtPriceFromOutput(
         sqrtPriceCurrent,
         liquidity,
         amountRemaining.multipliedBy(-1),
         zeroForOne
       );
+    }
   }
 
   const max = sqrtPriceTarget.isEqualTo(sqrtPriceNext);

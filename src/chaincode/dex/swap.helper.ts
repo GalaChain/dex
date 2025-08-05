@@ -101,7 +101,8 @@ export async function processSwapSteps(
         : step.sqrtPriceNext,
       state.liquidity,
       state.amountSpecifiedRemaining,
-      pool.fee
+      pool.fee,
+      zeroForOne
     );
 
     // Adjust remaining and calculated amounts depending on exact input/output

@@ -34,12 +34,18 @@ export function tickToSqrtPrice(tick: number): BigNumber {
 
 /**
  *
- * @notice Calculates the greatest tick value such that getRatioAtTick(tick) <= ratio
+ * @notice Calculates the greatest tick value such that tickToSqrtPrice(tick) <= sqrtPrice
  *  @param sqrtPrice The sqrt ratio for which to compute the tick
  *  @return tick The greatest tick for which the ratio is less than or equal to the input ratio
  */
 export function sqrtPriceToTick(sqrtPrice: BigNumber): number {
-  return Number((Math.log(sqrtPrice.toNumber() ** 2) / Math.log(1.0001)).toFixed(0));
+  const calculatedTick = Number((Math.log(sqrtPrice.toNumber() ** 2) / Math.log(1.0001)).toFixed(0));
+
+  const tickPrice = tickToSqrtPrice(calculatedTick);
+
+  const tick = tickPrice.isLessThanOrEqualTo(sqrtPrice) ? calculatedTick : calculatedTick - 1;
+
+  return tick;
 }
 
 /**

@@ -12,13 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { fixture } from "@gala-chain/test";
+import { fixture, transactionError } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
 import { DexFeePercentageTypes, Pool, SwapState, TickData, sqrtPriceToTick } from "../../api";
 import { DexV3Contract } from "../DexV3Contract";
 import { processSwapSteps } from "./swap.helper";
+import { GalaChainResponse } from "@gala-chain/api";
 
 describe("swap.helper", () => {
   describe("processSwapSteps", () => {
@@ -278,5 +279,110 @@ describe("swap.helper", () => {
       expect(resultState.amountSpecifiedRemaining.toNumber()).toBeLessThan(1000);
       expect(resultState.amountCalculated.toNumber()).toBeLessThan(0);
     });
+  });
+
+  test("loop performance", async () => {
+    // Given
+    const poolHash = "loop-pool";
+    const poolWithDustLiquidity = plainToInstance(Pool, {
+      "fee": 500,
+      "bitmap": {
+        "-2": "0",
+        "-3": "0",
+        "-4": "0",
+        "-5": "0",
+        "-6": "6129982163463555433433388108601236734474956488734408704",
+        "-7": "0",
+        "-8": "0",
+        "-9": "0",
+        "-10": "0",
+        "-11": "0",
+        "-12": "0",
+        "-13": "0",
+        "-14": "0",
+        "-15": "0",
+        "-16": "0",
+        "-17": "0",
+        "-18": "0",
+        "-19": "0",
+        "-20": "0",
+        "-21": "0",
+        "-22": "0",
+        "-23": "0",
+        "-24": "0",
+        "-25": "0",
+        "-26": "8"
+      },
+      "token0": "GALA$Unit$none$none",
+      "token1": "GOSMI$Unit$none$none",
+      "liquidity": "0.034029613108643226",
+      "sqrtPrice": "0.86759926423373788029",
+      "tickSpacing": 10,
+      "protocolFees": 0.1,
+      "token0ClassKey": {
+        "type": "none",
+        "category": "Unit",
+        "collection": "GALA",
+        "additionalKey": "none"
+      },
+      "token1ClassKey": {
+        "type": "none",
+        "category": "Unit",
+        "collection": "GOSMI",
+        "additionalKey": "none"
+      },
+      "feeGrowthGlobal0": "0",
+      "feeGrowthGlobal1": "0.00037637760823854262",
+      "grossPoolLiquidity": "1803.22919862700454574",
+      "protocolFeesToken0": "0",
+      "protocolFeesToken1": "0.0000014231093767904548846723852534735862941902344",
+      "maxLiquidityPerTick": "1917565579412846627735051215301243.08110657663841167978"
+    });
+    poolWithDustLiquidity.genPoolHash = () => poolHash;
+
+
+    const { ctx } = fixture(DexV3Contract).savedState(poolWithDustLiquidity);
+
+    const state: SwapState = {
+      amountSpecifiedRemaining: new BigNumber("-41.62"), 
+      amountCalculated: new BigNumber("0"),
+      sqrtPrice: new BigNumber(poolWithDustLiquidity.sqrtPrice),
+      tick: sqrtPriceToTick(poolWithDustLiquidity.sqrtPrice),
+      liquidity: new BigNumber("0.034029613108643226"),
+      feeGrowthGlobalX: new BigNumber("0"),
+      protocolFee: new BigNumber("500")
+    };
+
+    const bitmapEntriesStart = Object.keys(poolWithDustLiquidity.bitmap).length;
+
+    // When
+    const exactInput = true;
+    const zeroForOne = false;
+
+    // logic from quoteExactAmount
+    const sqrtPriceLimit = zeroForOne
+      ? new BigNumber("0.000000000000000000054212147")
+      : new BigNumber("18446050999999999999");
+
+    const swapPromise = await processSwapSteps(
+      ctx,
+      state,
+      poolWithDustLiquidity,
+      sqrtPriceLimit,
+      exactInput,
+      zeroForOne
+    ).catch((e) => e);
+
+    // Then
+    const bitmapEntriesEnd = Object.keys(poolWithDustLiquidity.bitmap).length;
+
+    // started with 25, iterated through to 373!
+    expect(bitmapEntriesStart).toBe(25);
+    expect(bitmapEntriesEnd).toBe(373);
+
+    // todo: add real values for test later
+    // expect to fail, useful for analyzing actual output in test result
+    expect(poolWithDustLiquidity).toEqual({});
+    expect(state).toEqual({});
   });
 });

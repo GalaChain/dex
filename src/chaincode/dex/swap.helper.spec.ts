@@ -12,15 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { GalaChainResponse } from "@gala-chain/api";
 import { fixture, transactionError } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
-import { plainToInstance } from "class-transformer";
-import { performance } from "perf_hooks";
+import { instanceToInstance, plainToInstance } from "class-transformer";
+import dns from "dns";
+import { monitorEventLoopDelay, performance } from "perf_hooks";
+import { setImmediate } from "timers/promises";
 
 import { DexFeePercentageTypes, Pool, SwapState, TickData, sqrtPriceToTick } from "../../api";
 import { DexV3Contract } from "../DexV3Contract";
 import { processSwapSteps } from "./swap.helper";
-import { GalaChainResponse } from "@gala-chain/api";
 
 describe("swap.helper", () => {
   describe("processSwapSteps", () => {
@@ -286,8 +288,8 @@ describe("swap.helper", () => {
     // Given
     const poolHash = "loop-pool";
     const poolWithDustLiquidity = plainToInstance(Pool, {
-      "fee": 500,
-      "bitmap": {
+      fee: 500,
+      bitmap: {
         "-2": "0",
         "-3": "0",
         "-4": "0",
@@ -314,38 +316,37 @@ describe("swap.helper", () => {
         "-25": "0",
         "-26": "8"
       },
-      "token0": "GALA$Unit$none$none",
-      "token1": "GOSMI$Unit$none$none",
-      "liquidity": "0.034029613108643226",
-      "sqrtPrice": "0.86759926423373788029",
-      "tickSpacing": 10,
-      "protocolFees": 0.1,
-      "token0ClassKey": {
-        "type": "none",
-        "category": "Unit",
-        "collection": "GALA",
-        "additionalKey": "none"
+      token0: "GALA$Unit$none$none",
+      token1: "GOSMI$Unit$none$none",
+      liquidity: "0.034029613108643226",
+      sqrtPrice: "0.86759926423373788029",
+      tickSpacing: 10,
+      protocolFees: 0.1,
+      token0ClassKey: {
+        type: "none",
+        category: "Unit",
+        collection: "GALA",
+        additionalKey: "none"
       },
-      "token1ClassKey": {
-        "type": "none",
-        "category": "Unit",
-        "collection": "GOSMI",
-        "additionalKey": "none"
+      token1ClassKey: {
+        type: "none",
+        category: "Unit",
+        collection: "GOSMI",
+        additionalKey: "none"
       },
-      "feeGrowthGlobal0": "0",
-      "feeGrowthGlobal1": "0.00037637760823854262",
-      "grossPoolLiquidity": "1803.22919862700454574",
-      "protocolFeesToken0": "0",
-      "protocolFeesToken1": "0.0000014231093767904548846723852534735862941902344",
-      "maxLiquidityPerTick": "1917565579412846627735051215301243.08110657663841167978"
+      feeGrowthGlobal0: "0",
+      feeGrowthGlobal1: "0.00037637760823854262",
+      grossPoolLiquidity: "1803.22919862700454574",
+      protocolFeesToken0: "0",
+      protocolFeesToken1: "0.0000014231093767904548846723852534735862941902344",
+      maxLiquidityPerTick: "1917565579412846627735051215301243.08110657663841167978"
     });
     poolWithDustLiquidity.genPoolHash = () => poolHash;
-
 
     const { ctx } = fixture(DexV3Contract).savedState(poolWithDustLiquidity);
 
     const state: SwapState = {
-      amountSpecifiedRemaining: new BigNumber("-41.62"), 
+      amountSpecifiedRemaining: new BigNumber("-41.62"),
       amountCalculated: new BigNumber("0"),
       sqrtPrice: new BigNumber(poolWithDustLiquidity.sqrtPrice),
       tick: sqrtPriceToTick(poolWithDustLiquidity.sqrtPrice),
@@ -355,7 +356,7 @@ describe("swap.helper", () => {
     };
 
     const bitmapEntriesStart = Object.keys(poolWithDustLiquidity.bitmap).length;
-    
+
     // When
     const exactInput = true;
     const zeroForOne = false;
@@ -365,34 +366,70 @@ describe("swap.helper", () => {
       ? new BigNumber("0.000000000000000000054212147")
       : new BigNumber("18446050999999999999");
 
-   
     const start = performance.eventLoopUtilization();
 
-    const swapPromise = await processSwapSteps(
-      ctx,
-      state,
-      poolWithDustLiquidity,
-      sqrtPriceLimit,
-      exactInput,
-      zeroForOne
-    ).catch((e) => e);
+    const h = monitorEventLoopDelay({ resolution: 20 });
+    h.enable();
 
+    let timeoutCallbackCount = 0;
+    let dnsLookupCallbackCount = 0;
+
+    setTimeout(() => {
+      timeoutCallbackCount++;
+    }, 0);
+    dns.lookup("1.1.1.1", {}, () => {
+      dnsLookupCallbackCount++;
+    });
+
+    const iterations = 2000;
+
+    for (let i = 0; i < iterations; i++) {
+      setTimeout(() => {
+        timeoutCallbackCount++;
+      }, 0);
+      dns.lookup("1.1.1.1", {}, () => {
+        dnsLookupCallbackCount++;
+      });
+      const tmpState = i === 0 ? state : instanceToInstance(state);
+      await processSwapSteps(
+        ctx,
+        tmpState,
+        poolWithDustLiquidity,
+        sqrtPriceLimit,
+        exactInput,
+        zeroForOne
+      ).catch((e) => e);
+      setTimeout(() => {
+        timeoutCallbackCount++;
+      }, 0);
+      dns.lookup("1.1.1.1", {}, () => {
+        dnsLookupCallbackCount++;
+      });
+    }
+
+    await setImmediate();
+
+    h.disable();
     const end = performance.eventLoopUtilization(start);
 
     // Then
     const bitmapEntriesEnd = Object.keys(poolWithDustLiquidity.bitmap).length;
 
-    expect(end.idle).toBeGreaterThan(0);
-    expect(end.utilization).toBeLessThan(1);
-
     // started with 25, iterated through to 373!
     expect(bitmapEntriesStart).toBe(25);
     expect(bitmapEntriesEnd).toBe(373);
 
+    console.log(h.min);
+    console.log(h.max);
+    console.log(h.mean);
+    console.log(h.stddev);
+    console.log(h.percentiles);
+    console.log(h.percentile(50));
+    console.log(h.percentile(99));
+    console.log(end.idle);
+    console.log(end.utilization);
 
-    // todo: add real values for test later
-    // expect to fail, useful for analyzing actual output in test result
-    expect(poolWithDustLiquidity).toEqual({});
-    expect(state).toEqual({});
+    expect(timeoutCallbackCount).toBeGreaterThan(iterations);
+    expect(dnsLookupCallbackCount).toBeGreaterThan(iterations);
   });
 });

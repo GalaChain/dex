@@ -15,6 +15,7 @@
 import { fixture, transactionError } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
+import { performance } from "perf_hooks";
 
 import { DexFeePercentageTypes, Pool, SwapState, TickData, sqrtPriceToTick } from "../../api";
 import { DexV3Contract } from "../DexV3Contract";
@@ -354,7 +355,7 @@ describe("swap.helper", () => {
     };
 
     const bitmapEntriesStart = Object.keys(poolWithDustLiquidity.bitmap).length;
-
+    
     // When
     const exactInput = true;
     const zeroForOne = false;
@@ -363,6 +364,9 @@ describe("swap.helper", () => {
     const sqrtPriceLimit = zeroForOne
       ? new BigNumber("0.000000000000000000054212147")
       : new BigNumber("18446050999999999999");
+
+   
+    const start = performance.eventLoopUtilization();
 
     const swapPromise = await processSwapSteps(
       ctx,
@@ -373,12 +377,18 @@ describe("swap.helper", () => {
       zeroForOne
     ).catch((e) => e);
 
+    const end = performance.eventLoopUtilization(start);
+
     // Then
     const bitmapEntriesEnd = Object.keys(poolWithDustLiquidity.bitmap).length;
+
+    expect(end.idle).toBeGreaterThan(0);
+    expect(end.utilization).toBeLessThan(1);
 
     // started with 25, iterated through to 373!
     expect(bitmapEntriesStart).toBe(25);
     expect(bitmapEntriesEnd).toBe(373);
+
 
     // todo: add real values for test later
     // expect to fail, useful for analyzing actual output in test result

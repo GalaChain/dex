@@ -12,8 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { GalaChainResponse } from "@gala-chain/api";
-import { fixture, transactionError } from "@gala-chain/test";
+import { fixture } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { instanceToInstance, plainToInstance } from "class-transformer";
 import dns from "dns";
@@ -283,7 +282,6 @@ describe("swap.helper", () => {
       expect(resultState.amountCalculated.toNumber()).toBeLessThan(0);
     });
   });
-
   test("loop performance", async () => {
     // Given
     const poolHash = "loop-pool";

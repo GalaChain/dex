@@ -15,6 +15,7 @@
 import { ConflictError } from "@gala-chain/api";
 import { GalaChainContext } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
+import { setImmediate } from "timers/promises";
 
 import {
   Pool,
@@ -150,6 +151,8 @@ export async function processSwapSteps(
       // Update tick based on new sqrtPrice
       state.tick = sqrtPriceToTick(state.sqrtPrice);
     }
+
+    await setImmediate();
   }
 
   return state;

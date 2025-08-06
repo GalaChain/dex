@@ -22,7 +22,7 @@ import {
   SwapState,
   TickData,
   computeSwapStep,
-  f18,
+  f8,
   nextInitialisedTickWithInSameWord,
   sqrtPriceToTick,
   tickToSqrtPrice
@@ -58,7 +58,7 @@ export async function processSwapSteps(
 ): Promise<SwapState> {
   while (
     // Continue while there's amount left to swap and price hasn't hit the limit
-    !f18(state.amountSpecifiedRemaining).isEqualTo(0) &&
+    !f8(state.amountSpecifiedRemaining).isEqualTo(0) &&
     !state.sqrtPrice.isEqualTo(sqrtPriceLimit)
   ) {
     // Initialize step state

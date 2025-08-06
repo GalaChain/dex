@@ -16,8 +16,9 @@ import { TokenBalance, TokenClass, TokenClassKey, TokenInstance, randomUniqueKey
 import { currency, fixture, transactionError, transactionSuccess, users } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
+import { randomUUID } from "crypto";
 
-import { DexFeePercentageTypes, DexPositionData, Pool, SwapDto, SwapResDto, TickData } from "../../api";
+import { DexFeePercentageTypes, Pool, SwapDto, SwapResDto } from "../../api";
 import { DexV3Contract } from "../DexV3Contract";
 import dex from "../test/dex";
 import { generateKeyFromClassKey } from "./dexUtils";
@@ -254,5 +255,105 @@ describe("swap", () => {
           "is less than actual received amount (-0.04199688158254951488549494150933105767)."
       )
     );
+  });
+
+  test("It should ignore very small amount 'amount specified' remaining to prevent infinite loop", async () => {
+    const currencyClass: TokenClass = currency.tokenClass();
+    const currencyInstance: TokenInstance = currency.tokenInstance();
+    const currencyClassKey: TokenClassKey = currency.tokenClassKey();
+    const dexClass: TokenClass = dex.tokenClass();
+    const dexInstance: TokenInstance = dex.tokenInstance();
+    const dexClassKey: TokenClassKey = dex.tokenClassKey();
+
+    const token0Key = generateKeyFromClassKey(dexClassKey);
+    const token1Key = generateKeyFromClassKey(currencyClassKey);
+    const fee = DexFeePercentageTypes.FEE_0_05_PERCENT;
+
+    const pool = new Pool(
+      token0Key,
+      token1Key,
+      dexClassKey,
+      currencyClassKey,
+      fee,
+      new BigNumber("0.01664222241481084743"),
+      0.1
+    );
+
+    const poolAlias = pool.getPoolAlias();
+    const poolDexBalance = plainToInstance(TokenBalance, {
+      ...dex.tokenBalance(),
+      owner: poolAlias,
+      quantity: new BigNumber("10000000")
+    });
+    const poolCurrencyBalance = plainToInstance(TokenBalance, {
+      ...currency.tokenBalance(),
+      owner: poolAlias,
+      quantity: new BigNumber("10000000")
+    });
+
+    // Create user balances - user needs tokens to swap
+    const userDexBalance = plainToInstance(TokenBalance, {
+      ...dex.tokenBalance(),
+      owner: users.testUser1.identityKey,
+      quantity: new BigNumber("10000000") // User has 10k DEX tokens
+    });
+    const userCurrencyBalance = plainToInstance(TokenBalance, {
+      ...currency.tokenBalance(),
+      owner: users.testUser1.identityKey,
+      quantity: new BigNumber("10000000") // User has 10k CURRENCY tokens
+    });
+
+    pool.bitmap = {
+      "0": "147573952589676412928",
+      "1": "170141183460469231731687303715884105728",
+      "2": "0",
+      "57": "392318858461667547739736838950479151006397215279002157056",
+      "-1": "618970019642690137449562113",
+      "-2": "2588154880046461420288033448353884544669165864563894958185946583924736",
+      "-57": "295147905179352825856"
+    };
+
+    pool.feeGrowthGlobal0 = new BigNumber("0.0161554447070587688");
+    pool.feeGrowthGlobal1 = new BigNumber("0.00262650588560846147");
+    pool.grossPoolLiquidity = new BigNumber("65953092854.51058789079502418");
+    pool.liquidity = new BigNumber("37184.073351973133578393");
+
+    // dexUserBalance.addQuantity(new BigNumber("10000"));
+    userCurrencyBalance.addQuantity(new BigNumber("100000"));
+
+    const sqrtPriceLimit = new BigNumber("18446050999999999999");
+    const { ctx, contract } = fixture(DexV3Contract)
+      .registeredUsers(users.testUser1)
+      .savedState(
+        currencyClass,
+        currencyInstance,
+        dexInstance,
+        dexClass,
+        pool,
+        poolCurrencyBalance,
+        poolDexBalance,
+        userDexBalance,
+        userCurrencyBalance
+      );
+
+    const dto = new SwapDto(dexClassKey, currencyClassKey, fee, new BigNumber("-15"), false, sqrtPriceLimit);
+    dto.uniqueKey = randomUUID();
+    dto.sign(users.testUser1.privateKey);
+    const swapRes = await contract.Swap(ctx, dto);
+    expect(swapRes).toMatchObject({
+      Status: 1,
+      Data: {
+        token0: "AUTC",
+        token0ImageUrl: "https://app.gala.games/test-image-placeholder-url.png",
+        token1: "AUTC",
+        token1ImageUrl: "https://app.gala.games/test-image-placeholder-url.png",
+        amount0: "-15.0000000000",
+        amount1: "0.0041565597",
+        userAddress: "client|testUser1",
+        poolHash: "a225bce08a98af95a22deaf342d2a3bf50bbc4bc1a496aafa4cb7d93af40bbbc",
+        poolAlias: "service|pool_a225bce08a98af95a22deaf342d2a3bf50bbc4bc1a496aafa4cb7d93af40bbbc",
+        poolFee: 500
+      }
+    });
   });
 });

@@ -14,6 +14,7 @@
  */
 import { ValidationFailedError } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
+import Decimal from "decimal.js";
 
 import { TickData } from "../../types/TickData";
 import { leastSignificantBit, mostSignificantBit } from "./bitMath.helper";
@@ -29,7 +30,8 @@ const MIN_TICK = -887272,
  *  at the given tick
  */
 export function tickToSqrtPrice(tick: number): BigNumber {
-  return new BigNumber(1.0001 ** (tick / 2));
+  const price = new Decimal(1.0001).pow(tick / 2);
+  return new BigNumber(price.toString());
 }
 
 /**
@@ -39,8 +41,9 @@ export function tickToSqrtPrice(tick: number): BigNumber {
  *  @return tick The greatest tick for which the ratio is less than or equal to the input ratio
  */
 export function sqrtPriceToTick(sqrtPrice: BigNumber): number {
-  const calculatedTick = Number((Math.log(sqrtPrice.toNumber() ** 2) / Math.log(1.0001)).toFixed(0));
-
+  // const calculatedTick = Number((Math.log(sqrtPrice.toNumber() ** 2) / Math.log(1.0001)).toFixed(0));
+  const priceLog = new Decimal(sqrtPrice.toString()).pow(2).ln();
+  const calculatedTick = Number(priceLog.dividedBy(new Decimal(1.0001).ln()).toFixed(0));
   const tickPrice = tickToSqrtPrice(calculatedTick);
 
   const tick = tickPrice.isLessThanOrEqualTo(sqrtPrice) ? calculatedTick : calculatedTick - 1;

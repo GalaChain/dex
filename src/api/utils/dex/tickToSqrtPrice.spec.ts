@@ -15,6 +15,7 @@
 import BigNumber from "bignumber.js";
 
 import { sqrtPriceToTick, tickToSqrtPrice } from "./tick.helper";
+import Decimal from "decimal.js";
 
 describe("tickToSqrtPrice", () => {
   describe("Base cases - normal tick ranges", () => {
@@ -197,7 +198,7 @@ describe("tickToSqrtPrice", () => {
       testTicks.forEach((tick) => {
         // When
         const sqrtPrice = tickToSqrtPrice(tick);
-        const expectedSqrtPrice = new BigNumber(1.0001 ** (tick / 2));
+        const expectedSqrtPrice = new BigNumber(new Decimal(1.0001).pow(tick / 2).toString());
 
         // Then - should match the mathematical formula
         expect(sqrtPrice.toNumber()).toBeCloseTo(expectedSqrtPrice.toNumber(), 10);

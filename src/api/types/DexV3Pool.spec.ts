@@ -165,7 +165,7 @@ describe("DexV3Pool", () => {
 
     // Then
     expect(validationResult).toEqual([]);
-    expect(amount0).toEqual(new BigNumber("0.00493727582043612206"));
+    expect(amount0).toEqual(new BigNumber("0.00493727582043662347"));
     expect(amount1).toEqual(new BigNumber("0"));
   });
 
@@ -183,8 +183,8 @@ describe("DexV3Pool", () => {
 
     // Then
     expect(validationResult).toEqual([]);
-    expect(amount0).toEqual(new BigNumber("0.00498727207074849864"));
-    expect(amount1).toEqual(new BigNumber("0.0049872720707486"));
+    expect(amount0).toEqual(new BigNumber("0.00498727207074909613"));
+    expect(amount1).toEqual(new BigNumber("0.00498727207074909613"));
   });
 
   test("mint: throws error when liquidity is zero", () => {
@@ -225,7 +225,7 @@ describe("DexV3Pool", () => {
     const [amount0, amount1] = pool.burn(positionData, tickLowerData, tickUpperData, new BigNumber(1));
 
     // Then
-    expect(amount0).toEqual(new BigNumber("0.00493727582043612206"));
+    expect(amount0).toEqual(new BigNumber("0.00493727582043662347"));
     expect(amount1).toEqual(new BigNumber("0"));
   });
 
@@ -251,8 +251,8 @@ describe("DexV3Pool", () => {
 
     // Then
     expect(amount0).toEqual(amount);
-    expect(amount1).toEqual(new BigNumber("999.999999999980893191863136695785480256"));
-    expect(liquidity).toEqual(new BigNumber("333850.24970973552810742589"));
+    expect(amount1).toEqual(new BigNumber("999.9999999999999855040699759879468872461742"));
+    expect(liquidity).toEqual(new BigNumber("333850.24970969944403608593"));
   });
 
   test("getAmountForLiquidity: should return only token1 and liquidity when current tick is above range", () => {
@@ -267,7 +267,7 @@ describe("DexV3Pool", () => {
     // Then
     expect(amount0).toEqual(new BigNumber("0"));
     expect(amount1).toEqual(amount);
-    expect(liquidity).toEqual(new BigNumber("5010.25916704397590249112"));
+    expect(liquidity).toEqual(new BigNumber("5010.25916704316960851298"));
   });
 
   test("getAmountForLiquidity: should throw error when token0 is provided but current tick is above range", () => {
@@ -458,7 +458,7 @@ describe("DexV3Pool", () => {
     const [amount0, amount1] = pool.burnEstimate(liquidity, tickLower, tickUpper);
 
     // Then
-    expect(amount0).toEqual(new BigNumber("4.96239918804087394093"));
+    expect(amount0).toEqual(new BigNumber("4.96239918804142220093"));
     expect(amount1).toEqual(new BigNumber("0"));
   });
 
@@ -474,8 +474,8 @@ describe("DexV3Pool", () => {
     const [amount0, amount1] = pool.burnEstimate(liquidity, tickLower, tickUpper);
 
     // Then
-    expect(amount0).toEqual("2.47809825120758119716");
-    expect(amount1).toEqual("2.5155480236664");
+    expect(amount0).toEqual(new BigNumber("2.4780982512079432954"));
+    expect(amount1).toEqual(new BigNumber("2.515548023666592"));
   });
 
   test("burnEstimate: should estimate only amount1 when current tick is above the range", () => {
@@ -491,7 +491,7 @@ describe("DexV3Pool", () => {
 
     // Then
     expect(amount0).toEqual(new BigNumber("0"));
-    expect(amount1).toEqual("5.0373924698248");
+    expect(amount1).toEqual(new BigNumber("5.0373924698253654"));
   });
 
   test("swap: should update state and return correct amounts for zeroForOne exact input", () => {

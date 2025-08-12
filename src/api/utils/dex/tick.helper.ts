@@ -41,7 +41,6 @@ export function tickToSqrtPrice(tick: number): BigNumber {
  *  @return tick The greatest tick for which the ratio is less than or equal to the input ratio
  */
 export function sqrtPriceToTick(sqrtPrice: BigNumber): number {
-  // const calculatedTick = Number((Math.log(sqrtPrice.toNumber() ** 2) / Math.log(1.0001)).toFixed(0));
   const priceLog = new Decimal(sqrtPrice.toString()).pow(2).ln();
   const calculatedTick = Number(priceLog.dividedBy(new Decimal(1.0001).ln()).toFixed(0));
   const tickPrice = tickToSqrtPrice(calculatedTick);

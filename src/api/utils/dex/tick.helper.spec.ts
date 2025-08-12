@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 import BigNumber from "bignumber.js";
+import Decimal from "decimal.js";
 
 import { TickData } from "../../types/TickData";
 import {
@@ -45,7 +46,7 @@ describe("tick.helper", () => {
   describe("sqrtPriceToTick", () => {
     it("should return correct tick for given sqrtPrice", () => {
       // Given
-      const sqrtPrice = new BigNumber(Math.sqrt(1.0001 ** 200));
+      const sqrtPrice = new BigNumber(new Decimal(1.0001).pow(200).sqrt().toString());
 
       // When
       const tick = sqrtPriceToTick(sqrtPrice);

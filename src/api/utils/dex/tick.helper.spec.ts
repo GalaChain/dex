@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 import BigNumber from "bignumber.js";
+import Decimal from "decimal.js";
 
 import { TickData } from "../../types/TickData";
 import {
@@ -27,7 +28,6 @@ import {
   tickSpacingToMaxLiquidityPerTick,
   tickToSqrtPrice
 } from "./tick.helper";
-import Decimal from "decimal.js";
 
 describe("tick.helper", () => {
   describe("tickToSqrtPrice", () => {

@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 import BigNumber from "bignumber.js";
+import Decimal from "decimal.js";
 
 import { sqrtPriceToTick, tickToSqrtPrice } from "./tick.helper";
-import Decimal from "decimal.js";
 
 describe("tickToSqrtPrice", () => {
   describe("Base cases - normal tick ranges", () => {

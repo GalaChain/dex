@@ -59,8 +59,11 @@ export async function addLiquidity(
   const token1InstanceKey = TokenInstanceKey.fungibleKey(pool.token1ClassKey);
 
   const liquidityProvider = launchpadAddress ?? ctx.callingUser;
-  const tickLower = parseInt(dto.tickLower.toString()),
-    tickUpper = parseInt(dto.tickUpper.toString());
+ 
+// Safe conversion: Uniswap V3 ticks are within JavaScript's safe integer range
+    const tickLower = dto.tickLower,
+    tickUpper = dto.tickUpper;
+  
 
   //calculate token amounts required for the desired liquidity
   const amount0Desired = f18(dto.amount0Desired),

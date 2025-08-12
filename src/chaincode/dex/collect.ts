@@ -74,8 +74,11 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
     BigNumber.min(f18(dto.amount1Requested), poolToken1Balance.getQuantityTotal())
   ];
 
-  const tickLower = parseInt(dto.tickLower.toString()),
-    tickUpper = parseInt(dto.tickUpper.toString());
+ 
+  // Safe conversion: Uniswap V3 ticks are within JavaScript's safe integer range
+  const tickLower = dto.tickLower,
+    tickUpper = dto.tickUpper;
+  
 
   // Fetch tick data for positions upper and lower tick and receive the amounts that need to be payed out
   const { tickUpperData, tickLowerData } = await fetchOrCreateTickDataPair(

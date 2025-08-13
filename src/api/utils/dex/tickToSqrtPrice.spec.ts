@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 import BigNumber from "bignumber.js";
+import Decimal from "decimal.js";
 
 import { sqrtPriceToTick, tickToSqrtPrice } from "./tick.helper";
 
@@ -197,7 +198,7 @@ describe("tickToSqrtPrice", () => {
       testTicks.forEach((tick) => {
         // When
         const sqrtPrice = tickToSqrtPrice(tick);
-        const expectedSqrtPrice = new BigNumber(1.0001 ** (tick / 2));
+        const expectedSqrtPrice = new BigNumber(new Decimal(1.0001).pow(tick / 2).toString());
 
         // Then - should match the mathematical formula
         expect(sqrtPrice.toNumber()).toBeCloseTo(expectedSqrtPrice.toNumber(), 10);

@@ -45,8 +45,12 @@ export async function getRemoveLiquidityEstimation(
     dto.owner
   );
 
-  const tickLower = parseInt(dto.tickLower.toString()),
-    tickUpper = parseInt(dto.tickUpper.toString());
+
+// Safe conversion: Uniswap V3 ticks are within JavaScript's safe integer range
+  const tickLower = dto.tickLower,
+    tickUpper = dto.tickUpper;
+  
+
 
   const { tickUpperData, tickLowerData } = await fetchOrCreateTickDataPair(
     ctx,

@@ -113,8 +113,12 @@ export async function getAddLiquidityEstimation(
     throw new ValidationFailedError("Token0 must be smaller");
   }
   const zeroForOne = dto.zeroForOne;
-  const tickLower = parseInt(dto.tickLower.toString()),
-    tickUpper = parseInt(dto.tickUpper.toString());
+
+
+// Safe conversion: Uniswap V3 ticks are within JavaScript's safe integer range
+  const tickLower = dto.tickLower,
+    tickUpper = dto.tickUpper;
+  
   const getPool = new GetPoolDto(dto.token0, dto.token1, dto.fee);
   const pool = await getPoolData(ctx, getPool);
   if (!pool) throw new NotFoundError("No pool for these tokens and fee exists");

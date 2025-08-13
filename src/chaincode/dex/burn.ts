@@ -65,8 +65,10 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
   if (!position)
     throw new NotFoundError(`User doesn't hold any positions with this tick rangeData in thisData pool`);
 
-  const tickLower = parseInt(dto.tickLower.toString()),
-    tickUpper = parseInt(dto.tickUpper.toString());
+  // Safe conversion: Uniswap V3 ticks are within JavaScript's safe integer range
+  const tickLower = dto.tickLower,
+    tickUpper = dto.tickUpper;
+
 
   //Create tokenInstanceKeys
   const token0InstanceKey = TokenInstanceKey.fungibleKey(pool.token0ClassKey);

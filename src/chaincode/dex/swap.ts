@@ -33,6 +33,7 @@ import {
 } from "../../api/";
 import { roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { processSwapSteps } from "./swap.helper";
+import { EmergencyControl } from "./emergencyControl";
 
 /**
  * @dev The swap function executes a token swap in a Dex liquidity pool within the GalaChain ecosystem.
@@ -49,6 +50,8 @@ import { processSwapSteps } from "./swap.helper";
  * @returns
  */
 export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapResDto> {
+  // Emergency pause check
+  await EmergencyControl.checkPaused(ctx);
   const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
   const zeroForOne = dto.zeroForOne;
   const sqrtPriceLimit = dto.sqrtPriceLimit;

@@ -17,6 +17,10 @@ import { GalaChainContext, fetchTokenClass, getObjectByKey, putChainObject } fro
 
 import { CreatePoolDto, CreatePoolResDto, DexFeeConfig, Pool } from "../../api/";
 import { generateKeyFromClassKey } from "./dexUtils";
+import { EmergencyControl } from "./emergencyControl";
+
+
+
 
 /**
  * @dev The createPool function initializes a new Decentralized exchange liquidity pool within the GalaChain ecosystem. It sets up the pool with the specified token pair, initial price, fee structure, and protocol fee settings.
@@ -28,6 +32,10 @@ import { generateKeyFromClassKey } from "./dexUtils";
   - Protocol fees – The percentage of fees collected by the protocol.
  */
 export async function createPool(ctx: GalaChainContext, dto: CreatePoolDto): Promise<CreatePoolResDto> {
+  
+    // Emergency pause check
+await EmergencyControl.checkPaused(ctx);
+
   // sort the tokens in an order
   const [token0, token1] = [dto.token0, dto.token1].map(generateKeyFromClassKey);
   if (token0.localeCompare(token1) > 0) {

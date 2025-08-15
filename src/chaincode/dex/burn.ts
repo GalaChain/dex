@@ -38,6 +38,7 @@ import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "
 import { fetchUserPositionInTickRange } from "./position.helper";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
 import { updateOrRemovePosition } from "./updateOrRemovePosition";
+import { EmergencyControl } from "./emergencyControl";
 
 /**
  * @dev The burn function is responsible for removing liquidity from a Decentralized exchange pool within the GalaChain ecosystem. It executes the necessary operations to burn the liquidity position and transfer the corresponding tokens back to the user.
@@ -46,6 +47,11 @@ import { updateOrRemovePosition } from "./updateOrRemovePosition";
  * @returns DexOperationResDto
  */
 export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOperationResDto> {
+
+  // Emergency pause check
+  await EmergencyControl.checkPaused(ctx);
+
+
   // Fetch pool and user position
   const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
 

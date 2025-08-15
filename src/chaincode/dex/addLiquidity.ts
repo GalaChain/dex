@@ -35,6 +35,7 @@ import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchOrCreateDexPosition } from "./position.helper";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
+import { EmergencyControl } from "./emergencyControl";
 
 /**
  * @dev Function to add Liqudity to v3 pool. The addLiquidity function facilitates the addition of liquidity to a Decentralized exchange pool within the GalaChain ecosystem. It takes in the blockchain context, liquidity parameters, and an optional launchpad address, then executes the necessary operations to deposit assets into the specified liquidity pool.
@@ -48,6 +49,9 @@ export async function addLiquidity(
   dto: AddLiquidityDTO,
   launchpadAddress?: UserAlias | undefined
 ): Promise<DexOperationResDto> {
+  // Emergency pause check
+
+  await EmergencyControl.checkPaused(ctx);
   const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
 
   const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);

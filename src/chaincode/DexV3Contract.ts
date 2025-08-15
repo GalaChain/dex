@@ -112,6 +112,9 @@ import {
   transferDexPositionFeeGate
 } from "./dexLaunchpadFeeGate";
 
+
+import { EmergencyControl } from "./dex/emergencyControl";
+
 /**
  * DexV3Contract provides Uniswap V3-style decentralized exchange functionality
  * including concentrated liquidity, limit orders, and automated market making.
@@ -570,4 +573,42 @@ export class DexV3Contract extends GalaContract {
   ): Promise<BatchSubmitAuthoritiesResDto> {
     return await getBatchSubmitAuthorities(ctx, dto);
   }
+
+
+/**
+   * Emergency pause function - stops all DEX operations
+   * @param ctx - The GalaChain context
+   * @param reason - Reason for the pause
+   * @returns Confirmation of pause
+   */
+  @GalaTransaction({
+    type: EVALUATE,
+    in: class {
+      @IsString()
+      @IsNotEmpty()
+      reason: string;
+    },
+    out: "string",
+    description: "Emergency pause of all DEX operations"
+  })
+  public async emergencyPause(ctx: GalaChainContext, dto: { reason: string }): Promise<string> {
+    await EmergencyControl.pauseDex(ctx, dto.reason);
+    return `DEX paused successfully at ${ctx.txUnixTime}`;
+  }
+
+  /**
+   * Emergency resume function - resumes DEX operations after pause
+   * @param ctx - The GalaChain context
+   * @returns Confirmation of resume
+   */
+  @GalaTransaction({
+    type: EVALUATE,
+    out: "string",
+    description: "Resume DEX operations after emergency pause"
+  })
+  public async emergencyResume(ctx: GalaChainContext): Promise<string> {
+    await EmergencyControl.resumeDex(ctx);
+    return `DEX resumed successfully at ${ctx.txUnixTime}`;
+  }
+  
 }

@@ -295,7 +295,7 @@ export class BurnDto extends SubmitCallDTO {
   }
 }
 
-export class GetPoolDto extends ChainCallDTO {
+export class GetPoolDto extends SubmitCallDTO {
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => TokenClassKey)
@@ -1107,6 +1107,62 @@ export class CreatePoolResDto extends ChainCallDTO {
     this.poolHash = poolHash;
     this.poolAlias = poolAlias;
   }
+}
+
+export class TransferUnclaimedFundsDto extends SubmitCallDTO {
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token0: TokenClassKey;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token1: TokenClassKey;
+
+  @EnumProperty(DexFeePercentageTypes)
+  public fee: DexFeePercentageTypes;
+
+  @IsUserAlias()
+  @IsNotEmpty()
+  public secureWallet: UserAlias;
+
+  constructor(
+    token0: TokenClassKey,
+    token1: TokenClassKey,
+    fee: DexFeePercentageTypes,
+    secureWallet: UserAlias
+  ) {
+    super();
+    this.token0 = token0;
+    this.token1 = token1;
+    this.fee = fee;
+    this.secureWallet = secureWallet;
+  }
+}
+
+export class TransferUnclaimedFundsResDto extends ChainCallDTO {
+  @IsNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => TokenBalance)
+  newToken0Balances: TokenBalance[];
+
+  @IsNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => TokenBalance)
+  newToken1Balances: TokenBalance[];
+
+  constructor(newToken0Balances: TokenBalance[], newToken1Balances: TokenBalance[]) {
+    super();
+    this.newToken0Balances = newToken0Balances;
+    this.newToken1Balances = newToken1Balances;
+  }
+}
+
+export class GetBitMapResDto {
+  bitMap: { [key: string]: any };
+  expectedLiquidity: BigNumber;
+  liquidity: BigNumber;
 }
 
 export interface IPlaceLimitOrderDto {

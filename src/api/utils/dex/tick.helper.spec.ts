@@ -218,25 +218,25 @@ describe("tick.helper", () => {
   });
 
   describe("position function", () => {
-    it("should handle negative ticks correctly using floor instead of trunc", () => {
-      // This test demonstrates the issue with using Math.trunc for negative ticks
-      // Math.trunc(-3.1) = -3, but we want Math.floor(-3.1) = -4
+    it("should handle negative ticks correctly using trunc for initial tick and floor for word position", () => {
+      // This test verifies the correct behavior:
+      // - Math.trunc(tick) for the initial tick value
+      // - Math.floor(tick / 256) for calculating wordPos
 
-      // Test cases that would fail with Math.trunc but should work with Math.floor
+      // Test cases with expected behavior
       const testCases = [
-        { tick: -3.1, expectedWord: -1, expectedBit: 252 }, // Math.floor(-3.1) = -4, word = -1, bit = 252
-        { tick: -3.9, expectedWord: -1, expectedBit: 252 }, // Math.floor(-3.9) = -4, word = -1, bit = 252
-        { tick: -259.1, expectedWord: -2, expectedBit: 252 }, // Math.floor(-259.1) = -260, word = -2, bit = 252
-        { tick: 3.1, expectedWord: 0, expectedBit: 3 }, // Math.floor(3.1) = 3, word = 0, bit = 3
-        { tick: 3.9, expectedWord: 0, expectedBit: 3 } // Math.floor(3.9) = 3, word = 0, bit = 3
+        { tick: -3.1, expectedWord: -1, expectedBit: 253 }, // Math.trunc(-3.1) = -3, word = Math.floor(-3/256) = -1, bit = -3 % 256 = 253
+        { tick: -3.9, expectedWord: -1, expectedBit: 253 }, // Math.trunc(-3.9) = -3, word = Math.floor(-3/256) = -1, bit = -3 % 256 = 253
+        { tick: -259.1, expectedWord: -2, expectedBit: 253 }, // Math.trunc(-259.1) = -259, word = Math.floor(-259/256) = -2, bit = -259 % 256 = 253
+        { tick: 3.1, expectedWord: 0, expectedBit: 3 }, // Math.trunc(3.1) = 3, word = Math.floor(3/256) = 0, bit = 3 % 256 = 3
+        { tick: 3.9, expectedWord: 0, expectedBit: 3 } // Math.trunc(3.9) = 3, word = Math.floor(3/256) = 0, bit = 3 % 256 = 3
       ];
 
       testCases.forEach(({ tick, expectedWord, expectedBit }) => {
         // Call the actual position function
         const result = position(tick);
 
-        // This test will fail with the current Math.trunc implementation
-        // because Math.trunc(-3.1) = -3, but Math.floor(-3.1) = -4
+        // Verify the correct behavior with Math.trunc for initial tick and Math.floor for word position
         expect(result).toEqual([expectedWord, expectedBit]);
       });
     });

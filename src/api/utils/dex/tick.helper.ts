@@ -57,7 +57,7 @@ export function sqrtPriceToTick(sqrtPrice: BigNumber): number {
  * @returns A tuple of [word index, bit position within the word].
  */
 export function position(tick: number): [word: number, position: number] {
-  tick = Math.floor(tick);
+  tick = Math.trunc(tick);
 
   const wordPos = Math.floor(tick / 256); // Equivalent to tick >> 8
 

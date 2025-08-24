@@ -129,5 +129,10 @@ it("should transfer unclaimed funds to secure wallet", async () => {
 
   // When
   const response = await contract.TransferUnclaimedFunds(ctx, signedDto);
-  console.dir(response, { depth: null, colors: true });
+
+  // Then
+  expect(response.Data?.newToken0Balances[0].getQuantityTotal().toString()).toBe("110");
+  expect(response.Data?.newToken0Balances[1].getQuantityTotal().toString()).toBe("890");
+  expect(response.Data?.newToken1Balances[0].getQuantityTotal().toString()).toBe("25");
+  expect(response.Data?.newToken1Balances[1].getQuantityTotal().toString()).toBe("975");
 });

@@ -52,6 +52,7 @@ export async function transferUnclaimedFunds(
   const pool = await getObjectByKey(ctx, Pool, key);
   const poolAlias = pool.getPoolAlias();
 
+  // Fetch all positions
   const positions = await getObjectsByPartialCompositeKey(
     ctx,
     DexPositionData.INDEX_KEY,
@@ -97,28 +98,33 @@ export async function transferUnclaimedFunds(
     0
   );
 
-  const newToken0Balances = await transferToken(ctx, {
-    from: poolAlias,
-    to: dto.secureWallet,
-    tokenInstanceKey: token0InstanceKey,
-    quantity: unclaimedToken0Amount,
-    allowancesToUse: [],
-    authorizedOnBehalf: {
-      callingOnBehalf: poolAlias,
-      callingUser: poolAlias
-    }
-  });
-  const newToken1Balances = await transferToken(ctx, {
-    from: poolAlias,
-    to: dto.secureWallet,
-    tokenInstanceKey: token1InstanceKey,
-    quantity: unclaimedToken1Amount,
-    allowancesToUse: [],
-    authorizedOnBehalf: {
-      callingOnBehalf: poolAlias,
-      callingUser: poolAlias
-    }
-  });
+  // Transfer funds to secure wallet
+  const newToken0Balances = unclaimedToken0Amount.toNumber()
+    ? await transferToken(ctx, {
+        from: poolAlias,
+        to: dto.secureWallet,
+        tokenInstanceKey: token0InstanceKey,
+        quantity: unclaimedToken0Amount,
+        allowancesToUse: [],
+        authorizedOnBehalf: {
+          callingOnBehalf: poolAlias,
+          callingUser: poolAlias
+        }
+      })
+    : [poolToken0Balance, await fetchOrCreateBalance(ctx, dto.secureWallet, token0InstanceKey)];
+  const newToken1Balances = unclaimedToken1Amount.toNumber()
+    ? await transferToken(ctx, {
+        from: poolAlias,
+        to: dto.secureWallet,
+        tokenInstanceKey: token1InstanceKey,
+        quantity: unclaimedToken1Amount,
+        allowancesToUse: [],
+        authorizedOnBehalf: {
+          callingOnBehalf: poolAlias,
+          callingUser: poolAlias
+        }
+      })
+    : [poolToken1Balance, await fetchOrCreateBalance(ctx, dto.secureWallet, token1InstanceKey)];
 
   return new TransferUnclaimedFundsResDto(newToken0Balances, newToken1Balances);
 }

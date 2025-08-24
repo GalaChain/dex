@@ -31,6 +31,17 @@ import {
 } from "../../api";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 
+/**
+ * @dev The transferUnclaimedFunds function transfers any unclaimed tokens
+ *      from a pool that no longer has active liquidity positions.
+ * @param ctx GalaChainContext – The execution context providing access to the GalaChain environment.
+ * @param dto TransferUnclaimedFundsDto – A data transfer object containing:
+ *        - token0, token1 – The two tokens that define the pool.
+ *        - fee – The fee tier of the pool.
+ *        - secureWallet – The destination wallet where unclaimed funds will be transferred.
+ * @returns TransferUnclaimedFundsResDto – An object containing the updated balances
+ *          after transferring unclaimed token0 and token1 amounts to the secure wallet.
+ */
 export async function transferUnclaimedFunds(
   ctx: GalaChainContext,
   dto: TransferUnclaimedFundsDto
@@ -51,6 +62,7 @@ export async function transferUnclaimedFunds(
   let totalTokenOwed0 = new BigNumber(0);
   let totalTokenOwed1 = new BigNumber(0);
 
+  // Parse through all the positions in given pool and ensure that noone holds any liquidity right now
   for (const position of positions) {
     if (position.liquidity.isGreaterThan(0.00000001)) {
       throw new PreConditionFailedError(
@@ -67,6 +79,7 @@ export async function transferUnclaimedFunds(
   const poolToken0Balance = await fetchOrCreateBalance(ctx, poolAlias, token0InstanceKey);
   const poolToken1Balance = await fetchOrCreateBalance(ctx, poolAlias, token1InstanceKey);
 
+  // Calculate total amount of unclaimed funds by subtracting total user liquidity fees and the pool's protocol fees from the pool balance
   const unclaimedToken0Amount = BigNumber.max(
     roundTokenAmount(
       poolToken0Balance.getQuantityTotal().minus(totalTokenOwed0.plus(pool.protocolFeesToken0)),

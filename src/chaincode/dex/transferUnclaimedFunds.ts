@@ -48,8 +48,8 @@ export async function transferUnclaimedFunds(
     DexPositionData
   );
 
-  var totalTokenOwed0 = new BigNumber(0);
-  var totalTokenOwed1 = new BigNumber(0);
+  let totalTokenOwed0 = new BigNumber(0);
+  let totalTokenOwed1 = new BigNumber(0);
 
   for (const position of positions) {
     if (position.liquidity.isGreaterThan(0.00000001)) {

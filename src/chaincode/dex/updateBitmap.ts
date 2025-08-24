@@ -20,7 +20,16 @@ import {
 } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
-import { DexPositionData, GetBitMapResDto, GetPoolDto, Pool, flipTick, sqrtPriceToTick } from "../../api";
+import {
+  DexPositionData,
+  GetBitMapResDto,
+  GetPoolDataDTO,
+  GetPoolDto,
+  Pool,
+  UpdatePoolBitmapDto,
+  flipTick,
+  sqrtPriceToTick
+} from "../../api";
 import { validateTokenOrder } from "./dexUtils";
 
 export async function getBitMapChanges(ctx: GalaChainContext, dto: GetPoolDto): Promise<GetBitMapResDto> {
@@ -32,7 +41,7 @@ export async function getBitMapChanges(ctx: GalaChainContext, dto: GetPoolDto): 
   return getPoolChanges(ctx, pool);
 }
 
-export async function makeBitMapChanges(ctx: GalaChainContext, dto: GetPoolDto): Promise<Pool> {
+export async function makeBitMapChanges(ctx: GalaChainContext, dto: UpdatePoolBitmapDto): Promise<Pool> {
   const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
 
   const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);

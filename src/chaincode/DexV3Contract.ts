@@ -73,7 +73,8 @@ import {
   TickData,
   TransferDexPositionDto,
   TransferUnclaimedFundsDto,
-  TransferUnclaimedFundsResDto
+  TransferUnclaimedFundsResDto,
+  UpdatePoolBitmapDto
 } from "../api/";
 import {
   addLiquidity,
@@ -446,10 +447,10 @@ export class DexV3Contract extends GalaContract {
   }
 
   @Submit({
-    in: GetPoolDto,
+    in: UpdatePoolBitmapDto,
     out: Pool
   })
-  public async MakeBitMapChanges(ctx: GalaChainContext, dto: GetPoolDto): Promise<Pool> {
+  public async MakeBitMapChanges(ctx: GalaChainContext, dto: UpdatePoolBitmapDto): Promise<Pool> {
     return makeBitMapChanges(ctx, dto);
   }
 

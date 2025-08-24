@@ -295,7 +295,29 @@ export class BurnDto extends SubmitCallDTO {
   }
 }
 
-export class GetPoolDto extends SubmitCallDTO {
+export class GetPoolDto extends ChainCallDTO {
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token0: TokenClassKey;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token1: TokenClassKey;
+
+  @EnumProperty(DexFeePercentageTypes)
+  public fee: DexFeePercentageTypes;
+
+  constructor(token0: TokenClassKey, token1: TokenClassKey, fee: number) {
+    super();
+    this.token0 = token0;
+    this.token1 = token1;
+    this.fee = fee;
+  }
+}
+
+export class UpdatePoolBitmapDto extends SubmitCallDTO {
   @IsNotEmpty()
   @ValidateNested()
   @Type(() => TokenClassKey)

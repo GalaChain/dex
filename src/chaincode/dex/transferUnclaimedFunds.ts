@@ -54,7 +54,7 @@ export async function transferUnclaimedFunds(
   for (const position of positions) {
     if (position.liquidity.isGreaterThan(0.00000001)) {
       throw new PreConditionFailedError(
-        `Position ${position.positionId} in this pool still hold some liquidity`
+        `Position with ID ${position.positionId} in this pool still hold some liquidity`
       );
     }
     totalTokenOwed0 = totalTokenOwed0.plus(position.tokensOwed0);
@@ -67,15 +67,21 @@ export async function transferUnclaimedFunds(
   const poolToken0Balance = await fetchOrCreateBalance(ctx, poolAlias, token0InstanceKey);
   const poolToken1Balance = await fetchOrCreateBalance(ctx, poolAlias, token1InstanceKey);
 
-  const unclaimedToken0Amount = roundTokenAmount(
-    poolToken0Balance.getQuantityTotal().minus(totalTokenOwed0.plus(pool.protocolFeesToken0)),
-    tokenDecimals[0],
-    false
+  const unclaimedToken0Amount = BigNumber.max(
+    roundTokenAmount(
+      poolToken0Balance.getQuantityTotal().minus(totalTokenOwed0.plus(pool.protocolFeesToken0)),
+      tokenDecimals[0],
+      false
+    ),
+    0
   );
-  const unclaimedToken1Amount = roundTokenAmount(
-    poolToken1Balance.getQuantityTotal().minus(totalTokenOwed1.plus(pool.protocolFeesToken1)),
-    tokenDecimals[1],
-    false
+  const unclaimedToken1Amount = BigNumber.max(
+    roundTokenAmount(
+      poolToken1Balance.getQuantityTotal().minus(totalTokenOwed1.plus(pool.protocolFeesToken1)),
+      tokenDecimals[1],
+      false
+    ),
+    0
   );
 
   const newToken0Balances = await transferToken(ctx, {
@@ -91,7 +97,7 @@ export async function transferUnclaimedFunds(
   });
   const newToken1Balances = await transferToken(ctx, {
     from: poolAlias,
-    to: ctx.callingUser,
+    to: dto.secureWallet,
     tokenInstanceKey: token1InstanceKey,
     quantity: unclaimedToken1Amount,
     allowancesToUse: [],

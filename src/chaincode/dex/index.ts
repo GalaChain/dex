@@ -37,3 +37,5 @@ export * from "./transferDexPosition";
 export * from "./dexUtils";
 export * from "./configurePoolDexFee";
 export * from "./batchSubmitAuthorizations";
+export * from "./transferUnclaimedFunds";
+export * from "./updateBitmap";

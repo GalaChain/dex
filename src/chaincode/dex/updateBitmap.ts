@@ -96,7 +96,7 @@ async function getPoolChanges(ctx: GalaChainContext, pool: Pool): Promise<GetBit
     set.add(tickUpper);
 
     if (tickLower <= currentTick && tickUpper >= currentTick) {
-      // If position is in range of current price, calculate the amount of liquidity we currently have 
+      // If position is in range of current price, calculate the amount of liquidity we currently have
       const currentLiquidity = new BigNumber(liquidity);
       expectedLiquidity = expectedLiquidity.plus(currentLiquidity);
     }

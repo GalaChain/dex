@@ -71,7 +71,7 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
   const tokenDecimals = await getTokenDecimalsFromPool(ctx, pool);
 
   // Estimate how much liquidity can actually be burned based on current pool balances and prices
-  let amountToBurn = f18(dto.amount);
+  const amountToBurn = f18(dto.amount);
 
   const poolToken0Balance = await fetchOrCreateBalance(ctx, poolAlias, token0InstanceKey);
   const poolToken1Balance = await fetchOrCreateBalance(ctx, poolAlias, token1InstanceKey);

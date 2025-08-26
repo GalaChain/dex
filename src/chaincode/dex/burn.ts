@@ -26,9 +26,12 @@ import {
   BurnDto,
   DexOperationResDto,
   Pool,
-  SlippageToleranceExceededError,
-  UserBalanceResDto
+  UserBalanceResDto,
+  liquidity0,
+  liquidity1,
+  tickToSqrtPrice
 } from "../../api/";
+import { SlippageToleranceExceededError } from "../../api/";
 import { f18 } from "../../api/utils";
 import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
@@ -71,10 +74,45 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
   const tokenDecimals = await getTokenDecimalsFromPool(ctx, pool);
 
   // Estimate how much liquidity can actually be burned based on current pool balances and prices
-  const amountToBurn = f18(dto.amount);
+  let amountToBurn = f18(dto.amount);
+  const amountsEstimated = pool.burnEstimate(amountToBurn, tickLower, tickUpper);
+  const sqrtPriceA = tickToSqrtPrice(tickLower),
+    sqrtPriceB = tickToSqrtPrice(tickUpper);
+  const sqrtPrice = pool.sqrtPrice;
 
   const poolToken0Balance = await fetchOrCreateBalance(ctx, poolAlias, token0InstanceKey);
   const poolToken1Balance = await fetchOrCreateBalance(ctx, poolAlias, token1InstanceKey);
+
+  // Adjust burn amount if pool lacks sufficient liquidity
+  for (const [index, amount] of amountsEstimated.entries()) {
+    if (amount.lt(0)) {
+      throw new NegativeAmountError(index, amount.toString());
+    }
+
+    const roundedAmount = roundTokenAmount(amount, tokenDecimals[index], false);
+
+    if (
+      roundedAmount.isGreaterThan(
+        index === 0 ? poolToken0Balance.getQuantityTotal() : poolToken1Balance.getQuantityTotal()
+      )
+    ) {
+      let maximumBurnableLiquidity: BigNumber;
+      if (index === 0) {
+        maximumBurnableLiquidity = liquidity0(
+          roundedAmount,
+          sqrtPrice.gt(sqrtPriceA) ? sqrtPrice : sqrtPriceA,
+          sqrtPriceB
+        );
+      } else {
+        maximumBurnableLiquidity = liquidity1(
+          roundedAmount,
+          sqrtPriceA,
+          sqrtPrice.lt(sqrtPriceB) ? sqrtPrice : sqrtPriceB
+        );
+      }
+      amountToBurn = BigNumber.min(amountToBurn, maximumBurnableLiquidity);
+    }
+  }
 
   // Burn liquidity and verify whether amounts are valid
   const { tickUpperData, tickLowerData } = await fetchOrCreateTickDataPair(

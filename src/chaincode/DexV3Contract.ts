@@ -72,8 +72,6 @@ import {
   SwapResDto,
   TickData,
   TransferDexPositionDto,
-  TransferUnclaimedFundsDto,
-  TransferUnclaimedFundsResDto,
   UpdatePoolBitmapDto
 } from "../api/";
 import {
@@ -109,7 +107,6 @@ import {
   transferDexPosition
 } from "./dex";
 import { getTickData } from "./dex/tickData.helper";
-import { transferUnclaimedFunds } from "./dex/transferUnclaimedFunds";
 import {
   addLiquidityFeeGate,
   collectPositionFeesFeeGate,
@@ -423,18 +420,6 @@ export class DexV3Contract extends GalaContract {
     dto: ConfigureDexFeeAddressDto
   ): Promise<DexFeeConfig> {
     return configureDexFeeAddress(ctx, dto);
-  }
-
-  @Submit({
-    in: TransferUnclaimedFundsDto,
-    out: TransferUnclaimedFundsResDto,
-    allowedOrgs: ["CuratorOrg"]
-  })
-  public async TransferUnclaimedFunds(
-    ctx: GalaChainContext,
-    dto: TransferUnclaimedFundsDto
-  ): Promise<TransferUnclaimedFundsResDto> {
-    return transferUnclaimedFunds(ctx, dto);
   }
 
   @GalaTransaction({

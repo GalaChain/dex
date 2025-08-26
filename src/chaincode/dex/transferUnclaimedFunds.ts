@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TokenInstanceKey } from "@gala-chain/api";
+import { TokenInstanceKey, asValidUserAlias } from "@gala-chain/api";
 import {
   GalaChainContext,
   fetchOrCreateBalance,
@@ -99,10 +99,11 @@ export async function transferUnclaimedFunds(
   );
 
   // Transfer funds to secure wallet
+  const transferTo = asValidUserAlias(dto.secureWallet);
   const newToken0Balances = unclaimedToken0Amount.toNumber()
     ? await transferToken(ctx, {
         from: poolAlias,
-        to: dto.secureWallet,
+        to: transferTo,
         tokenInstanceKey: token0InstanceKey,
         quantity: unclaimedToken0Amount,
         allowancesToUse: [],
@@ -111,11 +112,11 @@ export async function transferUnclaimedFunds(
           callingUser: poolAlias
         }
       })
-    : [poolToken0Balance, await fetchOrCreateBalance(ctx, dto.secureWallet, token0InstanceKey)];
+    : [poolToken0Balance, await fetchOrCreateBalance(ctx, transferTo, token0InstanceKey)];
   const newToken1Balances = unclaimedToken1Amount.toNumber()
     ? await transferToken(ctx, {
         from: poolAlias,
-        to: dto.secureWallet,
+        to: transferTo,
         tokenInstanceKey: token1InstanceKey,
         quantity: unclaimedToken1Amount,
         allowancesToUse: [],
@@ -124,7 +125,7 @@ export async function transferUnclaimedFunds(
           callingUser: poolAlias
         }
       })
-    : [poolToken1Balance, await fetchOrCreateBalance(ctx, dto.secureWallet, token1InstanceKey)];
+    : [poolToken1Balance, await fetchOrCreateBalance(ctx, transferTo, token1InstanceKey)];
 
   return new TransferUnclaimedFundsResDto(newToken0Balances, newToken1Balances);
 }

@@ -1145,15 +1145,15 @@ export class TransferUnclaimedFundsDto extends SubmitCallDTO {
   @EnumProperty(DexFeePercentageTypes)
   public fee: DexFeePercentageTypes;
 
-  @IsUserAlias()
+  @IsUserRef()
   @IsNotEmpty()
-  public secureWallet: UserAlias;
+  public secureWallet: UserRef;
 
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
     fee: DexFeePercentageTypes,
-    secureWallet: UserAlias
+    secureWallet: UserRef
   ) {
     super();
     this.token0 = token0;

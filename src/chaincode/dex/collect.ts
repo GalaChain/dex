@@ -28,6 +28,7 @@ import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "
 import { fetchUserPositionInTickRange } from "./position.helper";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
 import { updateOrRemovePosition } from "./updateOrRemovePosition";
+import { EmergencyControl } from "./emergencyControl";
 
 /**
  * @dev The collect function allows a user to claim and withdraw accrued fee tokens from a specific liquidity position in a Decentralized exchange pool within the GalaChain ecosystem. It retrieves earned fees based on the user's position details and transfers them to the user's account.
@@ -37,6 +38,9 @@ import { updateOrRemovePosition } from "./updateOrRemovePosition";
  * @returns DexOperationResDto
  */
 export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<DexOperationResDto> {
+   // Emergency pause check
+  await EmergencyControl.checkPaused(ctx);
+
   // Validate token order and fetch pool and positions
   const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
   const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);

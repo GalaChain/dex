@@ -81,23 +81,7 @@ export async function getBalanceDelta(
       tickLower,
       tickUpper
     );
-
-    tickLowerData.updateTick(
-      currentTick,
-      liquidity,
-      false,
-      pool.feeGrowthGlobal0,
-      pool.feeGrowthGlobal1,
-      pool.maxLiquidityPerTick
-    );
-    tickUpperData.updateTick(
-      currentTick,
-      liquidity,
-      true,
-      pool.feeGrowthGlobal0,
-      pool.feeGrowthGlobal1,
-      pool.maxLiquidityPerTick
-    );
+    
     const [feeGrowthInside0, feeGrowthInside1] = getFeeGrowthInside(
       tickLowerData,
       tickUpperData,

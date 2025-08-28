@@ -317,6 +317,28 @@ export class GetPoolDto extends ChainCallDTO {
   }
 }
 
+export class UpdatePoolBitmapDto extends SubmitCallDTO {
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token0: TokenClassKey;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token1: TokenClassKey;
+
+  @EnumProperty(DexFeePercentageTypes)
+  public fee: DexFeePercentageTypes;
+
+  constructor(token0: TokenClassKey, token1: TokenClassKey, fee: number) {
+    super();
+    this.token0 = token0;
+    this.token1 = token1;
+    this.fee = fee;
+  }
+}
+
 export class Slot0ResDto extends ChainCallDTO {
   @IsBigNumber()
   @BigNumberProperty()
@@ -1107,6 +1129,12 @@ export class CreatePoolResDto extends ChainCallDTO {
     this.poolHash = poolHash;
     this.poolAlias = poolAlias;
   }
+}
+
+export class GetBitMapResDto {
+  bitMap: { [key: string]: any };
+  expectedLiquidity: BigNumber;
+  liquidity: BigNumber;
 }
 
 export interface IPlaceLimitOrderDto {

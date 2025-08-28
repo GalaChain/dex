@@ -23,7 +23,8 @@ import {
   GetPoolDto,
   Pool,
   TickData,
-  TransferUnclaimedFundsDto
+  TransferUnclaimedFundsDto,
+  UpdatePoolBitmapDto
 } from "../../api";
 import { DexV3Contract } from "../DexV3Contract";
 import dex from "../test/dex";
@@ -311,17 +312,13 @@ it.only("should work with corrupted pools", async () => {
     0.1
   );
   pool.bitmap = {
+    "0": "1",
     "4": "18889465931478580854784",
     "346": "20282409603651670423947251286016",
-    "-11": "0",
-    "-12": "0",
-    "-13": "0",
-    "-14": "0",
-    "-15": "0",
-    "-16": "105312291668557186697918027683670432318895095400549111254310977536",
-    "-346": "5708990770823839524233143877797980545530986496"
+    "-347": "5708990770823839524233143877797980545530986496",
+    "-17": "105312291668557186697918027683670432318895097761732352689133584384"
   };
-  pool.liquidity = new BigNumber("1413046.954246445105085826");
+  pool.liquidity = new BigNumber("464493.649770990709619754");
   pool.feeGrowthGlobal0 = new BigNumber("0.00254431109535951094");
   pool.feeGrowthGlobal1 = new BigNumber("0.00006266545836499354");
 
@@ -352,66 +349,66 @@ it.only("should work with corrupted pools", async () => {
   const tickData = [
     {
       tick: -42810,
-      poolHash: "9cb1d6a5d7f1d2a3c7e0c5fbe57d486056abf15973ebed1812fd21e0d1b04003",
+      poolHash: pool.genPoolHash(),
       initialised: false,
-      liquidityNet: "0",
-      liquidityGross: "0",
-      feeGrowthOutside0: "0",
-      feeGrowthOutside1: "0"
+      liquidityNet: new BigNumber("0"),
+      liquidityGross: new BigNumber("0"),
+      feeGrowthOutside0: new BigNumber("0"),
+      feeGrowthOutside1: new BigNumber("0")
     },
     {
       tick: 10980,
-      poolHash: "9cb1d6a5d7f1d2a3c7e0c5fbe57d486056abf15973ebed1812fd21e0d1b04003",
+      poolHash: pool.genPoolHash(),
       initialised: true,
-      liquidityNet: "-414342.308664710770120158",
-      liquidityGross: "414342.308664710770120158",
-      feeGrowthOutside0: "0",
-      feeGrowthOutside1: "0"
+      liquidityNet: new BigNumber("-414342.308664710770120158"),
+      liquidityGross: new BigNumber("414342.308664710770120158"),
+      feeGrowthOutside0: new BigNumber("0"),
+      feeGrowthOutside1: new BigNumber("0")
     },
     {
       tick: -41360,
-      poolHash: "9cb1d6a5d7f1d2a3c7e0c5fbe57d486056abf15973ebed1812fd21e0d1b04003",
+      poolHash: pool.genPoolHash(),
       initialised: true,
-      liquidityNet: "414342.308664710770120158",
-      liquidityGross: "414342.308664710770120158",
-      feeGrowthOutside0: "0.00041755910296923862",
-      feeGrowthOutside1: "0.00000690299625102588"
+      liquidityNet: new BigNumber("414342.308664710770120158"),
+      liquidityGross: new BigNumber("414342.308664710770120158"),
+      feeGrowthOutside0: new BigNumber("0.00041755910296923862"),
+      feeGrowthOutside1: new BigNumber("0.00000690299625102588")
     },
     {
       tick: -886800,
-      poolHash: "9cb1d6a5d7f1d2a3c7e0c5fbe57d486056abf15973ebed1812fd21e0d1b04003",
+      poolHash: pool.genPoolHash(),
       initialised: true,
-      liquidityNet: "50151.341106279939499596",
-      liquidityGross: "50151.341106279939499596",
-      feeGrowthOutside0: "0",
-      feeGrowthOutside1: "0"
+      liquidityNet: new BigNumber("50151.341106279939499596"),
+      liquidityGross: new BigNumber("50151.341106279939499596"),
+      feeGrowthOutside0: new BigNumber("0"),
+      feeGrowthOutside1: new BigNumber("0")
     },
     {
       tick: 886800,
-      poolHash: "9cb1d6a5d7f1d2a3c7e0c5fbe57d486056abf15973ebed1812fd21e0d1b04003",
+      poolHash: pool.genPoolHash(),
       initialised: true,
-      liquidityNet: "-50151.341106279939499596",
-      liquidityGross: "50151.341106279939499596",
-      feeGrowthOutside0: "0",
-      feeGrowthOutside1: "0"
+      liquidityNet: new BigNumber("-50151.341106279939499596"),
+      liquidityGross: new BigNumber("50151.341106279939499596"),
+      feeGrowthOutside0: new BigNumber("0"),
+      feeGrowthOutside1: new BigNumber("0")
     },
     {
       tick: -37010,
-      poolHash: "9cb1d6a5d7f1d2a3c7e0c5fbe57d486056abf15973ebed1812fd21e0d1b04003",
+      poolHash: pool.genPoolHash(),
       initialised: false,
-      liquidityNet: "0",
-      liquidityGross: "0",
-      feeGrowthOutside0: "0",
-      feeGrowthOutside1: "0"
+      liquidityNet: new BigNumber("0"),
+      liquidityGross: new BigNumber("0"),
+      feeGrowthOutside0: new BigNumber("0"),
+      feeGrowthOutside1: new BigNumber("0")
     },
     {
       tick: -40250,
-      poolHash: "9cb1d6a5d7f1d2a3c7e0c5fbe57d486056abf15973ebed1812fd21e0d1b04003",
+      poolHash: pool.genPoolHash(),
       initialised: false,
-      liquidityNet: "0",
-      liquidityGross: "0",
-      feeGrowthOutside0: "0.00107145195127108877",
-      feeGrowthOutside1: "0.00001850845153029271"
+      liquidityNet: new BigNumber("0"),
+      liquidityGross: new BigNumber("0"),
+      feeGrowthOutside0: new BigNumber("0.00107145195127108877"),
+      feeGrowthOutside1: new BigNumber("0.00001850845153029271")
     }
   ];
   const [tick1, tick2, tick3, tick4, tick5, tick6, tick7]: TickData[] = plainToInstance(TickData, tickData);
@@ -419,8 +416,8 @@ it.only("should work with corrupted pools", async () => {
   const positionData1 = new DexPositionData(
     pool.genPoolHash(),
     "test position id",
-    -886800,
     886800,
+    -886800,
     dexClassKey,
     currencyClassKey,
     fee
@@ -434,8 +431,8 @@ it.only("should work with corrupted pools", async () => {
   const positionData2 = new DexPositionData(
     pool.genPoolHash(),
     "test position id2",
-    -41360,
     10980,
+    -41360,
     dexClassKey,
     currencyClassKey,
     fee
@@ -449,8 +446,8 @@ it.only("should work with corrupted pools", async () => {
   const positionData3 = new DexPositionData(
     pool.genPoolHash(),
     "test position id3",
-    0,
     -42810,
+    0,
     dexClassKey,
     currencyClassKey,
     fee
@@ -462,7 +459,7 @@ it.only("should work with corrupted pools", async () => {
   positionData3.feeGrowthInside1Last = new BigNumber("0.00000000293145495231");
 
   // Setup the fixture
-  const { ctx, contract } = fixture(DexV3Contract)
+  const { ctx, contract, getWrites } = fixture(DexV3Contract)
     .caClientIdentity(users.admin.identityKey, "CuratorOrg")
     .registeredUsers(users.testUser1)
     .savedState(
@@ -486,6 +483,12 @@ it.only("should work with corrupted pools", async () => {
       tick7,
       userCurrencyBalance
     );
+
+  // let updatePoolBitmapDto = new UpdatePoolBitmapDto(dexClassKey, currencyClassKey, fee);
+  // updatePoolBitmapDto.uniqueKey = "anyuniquiekey";
+  // updatePoolBitmapDto = updatePoolBitmapDto.signed(users.admin.privateKey);
+  // const response = await contract.GetBitMapChanges(ctx, updatePoolBitmapDto);
+  // console.dir(JSON.stringify(response), { depth: null, colors: true });
 
   const getPoolDto = new GetPoolDto(dexClassKey, currencyClassKey, fee);
   const res = await contract.GetBalanceDelta(ctx, getPoolDto);

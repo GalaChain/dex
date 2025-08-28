@@ -39,3 +39,4 @@ export * from "./configurePoolDexFee";
 export * from "./batchSubmitAuthorizations";
 export * from "./transferUnclaimedFunds";
 export * from "./getBalanceDelta";
+export * from "./updateBitmap";

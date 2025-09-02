@@ -24,14 +24,19 @@ import BigNumber from "bignumber.js";
 
 import {
   DexPositionData,
+  GetPoolBalanceDeltaResDto,
+  GetPoolDto,
   Pool,
   TransferUnclaimedFundsDto,
   TransferUnclaimedFundsResDto,
   getAmount0Delta,
   getAmount1Delta,
+  getFeeGrowthInside,
+  sqrtPriceToTick,
   tickToSqrtPrice
 } from "../../api";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
+import { fetchOrCreateTickDataPair } from "./tickData.helper";
 
 /**
  * @dev The transferUnclaimedFunds function transfers any unclaimed tokens
@@ -62,34 +67,7 @@ export async function transferUnclaimedFunds(
     DexPositionData
   );
 
-  let totalTokenOwed0 = new BigNumber(0);
-  let totalTokenOwed1 = new BigNumber(0);
-
-  // Parse through all the positions in given pool and calculate the amount of tokens owed to these positions
-  for (const position of positions) {
-    if (position.liquidity.isGreaterThan(0.00000001)) {
-      const sqrtPriceLower = tickToSqrtPrice(position.tickLower);
-      const sqrtPriceUpper = tickToSqrtPrice(position.tickUpper);
-      let amount0Req = new BigNumber(0),
-        amount1Req = new BigNumber(0);
-
-      // Calculate tokens owed if current tick is below the desired range
-      if (pool.sqrtPrice.isLessThan(sqrtPriceLower))
-        amount0Req = getAmount0Delta(sqrtPriceLower, sqrtPriceUpper, position.liquidity);
-      //Calculate tokens owed if current tick is in the desired range
-      else if (pool.sqrtPrice.isLessThan(sqrtPriceUpper)) {
-        amount0Req = getAmount0Delta(pool.sqrtPrice, sqrtPriceUpper, position.liquidity);
-        amount1Req = getAmount1Delta(sqrtPriceLower, pool.sqrtPrice, position.liquidity);
-      }
-      //Calculate tokens owed if current tick is above the desired range
-      else amount1Req = getAmount1Delta(sqrtPriceLower, sqrtPriceUpper, position.liquidity);
-
-      totalTokenOwed0 = totalTokenOwed0.plus(amount0Req);
-      totalTokenOwed1 = totalTokenOwed1.plus(amount1Req);
-    }
-    totalTokenOwed0 = totalTokenOwed0.plus(position.tokensOwed0);
-    totalTokenOwed1 = totalTokenOwed1.plus(position.tokensOwed1);
-  }
+  const { totalOwed0, totalOwed1 } = await calculateTotalOwedForPool(ctx, pool, positions);
 
   const token0InstanceKey = TokenInstanceKey.fungibleKey(pool.token0ClassKey);
   const token1InstanceKey = TokenInstanceKey.fungibleKey(pool.token1ClassKey);
@@ -97,21 +75,13 @@ export async function transferUnclaimedFunds(
   const poolToken0Balance = await fetchOrCreateBalance(ctx, poolAlias, token0InstanceKey);
   const poolToken1Balance = await fetchOrCreateBalance(ctx, poolAlias, token1InstanceKey);
 
-  // Calculate total amount of unclaimed funds by subtracting total user liquidity fees and the pool's protocol fees from the pool balance
+  // Calculate total amount of unclaimed funds by subtracting total user liquidity value, liquidity fees and the pool's protocol fees from the pool balance
   const unclaimedToken0Amount = BigNumber.max(
-    roundTokenAmount(
-      poolToken0Balance.getQuantityTotal().minus(totalTokenOwed0.plus(pool.protocolFeesToken0)),
-      tokenDecimals[0],
-      false
-    ),
+    roundTokenAmount(poolToken0Balance.getQuantityTotal().minus(totalOwed0), tokenDecimals[0], false),
     0
   );
   const unclaimedToken1Amount = BigNumber.max(
-    roundTokenAmount(
-      poolToken1Balance.getQuantityTotal().minus(totalTokenOwed1.plus(pool.protocolFeesToken1)),
-      tokenDecimals[1],
-      false
-    ),
+    roundTokenAmount(poolToken1Balance.getQuantityTotal().minus(totalOwed1), tokenDecimals[1], false),
     0
   );
 
@@ -145,4 +115,120 @@ export async function transferUnclaimedFunds(
     : [poolToken1Balance, await fetchOrCreateBalance(ctx, transferTo, token1InstanceKey)];
 
   return new TransferUnclaimedFundsResDto(newToken0Balances, newToken1Balances);
+}
+
+/**
+ * @dev The getBalanceDelta function calculates the difference between the total owed
+ *      amounts to liquidity providers in a pool and the actual on-chain balances
+ *      held by the pool’s token accounts.
+ * @param ctx GalaChainContext – The execution context providing access to the GalaChain environment.
+ * @param dto GetPoolDto – A data transfer object containing:
+ *        - token0, token1 – The two tokens that define the pool.
+ *        - fee – The fee tier of the pool.
+ * @returns GetPoolBalanceDeltaResDto – An object containing the delta values:
+ *          - token0Delta – The difference between total owed token0 and the pool’s token0 balance.
+ *          - token1Delta – The difference between total owed token1 and the pool’s token1 balance.
+ */
+export async function getBalanceDelta(
+  ctx: GalaChainContext,
+  dto: GetPoolDto
+): Promise<GetPoolBalanceDeltaResDto> {
+  const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
+
+  const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
+  const pool = await getObjectByKey(ctx, Pool, key);
+
+  const positions = await getObjectsByPartialCompositeKey(
+    ctx,
+    DexPositionData.INDEX_KEY,
+    [pool.genPoolHash()],
+    DexPositionData
+  );
+
+  const { totalOwed0, totalOwed1 } = await calculateTotalOwedForPool(ctx, pool, positions);
+
+  const tokenInstanceKeys = [pool.token0ClassKey, pool.token1ClassKey].map(TokenInstanceKey.fungibleKey);
+  const poolToken0Balance = await fetchOrCreateBalance(
+    ctx,
+    pool.getPoolAlias(),
+    tokenInstanceKeys[0].getTokenClassKey()
+  );
+  const poolToken1Balance = await fetchOrCreateBalance(
+    ctx,
+    pool.getPoolAlias(),
+    tokenInstanceKeys[1].getTokenClassKey()
+  );
+
+  return new GetPoolBalanceDeltaResDto(
+    totalOwed0.minus(poolToken0Balance.getQuantityTotal()),
+    totalOwed1.minus(poolToken1Balance.getQuantityTotal())
+  );
+}
+
+async function calculateTotalOwedForPool(
+  ctx: GalaChainContext,
+  pool: Pool,
+  positions: DexPositionData[]
+): Promise<{ totalOwed0: BigNumber; totalOwed1: BigNumber }> {
+  let totalOwed0 = new BigNumber(0);
+  let totalOwed1 = new BigNumber(0);
+  const currentTick = sqrtPriceToTick(pool.sqrtPrice);
+
+  for (const position of positions) {
+    // Skip calculations for negligible liquidity
+    if (position.liquidity.isLessThanOrEqualTo(0.00000001)) {
+      totalOwed0 = totalOwed0.plus(position.tokensOwed0 ?? 0);
+      totalOwed1 = totalOwed1.plus(position.tokensOwed1 ?? 0);
+      continue;
+    }
+
+    const liquidity = new BigNumber(position.liquidity);
+    const sqrtPriceLower = tickToSqrtPrice(position.tickLower);
+    const sqrtPriceUpper = tickToSqrtPrice(position.tickUpper);
+
+    let owed0 = new BigNumber(0);
+    let owed1 = new BigNumber(0);
+
+    // Calculate tokens owed if current tick is below the desired range
+    if (pool.sqrtPrice.isLessThan(sqrtPriceLower)) {
+      owed0 = getAmount0Delta(sqrtPriceLower, sqrtPriceUpper, liquidity);
+    }
+    //Calculate tokens owed if current tick is in the desired range
+    else if (pool.sqrtPrice.isLessThan(sqrtPriceUpper)) {
+      owed0 = getAmount0Delta(pool.sqrtPrice, sqrtPriceUpper, liquidity);
+      owed1 = getAmount1Delta(sqrtPriceLower, pool.sqrtPrice, liquidity);
+    }
+    //Calculate tokens owed if current tick is above the desired range
+    else {
+      owed1 = getAmount1Delta(sqrtPriceLower, sqrtPriceUpper, liquidity);
+    }
+
+    const { tickUpperData, tickLowerData } = await fetchOrCreateTickDataPair(
+      ctx,
+      pool.genPoolHash(),
+      position.tickLower,
+      position.tickUpper
+    );
+
+    const [feeGrowthInside0, feeGrowthInside1] = getFeeGrowthInside(
+      tickLowerData,
+      tickUpperData,
+      currentTick,
+      pool.feeGrowthGlobal0,
+      pool.feeGrowthGlobal1
+    );
+
+    // Calculate liquidity fees that this position has accumulated
+    const tokensOwed0 = feeGrowthInside0.minus(position.feeGrowthInside0Last).times(liquidity);
+    const tokensOwed1 = feeGrowthInside1.minus(position.feeGrowthInside1Last).times(liquidity);
+
+    totalOwed0 = totalOwed0.plus(owed0).plus(tokensOwed0).plus(position.tokensOwed0);
+    totalOwed1 = totalOwed1.plus(owed1).plus(tokensOwed1).plus(position.tokensOwed1);
+  }
+
+  // Add protocol fees to the total amount required
+  totalOwed0 = totalOwed0.plus(pool.protocolFeesToken0);
+  totalOwed1 = totalOwed1.plus(pool.protocolFeesToken1);
+
+  return { totalOwed0, totalOwed1 };
 }

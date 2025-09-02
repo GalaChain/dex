@@ -23,8 +23,7 @@ import {
   GetPoolDto,
   Pool,
   TickData,
-  TransferUnclaimedFundsDto,
-  UpdatePoolBitmapDto
+  TransferUnclaimedFundsDto
 } from "../../api";
 import { DexV3Contract } from "../DexV3Contract";
 import dex from "../test/dex";
@@ -290,7 +289,7 @@ it("should account for unclaimed liquidity inside active range", async () => {
   expect(response.Data?.newToken1Balances[1].getQuantityTotal().toString()).toBe("499.500149965");
 });
 
-it.only("should work with corrupted pools", async () => {
+it("should work with corrupted pools", async () => {
   const currencyClass: TokenClass = currency.tokenClass();
   const currencyInstance: TokenInstance = currency.tokenInstance();
   const currencyClassKey: TokenClassKey = currency.tokenClassKey();
@@ -484,13 +483,10 @@ it.only("should work with corrupted pools", async () => {
       userCurrencyBalance
     );
 
-  // let updatePoolBitmapDto = new UpdatePoolBitmapDto(dexClassKey, currencyClassKey, fee);
-  // updatePoolBitmapDto.uniqueKey = "anyuniquiekey";
-  // updatePoolBitmapDto = updatePoolBitmapDto.signed(users.admin.privateKey);
-  // const response = await contract.GetBitMapChanges(ctx, updatePoolBitmapDto);
-  // console.dir(JSON.stringify(response), { depth: null, colors: true });
-
   const getPoolDto = new GetPoolDto(dexClassKey, currencyClassKey, fee);
   const res = await contract.GetBalanceDelta(ctx, getPoolDto);
-  console.dir(JSON.stringify(res), { depth: null, colors: true });
+  expect(res.Data?.amount0Delta.toString()).toBe("3265423.52941774205028321689985566143251743848");
+  expect(res.Data?.amount1Delta.toString()).toBe(
+    "8172.022626307963224232733592333537587346366332393753304556708"
+  );
 });

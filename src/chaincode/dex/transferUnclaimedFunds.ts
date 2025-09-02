@@ -12,12 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TokenInstanceKey, asValidUserAlias } from "@gala-chain/api";
+import { TokenInstanceKey } from "@gala-chain/api";
 import {
   GalaChainContext,
   fetchOrCreateBalance,
   getObjectByKey,
   getObjectsByPartialCompositeKey,
+  resolveUserAlias,
   transferToken
 } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
@@ -86,7 +87,7 @@ export async function transferUnclaimedFunds(
   );
 
   // Transfer funds to secure wallet
-  const transferTo = asValidUserAlias(dto.secureWallet);
+  const transferTo = await resolveUserAlias(ctx, dto.secureWallet);
   const newToken0Balances = unclaimedToken0Amount.toNumber()
     ? await transferToken(ctx, {
         from: poolAlias,

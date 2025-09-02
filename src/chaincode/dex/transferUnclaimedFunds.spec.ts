@@ -38,12 +38,10 @@ it("should transfer unclaimed funds to secure wallet", async () => {
   const dexInstance: TokenInstance = dex.tokenInstance();
   const dexClassKey: TokenClassKey = dex.tokenClassKey();
 
-  // Create normalized token keys for pool
   const token0Key = generateKeyFromClassKey(dexClassKey);
   const token1Key = generateKeyFromClassKey(currencyClassKey);
   const fee = DexFeePercentageTypes.FEE_0_05_PERCENT;
 
-  // Initialize pool with manual values
   const pool = new Pool(
     token0Key,
     token1Key,
@@ -63,12 +61,10 @@ it("should transfer unclaimed funds to secure wallet", async () => {
     "346": "20282409603651670423947251286016"
   };
 
-  // Add initial liquidity to the pool
   pool.liquidity = new BigNumber("77789.999499306764803261");
   pool.grossPoolLiquidity = new BigNumber("348717210.55494320449679994");
   pool.sqrtPrice = new BigNumber("0.01664222241481084743");
   pool.bitmap = bitmap;
-  // Create pool balances - pool needs tokens to pay out
   const poolAlias = pool.getPoolAlias();
   const poolDexBalance = plainToInstance(TokenBalance, {
     ...dex.tokenBalance(),
@@ -81,16 +77,15 @@ it("should transfer unclaimed funds to secure wallet", async () => {
     quantity: new BigNumber("1000")
   });
 
-  // Create user balances - user needs tokens to swap
   const userDexBalance = plainToInstance(TokenBalance, {
     ...dex.tokenBalance(),
     owner: users.testUser1.identityKey,
-    quantity: new BigNumber("10000") // User has 10k DEX tokens
+    quantity: new BigNumber("10000") 
   });
   const userCurrencyBalance = plainToInstance(TokenBalance, {
     ...currency.tokenBalance(),
     owner: users.testUser1.identityKey,
-    quantity: new BigNumber("10000") // User has 10k CURRENCY tokens
+    quantity: new BigNumber("10000") 
   });
 
   const positionData = new DexPositionData(
@@ -107,7 +102,6 @@ it("should transfer unclaimed funds to secure wallet", async () => {
   pool.protocolFeesToken1 = new BigNumber("25");
   pool.protocolFeesToken0 = new BigNumber("10");
 
-  // Setup the fixture
   const { ctx, contract } = fixture(DexV3Contract)
     .caClientIdentity(users.admin.identityKey, "CuratorOrg")
     .registeredUsers(users.testUser1)
@@ -290,6 +284,7 @@ it("should account for unclaimed liquidity inside active range", async () => {
 });
 
 it("should work with corrupted pools", async () => {
+  // Given
   const currencyClass: TokenClass = currency.tokenClass();
   const currencyInstance: TokenInstance = currency.tokenInstance();
   const currencyClassKey: TokenClassKey = currency.tokenClassKey();
@@ -333,16 +328,15 @@ it("should work with corrupted pools", async () => {
     quantity: new BigNumber("1000")
   });
 
-  // Create user balances - user needs tokens to swap
   const userDexBalance = plainToInstance(TokenBalance, {
     ...dex.tokenBalance(),
     owner: users.testUser1.identityKey,
-    quantity: new BigNumber("10000") // User has 10k DEX tokens
+    quantity: new BigNumber("10000")
   });
   const userCurrencyBalance = plainToInstance(TokenBalance, {
     ...currency.tokenBalance(),
     owner: users.testUser1.identityKey,
-    quantity: new BigNumber("10000") // User has 10k CURRENCY tokens
+    quantity: new BigNumber("10000")
   });
 
   const tickData = [
@@ -457,8 +451,7 @@ it("should work with corrupted pools", async () => {
   positionData3.feeGrowthInside0Last = new BigNumber("0.00053306755570900906");
   positionData3.feeGrowthInside1Last = new BigNumber("0.00000000293145495231");
 
-  // Setup the fixture
-  const { ctx, contract, getWrites } = fixture(DexV3Contract)
+  const { ctx, contract } = fixture(DexV3Contract)
     .caClientIdentity(users.admin.identityKey, "CuratorOrg")
     .registeredUsers(users.testUser1)
     .savedState(
@@ -484,7 +477,11 @@ it("should work with corrupted pools", async () => {
     );
 
   const getPoolDto = new GetPoolDto(dexClassKey, currencyClassKey, fee);
+
+  // When
   const res = await contract.GetBalanceDelta(ctx, getPoolDto);
+
+  // Then
   expect(res.Data?.amount0Delta.toString()).toBe("3265423.52941774205028321689985566143251743848");
   expect(res.Data?.amount1Delta.toString()).toBe(
     "8172.022626307963224232733592333537587346366332393753304556708"

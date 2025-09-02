@@ -12,14 +12,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TokenClass, TokenClassKey, TokenInstance } from "@gala-chain/api";
+import { TokenBalance, TokenClass, TokenClassKey, TokenInstance } from "@gala-chain/api";
 import { currency, fixture, users } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
+import { plainToInstance } from "class-transformer";
 
 import {
   DexFeePercentageTypes,
   DexPositionData,
+  GetPoolDto,
   Pool,
+  TickData,
   UpdatePoolBitmapDto,
   sqrtPriceToTick
 } from "../../api";
@@ -371,4 +374,220 @@ it("should update the bitmap", async () => {
   }, new BigNumber("0"));
 
   expect(response.Data?.liquidity).toEqual(expectedLiquidity);
+});
+
+it("should work with corrupted pools", async () => {
+  // Given
+  const currencyClass: TokenClass = currency.tokenClass();
+  const currencyInstance: TokenInstance = currency.tokenInstance();
+  const currencyClassKey: TokenClassKey = currency.tokenClassKey();
+  const dexClass: TokenClass = dex.tokenClass();
+  const dexInstance: TokenInstance = dex.tokenInstance();
+  const dexClassKey: TokenClassKey = dex.tokenClassKey();
+
+  const token0Key = generateKeyFromClassKey(dex.tokenClassKey());
+  const token1Key = generateKeyFromClassKey(currency.tokenClassKey());
+  const fee = DexFeePercentageTypes.FEE_0_05_PERCENT;
+
+  const pool = new Pool(
+    token0Key,
+    token1Key,
+    dex.tokenClassKey(),
+    currency.tokenClassKey(),
+    fee,
+    new BigNumber("0.1325197216231319467"),
+    0.1
+  );
+  pool.bitmap = {
+    "4": "18889465931478580854784",
+    "346": "20282409603651670423947251286016",
+    "-11": "0",
+    "-12": "0",
+    "-13": "0",
+    "-14": "0",
+    "-15": "0",
+    "-16": "105312291668557186697918027683670432318895095400549111254310977536",
+    "-346": "5708990770823839524233143877797980545530986496"
+  };
+  pool.liquidity = new BigNumber("464493.649770990709619754");
+  pool.feeGrowthGlobal0 = new BigNumber("0.00254431109535951094");
+  pool.feeGrowthGlobal1 = new BigNumber("0.00006266545836499354");
+
+  const poolAlias = pool.getPoolAlias();
+  const poolDexBalance = plainToInstance(TokenBalance, {
+    ...dex.tokenBalance(),
+    owner: poolAlias,
+    quantity: new BigNumber("1000")
+  });
+  const poolCurrencyBalance = plainToInstance(TokenBalance, {
+    ...currency.tokenBalance(),
+    owner: poolAlias,
+    quantity: new BigNumber("1000")
+  });
+
+  // Create user balances - user needs tokens to swap
+  const userDexBalance = plainToInstance(TokenBalance, {
+    ...dex.tokenBalance(),
+    owner: users.testUser1.identityKey,
+    quantity: new BigNumber("10000") // User has 10k DEX tokens
+  });
+  const userCurrencyBalance = plainToInstance(TokenBalance, {
+    ...currency.tokenBalance(),
+    owner: users.testUser1.identityKey,
+    quantity: new BigNumber("10000") // User has 10k CURRENCY tokens
+  });
+
+  const tickData = [
+    {
+      tick: -42810,
+      poolHash: pool.genPoolHash(),
+      initialised: false,
+      liquidityNet: new BigNumber("0"),
+      liquidityGross: new BigNumber("0"),
+      feeGrowthOutside0: new BigNumber("0"),
+      feeGrowthOutside1: new BigNumber("0")
+    },
+    {
+      tick: 10980,
+      poolHash: pool.genPoolHash(),
+      initialised: true,
+      liquidityNet: new BigNumber("-414342.308664710770120158"),
+      liquidityGross: new BigNumber("414342.308664710770120158"),
+      feeGrowthOutside0: new BigNumber("0"),
+      feeGrowthOutside1: new BigNumber("0")
+    },
+    {
+      tick: -41360,
+      poolHash: pool.genPoolHash(),
+      initialised: true,
+      liquidityNet: new BigNumber("414342.308664710770120158"),
+      liquidityGross: new BigNumber("414342.308664710770120158"),
+      feeGrowthOutside0: new BigNumber("0.00041755910296923862"),
+      feeGrowthOutside1: new BigNumber("0.00000690299625102588")
+    },
+    {
+      tick: -886800,
+      poolHash: pool.genPoolHash(),
+      initialised: true,
+      liquidityNet: new BigNumber("50151.341106279939499596"),
+      liquidityGross: new BigNumber("50151.341106279939499596"),
+      feeGrowthOutside0: new BigNumber("0"),
+      feeGrowthOutside1: new BigNumber("0")
+    },
+    {
+      tick: 886800,
+      poolHash: pool.genPoolHash(),
+      initialised: true,
+      liquidityNet: new BigNumber("-50151.341106279939499596"),
+      liquidityGross: new BigNumber("50151.341106279939499596"),
+      feeGrowthOutside0: new BigNumber("0"),
+      feeGrowthOutside1: new BigNumber("0")
+    },
+    {
+      tick: -37010,
+      poolHash: pool.genPoolHash(),
+      initialised: false,
+      liquidityNet: new BigNumber("0"),
+      liquidityGross: new BigNumber("0"),
+      feeGrowthOutside0: new BigNumber("0"),
+      feeGrowthOutside1: new BigNumber("0")
+    },
+    {
+      tick: -40250,
+      poolHash: pool.genPoolHash(),
+      initialised: false,
+      liquidityNet: new BigNumber("0"),
+      liquidityGross: new BigNumber("0"),
+      feeGrowthOutside0: new BigNumber("0.00107145195127108877"),
+      feeGrowthOutside1: new BigNumber("0.00001850845153029271")
+    }
+  ];
+  const [tick1, tick2, tick3, tick4, tick5, tick6, tick7]: TickData[] = plainToInstance(TickData, tickData);
+
+  const positionData1 = new DexPositionData(
+    pool.genPoolHash(),
+    "test position id",
+    886800,
+    -886800,
+    dexClassKey,
+    currencyClassKey,
+    fee
+  );
+  positionData1.liquidity = new BigNumber("50151.341106279939499596");
+  positionData1.tokensOwed0 = new BigNumber("25.71222121993776949208261766265153599228");
+  positionData1.tokensOwed1 = new BigNumber("0.31700952853971159669819979827281850231");
+  positionData1.feeGrowthInside0Last = new BigNumber("0.00051269388780629604");
+  positionData1.feeGrowthInside1Last = new BigNumber("0.00000632107379088033");
+
+  const positionData2 = new DexPositionData(
+    pool.genPoolHash(),
+    "test position id2",
+    10980,
+    -41360,
+    dexClassKey,
+    currencyClassKey,
+    fee
+  );
+  positionData2.liquidity = new BigNumber("414342.308664710770120158");
+  positionData2.tokensOwed0 = new BigNumber("0.00000000764648208797468825190595965348");
+  positionData2.tokensOwed1 = new BigNumber("8.50581171547982358743512779314274500474");
+  positionData2.feeGrowthInside0Last = new BigNumber("0.00212675199239027232");
+  positionData2.feeGrowthInside1Last = new BigNumber("0.00005576246211396766");
+
+  const positionData3 = new DexPositionData(
+    pool.genPoolHash(),
+    "test position id3",
+    -42810,
+    0,
+    dexClassKey,
+    currencyClassKey,
+    fee
+  );
+  positionData3.liquidity = new BigNumber("0");
+  positionData3.tokensOwed0 = new BigNumber("505.64299147643391887113780049622797061232");
+  positionData3.tokensOwed1 = new BigNumber("0.00278064128193458607442657397498302632");
+  positionData3.feeGrowthInside0Last = new BigNumber("0.00053306755570900906");
+  positionData3.feeGrowthInside1Last = new BigNumber("0.00000000293145495231");
+
+  // Setup the fixture
+  const { ctx, contract, getWrites } = fixture(DexV3Contract)
+    .caClientIdentity(users.admin.identityKey, "CuratorOrg")
+    .registeredUsers(users.testUser1)
+    .savedState(
+      currencyClass,
+      currencyInstance,
+      dexClass,
+      dexInstance,
+      pool,
+      poolDexBalance,
+      poolCurrencyBalance,
+      userDexBalance,
+      positionData1,
+      positionData2,
+      positionData3,
+      tick1,
+      tick2,
+      tick3,
+      tick4,
+      tick5,
+      tick6,
+      tick7,
+      userCurrencyBalance
+    );
+
+  let updatePoolBitmapDto = new UpdatePoolBitmapDto(dexClassKey, currencyClassKey, fee);
+  updatePoolBitmapDto.uniqueKey = "anyuniquiekey";
+  updatePoolBitmapDto = updatePoolBitmapDto.signed(users.admin.privateKey);
+
+  // When
+  const response = await contract.GetBitMapChanges(ctx, updatePoolBitmapDto);
+
+  // Then
+  expect(response.Data?.bitMap).toStrictEqual({
+    "4": "18889465931478580854784",
+    "346": "20282409603651670423947251286016",
+    "-347": "5708990770823839524233143877797980545530986496",
+    "-17": "105312291668557186697918027683670432318895095400549111254310977536"
+  });
+  expect(response.Data?.expectedLiquidity.toString()).toBe("464493.649770990709619754");
 });

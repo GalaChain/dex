@@ -80,12 +80,12 @@ it("should transfer unclaimed funds to secure wallet", async () => {
   const userDexBalance = plainToInstance(TokenBalance, {
     ...dex.tokenBalance(),
     owner: users.testUser1.identityKey,
-    quantity: new BigNumber("10000") 
+    quantity: new BigNumber("10000")
   });
   const userCurrencyBalance = plainToInstance(TokenBalance, {
     ...currency.tokenBalance(),
     owner: users.testUser1.identityKey,
-    quantity: new BigNumber("10000") 
+    quantity: new BigNumber("10000")
   });
 
   const positionData = new DexPositionData(

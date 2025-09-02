@@ -88,6 +88,7 @@ async function getPoolChanges(ctx: GalaChainContext, pool: Pool): Promise<GetBit
   let expectedLiquidity = new BigNumber("0");
   const currentTick = sqrtPriceToTick(currentSqrtPrice); // Calculate the current price tick the pool is at
   for (const position of positions) {
+    if (position.liquidity.isLessThan(new BigNumber("0.00000001"))) continue; // Skip iteration if position has negligible liquidity
     const tickLower = position.tickLower;
     const tickUpper = position.tickUpper;
     const liquidity = position.liquidity;

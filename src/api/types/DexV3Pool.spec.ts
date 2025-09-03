@@ -17,7 +17,7 @@ import { BigNumber } from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
 import { SwapState, tickToSqrtPrice } from "../utils";
-import { DexFeePercentageTypes } from "./DexDtos";
+import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { DexPositionData } from "./DexPositionData";
 import { Pool } from "./DexV3Pool";
 import { TickData } from "./TickData";

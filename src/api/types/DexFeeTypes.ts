@@ -13,16 +13,8 @@
  * limitations under the License.
  */
 
-export * from "./DexDtos";
-export * from "./DexFeeConfig";
-export * from "./DexFeeTypes";
-export * from "./DexGlobalLimitOrderConfig";
-export * from "./DexLimitOrder";
-export * from "./DexLimitOrderCommitment";
-export * from "./DexLimitOrderModel";
-export * from "./DexPositionData";
-export * from "./DexPositionOwner";
-export * from "./DexV3Pool";
-export * from "./TickData";
-export * from "./BatchSubmitAuthorities";
-export * from "./BatchSubmitDtos";
+export enum DexFeePercentageTypes {
+  FEE_0_05_PERCENT = 500, // 0.05%
+  FEE_0_3_PERCENT = 3000, // 0.3%
+  FEE_1_PERCENT = 10000 // 1%
+}

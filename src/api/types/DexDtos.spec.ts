@@ -25,7 +25,6 @@ import {
   CollectDto,
   CollectProtocolFeesDto,
   CreatePoolDto,
-  DexFeePercentageTypes,
   GetAddLiquidityEstimationDto,
   GetPoolDto,
   GetPositionDto,
@@ -40,6 +39,7 @@ import {
   SwapDto
 } from "./DexDtos";
 import { TickData } from "./TickData";
+import { DexFeePercentageTypes } from "./DexFeeTypes";
 
 describe("DexDtos", () => {
   const mockToken0 = plainToInstance(TokenClassKey, {

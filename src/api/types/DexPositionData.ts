@@ -21,7 +21,7 @@ import { JSONSchema } from "class-validator-jsonschema";
 
 import { requirePosititve } from "../utils";
 import { IsLessThan } from "../validators";
-import { DexFeePercentageTypes } from "./DexDtos";
+import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { TickData } from "./TickData";
 
 @JSONSchema({

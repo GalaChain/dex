@@ -44,7 +44,7 @@ import {
   tickToSqrtPrice
 } from "../utils";
 import { BigNumberIsNotNegative, IsStringRecord } from "../validators";
-import { DexFeePercentageTypes } from "./DexDtos";
+import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { DexPositionData } from "./DexPositionData";
 import { TickData } from "./TickData";
 

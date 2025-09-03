@@ -47,11 +47,16 @@ export async function quoteExactAmount(
   const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
 
   const zeroForOne = dto.zeroForOne;
-
-  // Generate pool key from tokens and fee tier
-  const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
-  const pool = await getObjectByKey(ctx, Pool, key);
-  if (pool == undefined) throw new NotFoundError("Pool does not exist");
+  let pool: Pool;
+  
+  if (dto.pool !== undefined) {
+    pool = dto.pool;
+  } else {
+    // Generate pool key from tokens and fee tier
+    const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
+    pool = await getObjectByKey(ctx, Pool, key);
+    if (pool == undefined) throw new NotFoundError("Pool does not exist");
+  }
 
   // Define square root price limit as the maximum possible value in trade direction for estimation purposes
   const sqrtPriceLimit = zeroForOne

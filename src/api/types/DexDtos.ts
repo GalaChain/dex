@@ -45,12 +45,8 @@ import { PositionInPool, f18 } from "../utils";
 import { BigNumberIsNegative, BigNumberIsNotNegative, BigNumberIsPositive, IsLessThan } from "../validators";
 import { IDexLimitOrderModel } from "./DexLimitOrderModel";
 import { TickData } from "./TickData";
-
-export enum DexFeePercentageTypes {
-  FEE_0_05_PERCENT = 500, // 0.05%
-  FEE_0_3_PERCENT = 3000, // 0.3%
-  FEE_1_PERCENT = 10000 // 1%
-}
+import { Pool } from "./DexV3Pool";
+import { DexFeePercentageTypes } from "./DexFeeTypes";
 
 export class CreatePoolDto extends SubmitCallDTO {
   @IsNotEmpty()
@@ -152,12 +148,18 @@ export class QuoteExactAmountDto extends ChainCallDTO {
   @BigNumberProperty()
   public amount: BigNumber;
 
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => Pool)
+  public pool?: Pool;
+
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
     fee: DexFeePercentageTypes,
     amount: BigNumber,
-    zeroForOne: boolean
+    zeroForOne: boolean,
+    pool?: Pool
   ) {
     super();
     this.token0 = token0;
@@ -165,6 +167,9 @@ export class QuoteExactAmountDto extends ChainCallDTO {
     this.fee = fee;
     this.amount = amount;
     this.zeroForOne = zeroForOne;
+    if (pool !== undefined) {
+      this.pool = pool;
+    }
   }
 }
 

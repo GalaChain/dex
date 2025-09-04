@@ -315,6 +315,34 @@ describe("DexV3Contract:LimitOrder", () => {
     // Then
     expect(response).toEqual(transactionSuccess());
   });
+
+  test("QuoteExactAmount", async () => {
+    // Given
+    const pool = new Pool(
+      "GALA|Unit|none|none",
+      "TOWN|Unit|none|none",
+      token0ClassKey,
+      token1ClassKey,
+      DexFeePercentageTypes.FEE_0_3_PERCENT,
+      new BigNumber("1"),
+      0
+    );
+
+    const dto = new QuoteExactAmountDto(
+      token0ClassKey,
+      token1ClassKey,
+      DexFeePercentageTypes.FEE_0_3_PERCENT,
+      new BigNumber("1000000000"),
+      true,
+      pool
+    );
+
+    // When
+    const response = await client.dex.QuoteExactAmount(dto);
+
+    // Then
+    expect(response).toEqual(transactionSuccess());
+  });
 });
 
 interface DexV3ContractAPI {

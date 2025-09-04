@@ -16,7 +16,7 @@ import { TokenClassKey } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
-import { DexFeePercentageTypes } from "./DexDtos";
+import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { DexPositionData } from "./DexPositionData";
 
 const tokenClass0Properties = {

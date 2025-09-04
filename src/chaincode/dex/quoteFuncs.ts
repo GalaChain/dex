@@ -91,22 +91,46 @@ export async function quoteExactAmount(
   // Determine if it's exact input (positive amount) or exact output (negative)
   const exactInput = amountSpecified.isGreaterThan(0);
 
+  // Get token decimals from compositePool if available, otherwise fetch from chain
+  let token0Decimal: number, token1Decimal: number;
+  if (dto.compositePool !== undefined) {
+    token0Decimal = dto.compositePool.token0Decimals;
+    token1Decimal = dto.compositePool.token1Decimals;
+  } else {
+    [token0Decimal, token1Decimal] = await getTokenDecimalsFromPool(ctx, pool);
+  }
+
   // Swap steps until input amount is consumed or price limit hit and apply to pool state
-  await processSwapSteps(ctx, state, pool, sqrtPriceLimit, exactInput, zeroForOne);
+  if (dto.compositePool !== undefined) {
+    // Offline mode: pass tick data map and null context
+    await processSwapSteps(null, state, pool, sqrtPriceLimit, exactInput, zeroForOne, dto.compositePool.tickDataMap);
+  } else {
+    // Online mode: use chain context
+    await processSwapSteps(ctx, state, pool, sqrtPriceLimit, exactInput, zeroForOne);
+  }
   const [amount0, amount1] = pool.swap(zeroForOne, state, amountSpecified);
-  const [token0Decimal, token1Decimal] = await getTokenDecimalsFromPool(ctx, pool);
   const roundedToken0Amount = roundTokenAmount(amount0, token0Decimal, amount0.isPositive());
   const roundedToken1Amount = roundTokenAmount(amount1, token1Decimal, amount1.isPositive());
 
   // Check whether pool has enough liquidity to carry out this operation
   if (roundedToken0Amount.isNegative()) {
-    const poolTokenBalance = await fetchOrCreateBalance(ctx, pool.getPoolAlias(), pool.token0ClassKey);
-    if (poolTokenBalance.getQuantityTotal().isLessThan(roundedToken0Amount.abs())) {
+    let poolToken0Balance;
+    if (dto.compositePool !== undefined) {
+      poolToken0Balance = dto.compositePool.token0Balance;
+    } else {
+      poolToken0Balance = await fetchOrCreateBalance(ctx, pool.getPoolAlias(), pool.token0ClassKey);
+    }
+    if (poolToken0Balance.getQuantityTotal().isLessThan(roundedToken0Amount.abs())) {
       throw new ConflictError("Not enough liquidity available in pool");
     }
   } else {
-    const poolTokenBalance = await fetchOrCreateBalance(ctx, pool.getPoolAlias(), pool.token1ClassKey);
-    if (poolTokenBalance.getQuantityTotal().isLessThan(roundedToken1Amount.abs())) {
+    let poolToken1Balance;
+    if (dto.compositePool !== undefined) {
+      poolToken1Balance = dto.compositePool.token1Balance;
+    } else {
+      poolToken1Balance = await fetchOrCreateBalance(ctx, pool.getPoolAlias(), pool.token1ClassKey);
+    }
+    if (poolToken1Balance.getQuantityTotal().isLessThan(roundedToken1Amount.abs())) {
       throw new ConflictError("Not enough liquidity available in pool");
     }
   }

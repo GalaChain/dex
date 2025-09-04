@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+export * from "./CompositePoolDto";
 export * from "./DexDtos";
 export * from "./DexFeeConfig";
 export * from "./DexFeeTypes";
@@ -23,6 +24,7 @@ export * from "./DexLimitOrderModel";
 export * from "./DexPositionData";
 export * from "./DexPositionOwner";
 export * from "./DexV3Pool";
+export * from "./GetCompositePoolDto";
 export * from "./TickData";
 export * from "./BatchSubmitAuthorities";
 export * from "./BatchSubmitDtos";

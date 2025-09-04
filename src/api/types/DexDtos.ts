@@ -43,10 +43,10 @@ import { JSONSchema } from "class-validator-jsonschema";
 
 import { PositionInPool, f18 } from "../utils";
 import { BigNumberIsNegative, BigNumberIsNotNegative, BigNumberIsPositive, IsLessThan } from "../validators";
-import { IDexLimitOrderModel } from "./DexLimitOrderModel";
-import { TickData } from "./TickData";
-import { Pool } from "./DexV3Pool";
 import { DexFeePercentageTypes } from "./DexFeeTypes";
+import { IDexLimitOrderModel } from "./DexLimitOrderModel";
+import { Pool } from "./DexV3Pool";
+import { TickData } from "./TickData";
 
 export class CreatePoolDto extends SubmitCallDTO {
   @IsNotEmpty()

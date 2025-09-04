@@ -48,7 +48,7 @@ export async function quoteExactAmount(
 
   const zeroForOne = dto.zeroForOne;
   let pool: Pool;
-  
+
   if (dto.pool !== undefined) {
     pool = dto.pool;
   } else {

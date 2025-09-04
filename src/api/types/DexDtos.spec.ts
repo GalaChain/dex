@@ -18,6 +18,7 @@ import { signatures } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
+import { quoteExactAmount } from "../../chaincode/dex/quoteFuncs";
 import {
   AddLiquidityDTO,
   BurnDto,
@@ -34,12 +35,14 @@ import {
   PlaceLimitOrderDto,
   PositionDto,
   QuoteExactAmountDto,
+  QuoteExactAmountResDto,
   SetProtocolFeeDto,
   Slot0ResDto,
   SwapDto
 } from "./DexDtos";
-import { TickData } from "./TickData";
 import { DexFeePercentageTypes } from "./DexFeeTypes";
+import { Pool } from "./DexV3Pool";
+import { TickData } from "./TickData";
 
 describe("DexDtos", () => {
   const mockToken0 = plainToInstance(TokenClassKey, {
@@ -172,6 +175,67 @@ describe("DexDtos", () => {
       expect(validationErrors.length).toBe(0);
       expect(dto.zeroForOne).toBe(true);
       expect(dto.amount).toEqual(new BigNumber("1000"));
+    });
+
+    it("should create valid QuoteExactAmountDto with pool parameter", async () => {
+      // Given
+      const mockPool = new Pool(
+        "GALA",
+        "TOWN",
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_3_PERCENT,
+        new BigNumber("1000000000000000000"),
+        0
+      );
+      const dto = new QuoteExactAmountDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_3_PERCENT,
+        new BigNumber("2000"),
+        false,
+        mockPool as any
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.pool).toBeDefined();
+      expect(dto.zeroForOne).toBe(false);
+      expect(dto.amount).toEqual(new BigNumber("2000"));
+    });
+  });
+
+  describe("quoteExactAmount function", () => {
+    it("should handle QuoteExactAmountDto with Pool object", async () => {
+      // Given
+      const mockPool = new Pool(
+        "GALA",
+        "TOWN",
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_3_PERCENT,
+        new BigNumber("1000000000000000000"),
+        0
+      );
+
+      const dto = new QuoteExactAmountDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_3_PERCENT,
+        new BigNumber("1000"),
+        true,
+        mockPool
+      );
+
+      // When & Then
+      expect(dto.pool).toBeDefined();
+      expect(dto.pool).toBe(mockPool);
+      expect(dto.fee).toBe(DexFeePercentageTypes.FEE_0_3_PERCENT);
+      expect(dto.amount).toEqual(new BigNumber("1000"));
+      expect(dto.zeroForOne).toBe(true);
     });
   });
 

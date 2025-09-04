@@ -12,13 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TokenClassKey, UserRef, asValidUserRef } from "@gala-chain/api";
+import { TokenClassKey, UserRef, asValidUserRef, TokenBalance, asValidUserAlias } from "@gala-chain/api";
 import { ChainUser } from "@gala-chain/api";
 import { signatures } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
 import { quoteExactAmount } from "../../chaincode/dex/quoteFuncs";
+import { CompositePoolDto } from "./CompositePoolDto";
 import {
   AddLiquidityDTO,
   BurnDto,
@@ -60,6 +61,41 @@ describe("DexDtos", () => {
   });
 
   const mockUserRef = asValidUserRef("client|test-user");
+
+  // Helper function to create a mock CompositePoolDto
+  const createMockCompositePool = (pool: Pool) => {
+    const token0Balance = new TokenBalance({
+      owner: asValidUserAlias("client|pool-owner"),
+      collection: mockToken0.collection,
+      category: mockToken0.category,
+      type: mockToken0.type,
+      additionalKey: mockToken0.additionalKey
+    });
+    token0Balance.addQuantity(new BigNumber("100000"));
+
+    const token1Balance = new TokenBalance({
+      owner: asValidUserAlias("client|pool-owner"),
+      collection: mockToken1.collection,
+      category: mockToken1.category,
+      type: mockToken1.type,
+      additionalKey: mockToken1.additionalKey
+    });
+    token1Balance.addQuantity(new BigNumber("100000"));
+
+    const tickDataMap: Record<string, TickData> = {
+      "-100": new TickData("poolHash", -100),
+      "100": new TickData("poolHash", 100)
+    };
+
+    return new CompositePoolDto(
+      pool,
+      tickDataMap,
+      token0Balance,
+      token1Balance,
+      18,
+      18
+    );
+  };
 
   describe("CreatePoolDto", () => {
     it("should create valid CreatePoolDto with constructor", async () => {
@@ -177,7 +213,7 @@ describe("DexDtos", () => {
       expect(dto.amount).toEqual(new BigNumber("1000"));
     });
 
-    it("should create valid QuoteExactAmountDto with pool parameter", async () => {
+    it("should create valid QuoteExactAmountDto with compositePool parameter", async () => {
       // Given
       const mockPool = new Pool(
         "GALA",
@@ -188,13 +224,14 @@ describe("DexDtos", () => {
         new BigNumber("1000000000000000000"),
         0
       );
+      const mockCompositePool = createMockCompositePool(mockPool);
       const dto = new QuoteExactAmountDto(
         mockToken0,
         mockToken1,
         DexFeePercentageTypes.FEE_0_3_PERCENT,
         new BigNumber("2000"),
         false,
-        mockPool as any
+        mockCompositePool
       );
 
       // When
@@ -202,14 +239,14 @@ describe("DexDtos", () => {
 
       // Then
       expect(validationErrors.length).toBe(0);
-      expect(dto.pool).toBeDefined();
+      expect(dto.compositePool).toBeDefined();
       expect(dto.zeroForOne).toBe(false);
       expect(dto.amount).toEqual(new BigNumber("2000"));
     });
   });
 
   describe("quoteExactAmount function", () => {
-    it("should handle QuoteExactAmountDto with Pool object", async () => {
+    it("should handle QuoteExactAmountDto with CompositePool object", async () => {
       // Given
       const mockPool = new Pool(
         "GALA",
@@ -220,6 +257,7 @@ describe("DexDtos", () => {
         new BigNumber("1000000000000000000"),
         0
       );
+      const mockCompositePool = createMockCompositePool(mockPool);
 
       const dto = new QuoteExactAmountDto(
         mockToken0,
@@ -227,12 +265,13 @@ describe("DexDtos", () => {
         DexFeePercentageTypes.FEE_0_3_PERCENT,
         new BigNumber("1000"),
         true,
-        mockPool
+        mockCompositePool
       );
 
       // When & Then
-      expect(dto.pool).toBeDefined();
-      expect(dto.pool).toBe(mockPool);
+      expect(dto.compositePool).toBeDefined();
+      expect(dto.compositePool).toBe(mockCompositePool);
+      expect(dto.compositePool!.pool).toBe(mockPool);
       expect(dto.fee).toBe(DexFeePercentageTypes.FEE_0_3_PERCENT);
       expect(dto.amount).toEqual(new BigNumber("1000"));
       expect(dto.zeroForOne).toBe(true);

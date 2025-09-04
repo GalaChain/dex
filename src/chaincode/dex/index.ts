@@ -19,6 +19,7 @@ export * from "./cancelLimitOrder";
 export * from "./collect";
 export * from "./createPool";
 export * from "./fillLimitOrder";
+export * from "./getCompositePool";
 export * from "./getFunctions";
 export * from "./getGlobalLimitOrderConfig";
 export * from "./getLimitOrderCommitment";

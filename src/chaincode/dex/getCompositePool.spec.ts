@@ -12,28 +12,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TokenBalance, TokenClass, TokenClassKey, asValidUserAlias } from "@gala-chain/api";
-import { GalaChainContext } from "@gala-chain/chaincode";
+import { TokenBalance, TokenClassKey, asValidUserAlias } from "@gala-chain/api";
+import {
+  GalaChainContext,
+  fetchOrCreateBalance,
+  getObjectByKey,
+  getObjectsByPartialCompositeKey
+} from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
 import { CompositePoolDto, DexFeePercentageTypes, GetCompositePoolDto, Pool, TickData } from "../../api";
+import { getTokenDecimalsFromPool, validateTokenOrder } from "./dexUtils";
 import { getCompositePool } from "./getCompositePool";
 
 // Mock the dependencies
-jest.mock("@gala-chain/chaincode", () => ({
-  ...jest.requireActual("@gala-chain/chaincode"),
-  getObjectByKey: jest.fn(),
-  fetchOrCreateBalance: jest.fn(),
-  getObjectsByPartialCompositeKey: jest.fn()
-}));
+jest.mock("@gala-chain/chaincode");
+jest.mock("./dexUtils");
 
-jest.mock("./dexUtils", () => ({
-  validateTokenOrder: jest.fn(),
-  getTokenDecimalsFromPool: jest.fn()
-}));
+const mockGetObjectByKey = getObjectByKey as jest.Mock;
+const mockFetchOrCreateBalance = fetchOrCreateBalance as jest.Mock;
+const mockGetObjectsByPartialCompositeKey = getObjectsByPartialCompositeKey as jest.Mock;
+const mockValidateTokenOrder = validateTokenOrder as jest.Mock;
+const mockGetTokenDecimalsFromPool = getTokenDecimalsFromPool as jest.Mock;
+
+const createMockContext = (): GalaChainContext => {
+  const mockStub = {
+    createCompositeKey: jest.fn().mockReturnValue("mockPoolKey")
+  };
+
+  return {
+    stub: mockStub as any
+  } as GalaChainContext;
+};
 
 describe("getCompositePool", () => {
-  let mockCtx: jest.Mocked<GalaChainContext>;
+  let mockCtx: GalaChainContext;
   let mockToken0: TokenClassKey;
   let mockToken1: TokenClassKey;
   let mockPool: Pool;
@@ -41,11 +54,7 @@ describe("getCompositePool", () => {
 
   beforeEach(() => {
     // Setup mock context
-    mockCtx = {
-      stub: {
-        createCompositeKey: jest.fn().mockReturnValue("mockPoolKey")
-      }
-    } as any;
+    mockCtx = createMockContext();
 
     // Setup mock tokens
     mockToken0 = new TokenClassKey();
@@ -80,17 +89,10 @@ describe("getCompositePool", () => {
 
   it("should successfully fetch and assemble composite pool data", async () => {
     // Given
-    const {
-      getObjectByKey,
-      fetchOrCreateBalance,
-      getObjectsByPartialCompositeKey
-    } = require("@gala-chain/chaincode");
-    const { validateTokenOrder, getTokenDecimalsFromPool } = require("./dexUtils");
-
     // Mock dependencies
-    validateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
-    getObjectByKey.mockResolvedValue(mockPool);
-    getTokenDecimalsFromPool.mockResolvedValue([18, 18]);
+    mockValidateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
+    mockGetObjectByKey.mockResolvedValue(mockPool);
+    mockGetTokenDecimalsFromPool.mockResolvedValue([18, 18]);
 
     // Mock token balances
     const mockToken0Balance = new TokenBalance({
@@ -111,12 +113,14 @@ describe("getCompositePool", () => {
     });
     mockToken1Balance.addQuantity(new BigNumber("1000000"));
 
-    fetchOrCreateBalance.mockResolvedValueOnce(mockToken0Balance).mockResolvedValueOnce(mockToken1Balance);
+    mockFetchOrCreateBalance
+      .mockResolvedValueOnce(mockToken0Balance)
+      .mockResolvedValueOnce(mockToken1Balance);
 
     // Mock tick data
     const mockTickData = new TickData("mockPoolHash", 100);
     mockTickData.initialised = true;
-    getObjectsByPartialCompositeKey.mockResolvedValue([mockTickData]);
+    mockGetObjectsByPartialCompositeKey.mockResolvedValue([mockTickData]);
 
     // When
     const result = await getCompositePool(mockCtx, dto);
@@ -131,16 +135,16 @@ describe("getCompositePool", () => {
     expect(result.tickDataMap["100"]).toBe(mockTickData);
 
     // Verify function calls
-    expect(validateTokenOrder).toHaveBeenCalledWith(mockToken0, mockToken1);
+    expect(mockValidateTokenOrder).toHaveBeenCalledWith(mockToken0, mockToken1);
     expect(mockCtx.stub.createCompositeKey).toHaveBeenCalledWith(Pool.INDEX_KEY, [
       mockToken0.toStringKey(),
       mockToken1.toStringKey(),
       dto.fee.toString()
     ]);
-    expect(getObjectByKey).toHaveBeenCalledWith(mockCtx, Pool, "mockPoolKey");
-    expect(getTokenDecimalsFromPool).toHaveBeenCalledWith(mockCtx, mockPool);
-    expect(fetchOrCreateBalance).toHaveBeenCalledTimes(2);
-    expect(getObjectsByPartialCompositeKey).toHaveBeenCalledWith(
+    expect(mockGetObjectByKey).toHaveBeenCalledWith(mockCtx, Pool, "mockPoolKey");
+    expect(mockGetTokenDecimalsFromPool).toHaveBeenCalledWith(mockCtx, mockPool);
+    expect(mockFetchOrCreateBalance).toHaveBeenCalledTimes(2);
+    expect(mockGetObjectsByPartialCompositeKey).toHaveBeenCalledWith(
       mockCtx,
       TickData.INDEX_KEY,
       ["mockPoolHash"],
@@ -150,11 +154,8 @@ describe("getCompositePool", () => {
 
   it("should throw NotFoundError when pool doesn't exist", async () => {
     // Given
-    const { getObjectByKey } = require("@gala-chain/chaincode");
-    const { validateTokenOrder } = require("./dexUtils");
-
-    validateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
-    getObjectByKey.mockResolvedValue(null);
+    mockValidateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
+    mockGetObjectByKey.mockResolvedValue(null);
 
     // When & Then
     await expect(getCompositePool(mockCtx, dto)).rejects.toThrow("Pool does not exist");
@@ -162,13 +163,6 @@ describe("getCompositePool", () => {
 
   it("should filter tick data by range when minTick and maxTick are specified", async () => {
     // Given
-    const {
-      getObjectByKey,
-      fetchOrCreateBalance,
-      getObjectsByPartialCompositeKey
-    } = require("@gala-chain/chaincode");
-    const { validateTokenOrder, getTokenDecimalsFromPool } = require("./dexUtils");
-
     // Setup DTO with tick range
     const dtoWithRange = new GetCompositePoolDto(
       mockToken0,
@@ -178,9 +172,9 @@ describe("getCompositePool", () => {
       150 // maxTick
     );
 
-    validateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
-    getObjectByKey.mockResolvedValue(mockPool);
-    getTokenDecimalsFromPool.mockResolvedValue([18, 18]);
+    mockValidateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
+    mockGetObjectByKey.mockResolvedValue(mockPool);
+    mockGetTokenDecimalsFromPool.mockResolvedValue([18, 18]);
 
     const mockToken0Balance = new TokenBalance({
       owner: asValidUserAlias("client|pool"),
@@ -197,7 +191,9 @@ describe("getCompositePool", () => {
       additionalKey: "none"
     });
 
-    fetchOrCreateBalance.mockResolvedValueOnce(mockToken0Balance).mockResolvedValueOnce(mockToken1Balance);
+    mockFetchOrCreateBalance
+      .mockResolvedValueOnce(mockToken0Balance)
+      .mockResolvedValueOnce(mockToken1Balance);
 
     // Mock tick data with various tick values
     const tickData1 = new TickData("mockPoolHash", 25); // Below range
@@ -207,7 +203,7 @@ describe("getCompositePool", () => {
     const tickData3 = new TickData("mockPoolHash", 200); // Above range
     tickData3.initialised = true;
 
-    getObjectsByPartialCompositeKey.mockResolvedValue([tickData1, tickData2, tickData3]);
+    mockGetObjectsByPartialCompositeKey.mockResolvedValue([tickData1, tickData2, tickData3]);
 
     // When
     const result = await getCompositePool(mockCtx, dtoWithRange);
@@ -220,16 +216,9 @@ describe("getCompositePool", () => {
 
   it("should skip uninitialized ticks", async () => {
     // Given
-    const {
-      getObjectByKey,
-      fetchOrCreateBalance,
-      getObjectsByPartialCompositeKey
-    } = require("@gala-chain/chaincode");
-    const { validateTokenOrder, getTokenDecimalsFromPool } = require("./dexUtils");
-
-    validateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
-    getObjectByKey.mockResolvedValue(mockPool);
-    getTokenDecimalsFromPool.mockResolvedValue([18, 18]);
+    mockValidateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
+    mockGetObjectByKey.mockResolvedValue(mockPool);
+    mockGetTokenDecimalsFromPool.mockResolvedValue([18, 18]);
 
     const mockToken0Balance = new TokenBalance({
       owner: asValidUserAlias("client|pool"),
@@ -246,7 +235,9 @@ describe("getCompositePool", () => {
       additionalKey: "none"
     });
 
-    fetchOrCreateBalance.mockResolvedValueOnce(mockToken0Balance).mockResolvedValueOnce(mockToken1Balance);
+    mockFetchOrCreateBalance
+      .mockResolvedValueOnce(mockToken0Balance)
+      .mockResolvedValueOnce(mockToken1Balance);
 
     // Mock tick data - one initialized, one not
     const initializedTick = new TickData("mockPoolHash", 100);
@@ -254,7 +245,7 @@ describe("getCompositePool", () => {
     const uninitializedTick = new TickData("mockPoolHash", 200);
     uninitializedTick.initialised = false;
 
-    getObjectsByPartialCompositeKey.mockResolvedValue([initializedTick, uninitializedTick]);
+    mockGetObjectsByPartialCompositeKey.mockResolvedValue([initializedTick, uninitializedTick]);
 
     // When
     const result = await getCompositePool(mockCtx, dto);
@@ -266,16 +257,9 @@ describe("getCompositePool", () => {
 
   it("should handle tick data fetch failures gracefully", async () => {
     // Given
-    const {
-      getObjectByKey,
-      fetchOrCreateBalance,
-      getObjectsByPartialCompositeKey
-    } = require("@gala-chain/chaincode");
-    const { validateTokenOrder, getTokenDecimalsFromPool } = require("./dexUtils");
-
-    validateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
-    getObjectByKey.mockResolvedValue(mockPool);
-    getTokenDecimalsFromPool.mockResolvedValue([18, 18]);
+    mockValidateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
+    mockGetObjectByKey.mockResolvedValue(mockPool);
+    mockGetTokenDecimalsFromPool.mockResolvedValue([18, 18]);
 
     const mockToken0Balance = new TokenBalance({
       owner: asValidUserAlias("client|pool"),
@@ -292,10 +276,12 @@ describe("getCompositePool", () => {
       additionalKey: "none"
     });
 
-    fetchOrCreateBalance.mockResolvedValueOnce(mockToken0Balance).mockResolvedValueOnce(mockToken1Balance);
+    mockFetchOrCreateBalance
+      .mockResolvedValueOnce(mockToken0Balance)
+      .mockResolvedValueOnce(mockToken1Balance);
 
     // Mock tick data fetch to throw error
-    getObjectsByPartialCompositeKey.mockRejectedValue(new Error("Tick data fetch failed"));
+    mockGetObjectsByPartialCompositeKey.mockRejectedValue(new Error("Tick data fetch failed"));
 
     // When
     const result = await getCompositePool(mockCtx, dto);

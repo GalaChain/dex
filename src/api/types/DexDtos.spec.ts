@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TokenClassKey, UserRef, asValidUserRef, TokenBalance, asValidUserAlias } from "@gala-chain/api";
+import { TokenBalance, TokenClassKey, UserRef, asValidUserAlias, asValidUserRef } from "@gala-chain/api";
 import { ChainUser } from "@gala-chain/api";
 import { signatures } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
@@ -87,14 +87,7 @@ describe("DexDtos", () => {
       "100": new TickData("poolHash", 100)
     };
 
-    return new CompositePoolDto(
-      pool,
-      tickDataMap,
-      token0Balance,
-      token1Balance,
-      18,
-      18
-    );
+    return new CompositePoolDto(pool, tickDataMap, token0Balance, token1Balance, 18, 18);
   };
 
   describe("CreatePoolDto", () => {

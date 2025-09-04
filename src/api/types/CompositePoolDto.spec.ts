@@ -13,14 +13,14 @@
  * limitations under the License.
  */
 import { TokenBalance, TokenClassKey, asValidUserAlias } from "@gala-chain/api";
+import BigNumber from "bignumber.js";
 import { instanceToPlain, plainToInstance } from "class-transformer";
 import { validate } from "class-validator";
-import BigNumber from "bignumber.js";
 
 import { CompositePoolDto } from "./CompositePoolDto";
+import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { Pool } from "./DexV3Pool";
 import { TickData } from "./TickData";
-import { DexFeePercentageTypes } from "./DexFeeTypes";
 
 describe("CompositePoolDto", () => {
   const createValidPool = () => {
@@ -50,7 +50,7 @@ describe("CompositePoolDto", () => {
   const createValidTickDataMap = () => {
     const tickData1 = new TickData("poolHash123", -100);
     const tickData2 = new TickData("poolHash123", 100);
-    
+
     return {
       "-100": tickData1,
       "100": tickData2
@@ -131,7 +131,7 @@ describe("CompositePoolDto", () => {
 
     // Then
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors.some(e => e.property === "pool")).toBe(true);
+    expect(errors.some((e) => e.property === "pool")).toBe(true);
   });
 
   it("should fail validation when tickDataMap is missing", async () => {
@@ -144,7 +144,7 @@ describe("CompositePoolDto", () => {
 
     // Then
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors.some(e => e.property === "tickDataMap")).toBe(true);
+    expect(errors.some((e) => e.property === "tickDataMap")).toBe(true);
   });
 
   it("should fail validation when token balances are missing", async () => {
@@ -158,8 +158,8 @@ describe("CompositePoolDto", () => {
 
     // Then
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors.some(e => e.property === "token0Balance")).toBe(true);
-    expect(errors.some(e => e.property === "token1Balance")).toBe(true);
+    expect(errors.some((e) => e.property === "token0Balance")).toBe(true);
+    expect(errors.some((e) => e.property === "token1Balance")).toBe(true);
   });
 
   it("should fail validation when decimals are negative", async () => {
@@ -173,15 +173,15 @@ describe("CompositePoolDto", () => {
 
     // Then
     expect(errors.length).toBeGreaterThan(0);
-    expect(errors.some(e => e.property === "token0Decimals")).toBe(true);
-    expect(errors.some(e => e.property === "token1Decimals")).toBe(true);
+    expect(errors.some((e) => e.property === "token0Decimals")).toBe(true);
+    expect(errors.some((e) => e.property === "token1Decimals")).toBe(true);
   });
 
   it("should handle large tick data maps", () => {
     // Given
     const pool = createValidPool();
     const largeTickDataMap: Record<string, TickData> = {};
-    
+
     for (let i = -1000; i <= 1000; i += 10) {
       largeTickDataMap[i.toString()] = new TickData("poolHash123", i);
     }

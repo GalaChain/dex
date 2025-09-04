@@ -135,7 +135,7 @@ export async function processSwapSteps(
       // Handle liquidity change at the tick if initialized
       if (step.initialised) {
         let liquidityNet: BigNumber;
-        
+
         if (tickDataMap && ctx === null) {
           // Offline mode: use provided tick data
           const tickData = tickDataMap[step.tickNext.toString()];
@@ -162,7 +162,7 @@ export async function processSwapSteps(
             zeroForOne ? pool.feeGrowthGlobal1 : state.feeGrowthGlobalX
           );
         }
-        
+
         if (zeroForOne) {
           liquidityNet = liquidityNet.times(-1); // Negate if zeroForOne
         }

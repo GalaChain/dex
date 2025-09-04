@@ -355,10 +355,7 @@ export class DexV3Contract extends GalaContract {
     in: GetCompositePoolDto,
     out: CompositePoolDto
   })
-  public async GetCompositePool(
-    ctx: GalaChainContext,
-    dto: GetCompositePoolDto
-  ): Promise<CompositePoolDto> {
+  public async GetCompositePool(ctx: GalaChainContext, dto: GetCompositePoolDto): Promise<CompositePoolDto> {
     return await getCompositePool(ctx, dto);
   }
 

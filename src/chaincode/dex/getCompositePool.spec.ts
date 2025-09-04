@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { GalaChainContext } from "@gala-chain/chaincode";
 import { TokenBalance, TokenClass, TokenClassKey, asValidUserAlias } from "@gala-chain/api";
+import { GalaChainContext } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
 import { CompositePoolDto, DexFeePercentageTypes, GetCompositePoolDto, Pool, TickData } from "../../api";
@@ -72,11 +72,7 @@ describe("getCompositePool", () => {
     mockPool.genPoolHash = jest.fn().mockReturnValue("mockPoolHash");
 
     // Setup DTO
-    dto = new GetCompositePoolDto(
-      mockToken0,
-      mockToken1,
-      DexFeePercentageTypes.FEE_0_05_PERCENT
-    );
+    dto = new GetCompositePoolDto(mockToken0, mockToken1, DexFeePercentageTypes.FEE_0_05_PERCENT);
 
     // Reset all mocks
     jest.clearAllMocks();
@@ -84,7 +80,11 @@ describe("getCompositePool", () => {
 
   it("should successfully fetch and assemble composite pool data", async () => {
     // Given
-    const { getObjectByKey, fetchOrCreateBalance, getObjectsByPartialCompositeKey } = require("@gala-chain/chaincode");
+    const {
+      getObjectByKey,
+      fetchOrCreateBalance,
+      getObjectsByPartialCompositeKey
+    } = require("@gala-chain/chaincode");
     const { validateTokenOrder, getTokenDecimalsFromPool } = require("./dexUtils");
 
     // Mock dependencies
@@ -105,7 +105,7 @@ describe("getCompositePool", () => {
     const mockToken1Balance = new TokenBalance({
       owner: asValidUserAlias("client|pool"),
       collection: "TEST",
-      category: "Token", 
+      category: "Token",
       type: "TokenB",
       additionalKey: "none"
     });
@@ -162,7 +162,11 @@ describe("getCompositePool", () => {
 
   it("should filter tick data by range when minTick and maxTick are specified", async () => {
     // Given
-    const { getObjectByKey, fetchOrCreateBalance, getObjectsByPartialCompositeKey } = require("@gala-chain/chaincode");
+    const {
+      getObjectByKey,
+      fetchOrCreateBalance,
+      getObjectsByPartialCompositeKey
+    } = require("@gala-chain/chaincode");
     const { validateTokenOrder, getTokenDecimalsFromPool } = require("./dexUtils");
 
     // Setup DTO with tick range
@@ -170,8 +174,8 @@ describe("getCompositePool", () => {
       mockToken0,
       mockToken1,
       DexFeePercentageTypes.FEE_0_05_PERCENT,
-      50,   // minTick
-      150   // maxTick
+      50, // minTick
+      150 // maxTick
     );
 
     validateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
@@ -189,18 +193,18 @@ describe("getCompositePool", () => {
       owner: asValidUserAlias("client|pool"),
       collection: "TEST",
       category: "Token",
-      type: "TokenB", 
+      type: "TokenB",
       additionalKey: "none"
     });
 
     fetchOrCreateBalance.mockResolvedValueOnce(mockToken0Balance).mockResolvedValueOnce(mockToken1Balance);
 
     // Mock tick data with various tick values
-    const tickData1 = new TickData("mockPoolHash", 25);   // Below range
+    const tickData1 = new TickData("mockPoolHash", 25); // Below range
     tickData1.initialised = true;
-    const tickData2 = new TickData("mockPoolHash", 100);  // In range
+    const tickData2 = new TickData("mockPoolHash", 100); // In range
     tickData2.initialised = true;
-    const tickData3 = new TickData("mockPoolHash", 200);  // Above range
+    const tickData3 = new TickData("mockPoolHash", 200); // Above range
     tickData3.initialised = true;
 
     getObjectsByPartialCompositeKey.mockResolvedValue([tickData1, tickData2, tickData3]);
@@ -216,7 +220,11 @@ describe("getCompositePool", () => {
 
   it("should skip uninitialized ticks", async () => {
     // Given
-    const { getObjectByKey, fetchOrCreateBalance, getObjectsByPartialCompositeKey } = require("@gala-chain/chaincode");
+    const {
+      getObjectByKey,
+      fetchOrCreateBalance,
+      getObjectsByPartialCompositeKey
+    } = require("@gala-chain/chaincode");
     const { validateTokenOrder, getTokenDecimalsFromPool } = require("./dexUtils");
 
     validateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
@@ -252,13 +260,17 @@ describe("getCompositePool", () => {
     const result = await getCompositePool(mockCtx, dto);
 
     // Then
-    expect(result.tickDataMap["100"]).toBe(initializedTick);   // Included
-    expect(result.tickDataMap["200"]).toBeUndefined();        // Excluded
+    expect(result.tickDataMap["100"]).toBe(initializedTick); // Included
+    expect(result.tickDataMap["200"]).toBeUndefined(); // Excluded
   });
 
   it("should handle tick data fetch failures gracefully", async () => {
     // Given
-    const { getObjectByKey, fetchOrCreateBalance, getObjectsByPartialCompositeKey } = require("@gala-chain/chaincode");
+    const {
+      getObjectByKey,
+      fetchOrCreateBalance,
+      getObjectsByPartialCompositeKey
+    } = require("@gala-chain/chaincode");
     const { validateTokenOrder, getTokenDecimalsFromPool } = require("./dexUtils");
 
     validateTokenOrder.mockReturnValue([mockToken0.toStringKey(), mockToken1.toStringKey()]);
@@ -291,6 +303,6 @@ describe("getCompositePool", () => {
     // Then
     expect(result).toBeInstanceOf(CompositePoolDto);
     expect(result.tickDataMap).toEqual({}); // Should be empty due to error
-    expect(result.pool).toBe(mockPool);     // Other data should still be present
+    expect(result.pool).toBe(mockPool); // Other data should still be present
   });
 });

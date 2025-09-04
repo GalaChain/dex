@@ -12,20 +12,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { GalaChainContext, fetchOrCreateBalance, getObjectsByPartialCompositeKey, getObjectByKey } from "@gala-chain/chaincode";
 import { NotFoundError } from "@gala-chain/api";
+import {
+  GalaChainContext,
+  fetchOrCreateBalance,
+  getObjectByKey,
+  getObjectsByPartialCompositeKey
+} from "@gala-chain/chaincode";
 
 import { CompositePoolDto, GetCompositePoolDto, Pool, TickData } from "../../api";
 import { getTokenDecimalsFromPool, validateTokenOrder } from "./dexUtils";
 
 /**
- * Fetches comprehensive pool data including pool state, tick data, balances, 
+ * Fetches comprehensive pool data including pool state, tick data, balances,
  * and token metadata for offline quote calculations.
- * 
+ *
  * This function gathers all necessary data that would normally require multiple
  * chain reads during quote calculations, bundling it into a single CompositePoolDto
  * response that can be used for offline quote simulations.
- * 
+ *
  * @param ctx - The GalaChain context for blockchain operations
  * @param dto - Request parameters containing pool identification and optional tick range
  * @returns CompositePoolDto containing all pool data needed for offline quotes
@@ -68,11 +73,11 @@ export async function getCompositePool(
 
 /**
  * Fetches tick data for a pool, optionally limited by tick range.
- * 
+ *
  * This function retrieves all initialized ticks for the pool, or a subset
  * if minTick/maxTick are specified. It uses the pool's bitmap to identify
  * which ticks are initialized to avoid fetching empty tick data.
- * 
+ *
  * @param ctx - The GalaChain context for blockchain operations
  * @param pool - The pool to fetch tick data for
  * @param minTick - Optional minimum tick to fetch (inclusive)
@@ -99,7 +104,6 @@ async function fetchTickDataForPool(
 
     // Filter and process tick data based on range (if specified) and initialization status
     for (const tickData of tickDataResults) {
-      
       // Skip uninitialized ticks to reduce response size
       if (!tickData.initialised) {
         continue;
@@ -125,4 +129,3 @@ async function fetchTickDataForPool(
     return {};
   }
 }
-

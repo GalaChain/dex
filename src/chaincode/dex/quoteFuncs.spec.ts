@@ -50,7 +50,7 @@ describe("quoteExactAmount", () => {
   it("should verify offline mode code path exists", async () => {
     // Given - This test verifies that the offline logic branches exist
     // We test the code path by checking the conditions used
-    
+
     const mockToken0 = new TokenClassKey();
     mockToken0.collection = "TEST";
     mockToken0.category = "Token";
@@ -77,8 +77,20 @@ describe("quoteExactAmount", () => {
     const mockCompositePool = new CompositePoolDto(
       mockPool,
       {}, // Empty tick data map
-      new TokenBalance({ owner: asValidUserAlias("client|test"), collection: "TEST", category: "Token", type: "TokenA", additionalKey: "none" }),
-      new TokenBalance({ owner: asValidUserAlias("client|test"), collection: "TEST", category: "Token", type: "TokenB", additionalKey: "none" }),
+      new TokenBalance({
+        owner: asValidUserAlias("client|test"),
+        collection: "TEST",
+        category: "Token",
+        type: "TokenA",
+        additionalKey: "none"
+      }),
+      new TokenBalance({
+        owner: asValidUserAlias("client|test"),
+        collection: "TEST",
+        category: "Token",
+        type: "TokenB",
+        additionalKey: "none"
+      }),
       18,
       18
     );

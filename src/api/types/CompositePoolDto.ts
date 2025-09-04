@@ -23,7 +23,7 @@ import { TickData } from "./TickData";
 /**
  * Composite pool data transfer object that contains all necessary data
  * for performing offline DEX quote calculations without chain reads.
- * 
+ *
  * This DTO bundles together pool state, tick data, balances, and token metadata
  * to enable efficient client-side quote simulations.
  */

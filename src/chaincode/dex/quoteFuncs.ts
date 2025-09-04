@@ -103,7 +103,15 @@ export async function quoteExactAmount(
   // Swap steps until input amount is consumed or price limit hit and apply to pool state
   if (dto.compositePool !== undefined) {
     // Offline mode: pass tick data map and null context
-    await processSwapSteps(null, state, pool, sqrtPriceLimit, exactInput, zeroForOne, dto.compositePool.tickDataMap);
+    await processSwapSteps(
+      null,
+      state,
+      pool,
+      sqrtPriceLimit,
+      exactInput,
+      zeroForOne,
+      dto.compositePool.tickDataMap
+    );
   } else {
     // Online mode: use chain context
     await processSwapSteps(ctx, state, pool, sqrtPriceLimit, exactInput, zeroForOne);

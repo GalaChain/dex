@@ -43,6 +43,7 @@ import { JSONSchema } from "class-validator-jsonschema";
 
 import { PositionInPool, f18 } from "../utils";
 import { BigNumberIsNegative, BigNumberIsNotNegative, BigNumberIsPositive, IsLessThan } from "../validators";
+import { CompositePoolDto } from "./CompositePoolDto";
 import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { IDexLimitOrderModel } from "./DexLimitOrderModel";
 import { Pool } from "./DexV3Pool";
@@ -150,8 +151,8 @@ export class QuoteExactAmountDto extends ChainCallDTO {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => Pool)
-  public pool?: Pool;
+  @Type(() => CompositePoolDto)
+  public compositePool?: CompositePoolDto;
 
   constructor(
     token0: TokenClassKey,
@@ -159,7 +160,7 @@ export class QuoteExactAmountDto extends ChainCallDTO {
     fee: DexFeePercentageTypes,
     amount: BigNumber,
     zeroForOne: boolean,
-    pool?: Pool
+    compositePool?: CompositePoolDto
   ) {
     super();
     this.token0 = token0;
@@ -167,8 +168,8 @@ export class QuoteExactAmountDto extends ChainCallDTO {
     this.fee = fee;
     this.amount = amount;
     this.zeroForOne = zeroForOne;
-    if (pool !== undefined) {
-      this.pool = pool;
+    if (compositePool !== undefined) {
+      this.compositePool = compositePool;
     }
   }
 }

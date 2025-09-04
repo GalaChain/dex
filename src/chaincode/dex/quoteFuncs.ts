@@ -49,8 +49,8 @@ export async function quoteExactAmount(
   const zeroForOne = dto.zeroForOne;
   let pool: Pool;
 
-  if (dto.pool !== undefined) {
-    pool = dto.pool;
+  if (dto.compositePool !== undefined) {
+    pool = dto.compositePool.pool;
   } else {
     // Generate pool key from tokens and fee tier
     const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);

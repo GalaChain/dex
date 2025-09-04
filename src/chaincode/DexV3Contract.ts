@@ -22,6 +22,7 @@ import {
   GalaTransaction,
   SUBMIT,
   Submit,
+  UnsignedEvaluate,
   getApiMethod
 } from "@gala-chain/chaincode";
 
@@ -36,6 +37,7 @@ import {
   CollectDto,
   CollectProtocolFeesDto,
   CollectProtocolFeesResDto,
+  CompositePoolDto,
   ConfigureDexFeeAddressDto,
   ConfigurePoolDexFeeDto,
   ConfigurePoolDexFeeResDto,
@@ -51,6 +53,7 @@ import {
   GetAddLiquidityEstimationDto,
   GetAddLiquidityEstimationResDto,
   GetBitMapResDto,
+  GetCompositePoolDto,
   GetLiquidityResDto,
   GetPoolDto,
   GetPositionByIdDto,
@@ -90,6 +93,7 @@ import {
   getAddLiquidityEstimation,
   getBatchSubmitAuthorities,
   getBitMapChanges,
+  getCompositePool,
   getDexFeesConfigration,
   getLiquidity,
   getPoolData,
@@ -345,6 +349,17 @@ export class DexV3Contract extends GalaContract {
         throw new NotFoundError("Pool data not found");
       })()
     );
+  }
+
+  @UnsignedEvaluate({
+    in: GetCompositePoolDto,
+    out: CompositePoolDto
+  })
+  public async GetCompositePool(
+    ctx: GalaChainContext,
+    dto: GetCompositePoolDto
+  ): Promise<CompositePoolDto> {
+    return await getCompositePool(ctx, dto);
   }
 
   @GalaTransaction({

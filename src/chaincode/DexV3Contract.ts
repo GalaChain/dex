@@ -55,6 +55,7 @@ import {
   GetBitMapResDto,
   GetCompositePoolDto,
   GetLiquidityResDto,
+  GetPoolBalanceDeltaResDto,
   GetPoolDto,
   GetPositionByIdDto,
   GetPositionDto,
@@ -75,6 +76,8 @@ import {
   SwapResDto,
   TickData,
   TransferDexPositionDto,
+  TransferUnclaimedFundsDto,
+  TransferUnclaimedFundsResDto,
   UpdatePoolBitmapDto
 } from "../api/";
 import {
@@ -91,6 +94,7 @@ import {
   fetchBatchSubmitAuthorities,
   fillLimitOrder,
   getAddLiquidityEstimation,
+  getBalanceDelta,
   getBatchSubmitAuthorities,
   getBitMapChanges,
   getCompositePool,
@@ -108,7 +112,8 @@ import {
   setGlobalLimitOrderConfig,
   setProtocolFee,
   swap,
-  transferDexPosition
+  transferDexPosition,
+  transferUnclaimedFunds
 } from "./dex";
 import { getTickData } from "./dex/tickData.helper";
 import {
@@ -277,6 +282,27 @@ export class DexV3Contract extends GalaContract {
   })
   public async GetSlot0(ctx: GalaChainContext, dto: GetPoolDto): Promise<Slot0ResDto> {
     return await getSlot0(ctx, dto);
+  }
+
+  @Submit({
+    in: TransferUnclaimedFundsDto,
+    out: TransferUnclaimedFundsResDto,
+    allowedOrgs: ["CuratorOrg"]
+  })
+  public async TransferUnclaimedFunds(
+    ctx: GalaChainContext,
+    dto: TransferUnclaimedFundsDto
+  ): Promise<TransferUnclaimedFundsResDto> {
+    return transferUnclaimedFunds(ctx, dto);
+  }
+
+  @GalaTransaction({
+    type: EVALUATE,
+    in: GetPoolDto,
+    out: GetPoolBalanceDeltaResDto
+  })
+  public async GetBalanceDelta(ctx: GalaChainContext, dto: GetPoolDto): Promise<GetPoolBalanceDeltaResDto> {
+    return await getBalanceDelta(ctx, dto);
   }
 
   /**

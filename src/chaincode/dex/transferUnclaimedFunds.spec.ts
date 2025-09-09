@@ -482,8 +482,8 @@ it("should work with corrupted pools", async () => {
   const res = await contract.GetBalanceDelta(ctx, getPoolDto);
 
   // Then
-  expect(res.Data?.amount0Delta.toString()).toBe("3265423.52941774205028321689985566143251743848");
+  expect(res.Data?.amount0Delta.toString()).toBe("3265397.81719651446603163684254974687502179272");
   expect(res.Data?.amount1Delta.toString()).toBe(
-    "8172.022626307963224232733592333537587346366332393753304556708"
+    "8163.199805063943689048600264742122023839316332393753304556708"
   );
 });

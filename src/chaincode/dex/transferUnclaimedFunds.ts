@@ -223,8 +223,8 @@ async function calculateTotalOwedForPool(
     const tokensOwed0 = feeGrowthInside0.minus(position.feeGrowthInside0Last).times(liquidity);
     const tokensOwed1 = feeGrowthInside1.minus(position.feeGrowthInside1Last).times(liquidity);
 
-    totalOwed0 = totalOwed0.plus(owed0).plus(tokensOwed0).plus(position.tokensOwed0);
-    totalOwed1 = totalOwed1.plus(owed1).plus(tokensOwed1).plus(position.tokensOwed1);
+    totalOwed0 = totalOwed0.plus(owed0).plus(tokensOwed0);
+    totalOwed1 = totalOwed1.plus(owed1).plus(tokensOwed1);
   }
 
   // Add protocol fees to the total amount required

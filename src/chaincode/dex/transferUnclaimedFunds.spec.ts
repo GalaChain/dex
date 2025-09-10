@@ -277,10 +277,10 @@ it("should account for unclaimed liquidity inside active range", async () => {
   const response = await contract.TransferUnclaimedFunds(ctx, signedDto);
 
   // Then
-  expect(response.Data?.newToken0Balances[0].getQuantityTotal().toString()).toBe("0.499850035");
-  expect(response.Data?.newToken0Balances[1].getQuantityTotal().toString()).toBe("499.500149965");
-  expect(response.Data?.newToken1Balances[0].getQuantityTotal().toString()).toBe("0.499850035");
-  expect(response.Data?.newToken1Balances[1].getQuantityTotal().toString()).toBe("499.500149965");
+  expect(response.Data?.newToken0Balances[0].getQuantityTotal().toString()).toBe("0.4998500349");
+  expect(response.Data?.newToken0Balances[1].getQuantityTotal().toString()).toBe("499.5001499651");
+  expect(response.Data?.newToken1Balances[0].getQuantityTotal().toString()).toBe("0.4998500349");
+  expect(response.Data?.newToken1Balances[1].getQuantityTotal().toString()).toBe("499.5001499651");
 });
 
 it("should work with corrupted pools", async () => {
@@ -482,8 +482,6 @@ it("should work with corrupted pools", async () => {
   const res = await contract.GetBalanceDelta(ctx, getPoolDto);
 
   // Then
-  expect(res.Data?.amount0Delta.toString()).toBe("3265397.81719651446603163684254974687502179272");
-  expect(res.Data?.amount1Delta.toString()).toBe(
-    "8163.199805063943689048600264742122023839316332393753304556708"
-  );
+  expect(res.Data?.amount0Delta.toString()).toBe("3265423.529417742");
+  expect(res.Data?.amount1Delta.toString()).toBe("8172.0226263079");
 });

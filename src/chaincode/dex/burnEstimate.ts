@@ -17,6 +17,7 @@ import BigNumber from "bignumber.js";
 
 import { BurnEstimateDto, GetRemoveLiqEstimationResDto, Pool, f18 } from "../../api/";
 import { getTokenDecimalsFromPool, validateTokenOrder } from "./dexUtils";
+import { ensureSufficientLiquidityForBurn } from "./ensureSufficientLiquidityForBurn";
 import { fetchUserPositionInTickRange } from "./position.helper";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
 
@@ -55,6 +56,7 @@ export async function getRemoveLiquidityEstimation(
     tickUpper
   );
   const amounts = pool.burn(position, tickLowerData, tickUpperData, f18(dto.amount));
+  await ensureSufficientLiquidityForBurn(ctx, amounts, pool, position);
 
   const [token0Decimal, token1Decimal] = await getTokenDecimalsFromPool(ctx, pool);
 

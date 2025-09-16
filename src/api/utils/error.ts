@@ -30,3 +30,9 @@ export class PreConditionFailedError extends ChainError {
     super(message, 412);
   }
 }
+
+export class InsufficientLiquidityError extends ChainError {
+  constructor(message: string) {
+    super(message, 412);
+  }
+}

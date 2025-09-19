@@ -684,38 +684,6 @@ describe("Remove Liquidity Test", () => {
     //When
     const res = await contract.RemoveLiquidity(ctx, dto);
 
-    const expectedResponse = plainToInstance(DexOperationResDto, {
-      userBalanceDelta: plainToInstance(UserBalanceResDto, {
-        token0Balance: {
-          owner: users.testUser1.identityKey,
-          collection: "TEST",
-          category: "Currency",
-          type: "DEX",
-          additionalKey: "client:6337024724eec8c292f0118d",
-          quantity: new BigNumber("0.677260405"),
-          instanceIds: [],
-          inUseHolds: [],
-          lockedHolds: []
-        },
-        token1Balance: {
-          owner: users.testUser1.identityKey,
-          collection: "TEST",
-          category: "Currency",
-          type: "TEST",
-          additionalKey: "none",
-          quantity: new BigNumber("1000"),
-          instanceIds: [],
-          inUseHolds: [],
-          lockedHolds: []
-        }
-      }),
-      amounts: ["0.677260405", "1000"],
-      poolHash: pool.genPoolHash(),
-      poolAlias: pool.getPoolAlias(),
-      poolFee: 500,
-      userAddress: "client|testUser1"
-    });
-
     //Then
     expect(res).toEqual(
       GalaChainResponse.Error(

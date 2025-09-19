@@ -70,10 +70,17 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
   const token0InstanceKey = TokenInstanceKey.fungibleKey(pool.token0ClassKey);
   const token1InstanceKey = TokenInstanceKey.fungibleKey(pool.token1ClassKey);
   const tokenDecimals = await getTokenDecimalsFromPool(ctx, pool);
-
-  // Estimate how much liquidity can actually be burned based on current pool balances and prices
   const amountToBurn = f18(dto.amount);
-  const amountsEstimated = pool.burnEstimate(amountToBurn, tickLower, tickUpper);
+
+  // Burn liquidity and verify whether amounts are valid
+  const positionLiquidityBefore = position.liquidity;
+  const { tickUpperData, tickLowerData } = await fetchOrCreateTickDataPair(
+    ctx,
+    poolHash,
+    tickLower,
+    tickUpper
+  );
+  const amounts = pool.burn(position, tickLowerData, tickUpperData, amountToBurn);
 
   const poolToken0Balance = (
     await fetchOrCreateBalance(ctx, poolAlias, token0InstanceKey)
@@ -82,16 +89,7 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
     await fetchOrCreateBalance(ctx, poolAlias, token1InstanceKey)
   ).getQuantityTotal();
 
-  await ensureSufficientLiquidityForBurn(ctx, amountsEstimated, pool, position);
-
-  // Burn liquidity and verify whether amounts are valid
-  const { tickUpperData, tickLowerData } = await fetchOrCreateTickDataPair(
-    ctx,
-    poolHash,
-    tickLower,
-    tickUpper
-  );
-  const amounts = pool.burn(position, tickLowerData, tickUpperData, amountToBurn);
+  await ensureSufficientLiquidityForBurn(ctx, amounts, pool, position, positionLiquidityBefore);
 
   if (amounts[0].isLessThan(0)) {
     throw new NegativeAmountError(0, amounts[0].toString());

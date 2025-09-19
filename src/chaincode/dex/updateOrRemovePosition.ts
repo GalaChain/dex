@@ -15,8 +15,7 @@
 import { GalaChainContext, deleteChainObject, putChainObject } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
-import { BurnEstimateDto, DexPositionData, f18 } from "../../api";
-import { getRemoveLiquidityEstimation } from "./burnEstimate";
+import { DexPositionData, Pool, f18 } from "../../api";
 import { genTickRange, getUserPositionIds, roundTokenAmount } from "./dexUtils";
 
 /**
@@ -28,27 +27,20 @@ import { genTickRange, getUserPositionIds, roundTokenAmount } from "./dexUtils";
  */
 export async function updateOrRemovePosition(
   ctx: GalaChainContext,
-  poolHash: string,
+  pool: Pool,
   position: DexPositionData,
   token0Decimal: number,
   token1Decimal: number
 ) {
   //  Fetch user positions
-  const userPositions = await getUserPositionIds(ctx, ctx.callingUser, poolHash);
+  const userPositions = await getUserPositionIds(ctx, ctx.callingUser, pool.genPoolHash());
 
   // Fetch the amount of tokens left in the position's liquidity
-  const burnEstimateDto = new BurnEstimateDto(
-    position.token0ClassKey,
-    position.token1ClassKey,
-    position.fee,
+  const [amount0Req, amount1Req] = pool.burnEstimate(
     position.liquidity,
     position.tickLower,
-    position.tickUpper,
-    ctx.callingUser,
-    position.positionId
+    position.tickUpper
   );
-
-  const burnEstimateRes = await getRemoveLiquidityEstimation(ctx, burnEstimateDto);
 
   // Check if given position needs to be deleted
   const deleteUserPos =
@@ -58,8 +50,8 @@ export async function updateOrRemovePosition(
     f18(roundTokenAmount(position.tokensOwed1, token1Decimal, false)).isLessThan(
       new BigNumber("0.00000001")
     ) &&
-    f18(new BigNumber(burnEstimateRes.amount0)).isLessThan(new BigNumber("0.00000001")) &&
-    f18(new BigNumber(burnEstimateRes.amount1)).isLessThan(new BigNumber("0.00000001"));
+    f18(new BigNumber(amount0Req)).isLessThan(new BigNumber("0.00000001")) &&
+    f18(new BigNumber(amount1Req)).isLessThan(new BigNumber("0.00000001"));
 
   // Remove position if empty and commit it if its not
   if (deleteUserPos) {

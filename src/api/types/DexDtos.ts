@@ -14,15 +14,17 @@
  */
 import {
   BigNumberProperty,
+  ChainCallDTO,
   EnumProperty,
   IsBigNumber,
   IsUserAlias,
   IsUserRef,
   SubmitCallDTO,
+  TokenBalance,
+  TokenClassKey,
   UserAlias,
   UserRef
 } from "@gala-chain/api";
-import { ChainCallDTO, TokenBalance, TokenClassKey } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { Type } from "class-transformer";
 import {
@@ -46,7 +48,6 @@ import { BigNumberIsNegative, BigNumberIsNotNegative, BigNumberIsPositive, IsLes
 import { CompositePoolDto } from "./CompositePoolDto";
 import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { IDexLimitOrderModel } from "./DexLimitOrderModel";
-import { Pool } from "./DexV3Pool";
 import { TickData } from "./TickData";
 
 export class CreatePoolDto extends SubmitCallDTO {

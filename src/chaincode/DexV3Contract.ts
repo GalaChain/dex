@@ -52,7 +52,6 @@ import {
   FillLimitOrderDto,
   GetAddLiquidityEstimationDto,
   GetAddLiquidityEstimationResDto,
-  GetBitMapResDto,
   GetCompositePoolDto,
   GetLiquidityResDto,
   GetPoolDto,
@@ -74,8 +73,7 @@ import {
   SwapDto,
   SwapResDto,
   TickData,
-  TransferDexPositionDto,
-  UpdatePoolBitmapDto
+  TransferDexPositionDto
 } from "../api/";
 import {
   addLiquidity,
@@ -92,7 +90,6 @@ import {
   fillLimitOrder,
   getAddLiquidityEstimation,
   getBatchSubmitAuthorities,
-  getBitMapChanges,
   getCompositePool,
   getDexFeesConfigration,
   getLiquidity,
@@ -102,7 +99,6 @@ import {
   getRemoveLiquidityEstimation,
   getSlot0,
   getUserPositions,
-  makeBitMapChanges,
   placeLimitOrder,
   quoteExactAmount,
   setGlobalLimitOrderConfig,
@@ -432,23 +428,6 @@ export class DexV3Contract extends GalaContract {
     dto: ConfigureDexFeeAddressDto
   ): Promise<DexFeeConfig> {
     return configureDexFeeAddress(ctx, dto);
-  }
-
-  @GalaTransaction({
-    type: EVALUATE,
-    in: GetPoolDto,
-    out: GetBitMapResDto
-  })
-  public async GetBitMapChanges(ctx: GalaChainContext, dto: GetPoolDto): Promise<GetBitMapResDto> {
-    return getBitMapChanges(ctx, dto);
-  }
-
-  @Submit({
-    in: UpdatePoolBitmapDto,
-    out: Pool
-  })
-  public async MakeBitMapChanges(ctx: GalaChainContext, dto: UpdatePoolBitmapDto): Promise<Pool> {
-    return makeBitMapChanges(ctx, dto);
   }
 
   @Submit({

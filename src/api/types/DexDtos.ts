@@ -211,6 +211,11 @@ export class SwapDto extends SubmitCallDTO {
   @IsOptional()
   public amountOutMinimum?: BigNumber;
 
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  public allowancesToUse?: string[];
+
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
@@ -219,7 +224,8 @@ export class SwapDto extends SubmitCallDTO {
     zeroForOne: boolean,
     sqrtPriceLimit: BigNumber,
     amountInMaximum?: BigNumber,
-    amountOutMinimum?: BigNumber
+    amountOutMinimum?: BigNumber,
+    allowancesToUse?: string[]
   ) {
     super();
     this.token0 = token0;
@@ -233,6 +239,9 @@ export class SwapDto extends SubmitCallDTO {
     }
     if (amountOutMinimum !== undefined) {
       this.amountOutMinimum = amountOutMinimum;
+    }
+    if (allowancesToUse !== undefined) {
+      this.allowancesToUse = allowancesToUse;
     }
   }
 }

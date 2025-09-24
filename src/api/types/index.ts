@@ -28,3 +28,4 @@ export * from "./GetCompositePoolDto";
 export * from "./TickData";
 export * from "./BatchSubmitAuthorities";
 export * from "./BatchSubmitDtos";
+export * from "./SwapAllowanceDtos";

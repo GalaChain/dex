@@ -12,7 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { BatchDto, ChainCallDTO, GalaChainResponse, NotFoundError, UnauthorizedError } from "@gala-chain/api";
+import {
+  BatchDto,
+  ChainCallDTO,
+  FetchAllowancesResponse,
+  GalaChainResponse,
+  NotFoundError,
+  TokenAllowance,
+  UnauthorizedError
+} from "@gala-chain/api";
 import {
   BatchWriteLimitExceededError,
   EVALUATE,
@@ -44,11 +52,13 @@ import {
   CreatePoolDto,
   CreatePoolResDto,
   DeauthorizeBatchSubmitterDto,
+  DeleteSwapAllowancesDto,
   DexFeeConfig,
   DexOperationResDto,
   DexPositionData,
   DexPositionOwner,
   FetchBatchSubmitAuthoritiesDto,
+  FetchSwapAllowancesDto,
   FillLimitOrderDto,
   GetAddLiquidityEstimationDto,
   GetAddLiquidityEstimationResDto,
@@ -61,6 +71,7 @@ import {
   GetTickDataDto,
   GetUserPositionsDto,
   GetUserPositionsResDto,
+  GrantSwapAllowanceDto,
   PlaceLimitOrderDto,
   PlaceLimitOrderResDto,
   Pool,
@@ -86,7 +97,9 @@ import {
   configurePoolDexFee,
   createPool,
   deauthorizeBatchSubmitter,
+  deleteSwapAllowances,
   fetchBatchSubmitAuthorities,
+  fetchSwapAllowances,
   fillLimitOrder,
   getAddLiquidityEstimation,
   getBatchSubmitAuthorities,
@@ -99,6 +112,7 @@ import {
   getRemoveLiquidityEstimation,
   getSlot0,
   getUserPositions,
+  grantSwapAllowance,
   placeLimitOrder,
   quoteExactAmount,
   setGlobalLimitOrderConfig,
@@ -547,6 +561,64 @@ export class DexV3Contract extends GalaContract {
     dto: SetGlobalLimitOrderConfigDto
   ): Promise<void> {
     return setGlobalLimitOrderConfig(ctx, dto);
+  }
+
+  /**
+   * Grants swap allowances for the specified token instance.
+   *
+   * This method allows users to create allowances that can be used for token swaps,
+   * enabling third-party services to execute swaps on behalf of the user.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Swap allowance grant parameters
+   * @returns Array of created TokenAllowance objects
+   */
+  @Submit({
+    in: GrantSwapAllowanceDto
+  })
+  public async GrantSwapAllowance(
+    ctx: GalaChainContext,
+    dto: GrantSwapAllowanceDto
+  ): Promise<TokenAllowance[]> {
+    return grantSwapAllowance(ctx, dto);
+  }
+
+  /**
+   * Fetches swap allowances with pagination support.
+   *
+   * This method allows users to query their swap allowances with various filtering
+   * options and pagination support for large result sets.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Swap allowance query parameters
+   * @returns Paginated response with allowances
+   */
+  @GalaTransaction({
+    type: EVALUATE,
+    in: FetchSwapAllowancesDto
+  })
+  public async FetchSwapAllowances(
+    ctx: GalaChainContext,
+    dto: FetchSwapAllowancesDto
+  ): Promise<FetchAllowancesResponse> {
+    return fetchSwapAllowances(ctx, dto);
+  }
+
+  /**
+   * Deletes swap allowances matching the specified criteria.
+   *
+   * This method allows users to revoke swap allowances that are no longer needed,
+   * providing control over which services can execute swaps on their behalf.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Swap allowance deletion parameters
+   * @returns Number of allowances deleted
+   */
+  @Submit({
+    in: DeleteSwapAllowancesDto
+  })
+  public async DeleteSwapAllowances(ctx: GalaChainContext, dto: DeleteSwapAllowancesDto): Promise<number> {
+    return deleteSwapAllowances(ctx, dto);
   }
 
   @Submit({

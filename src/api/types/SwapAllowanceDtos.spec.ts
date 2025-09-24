@@ -12,15 +12,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TokenInstanceQueryKey, UserRef, asValidUserRef, asValidUserAlias } from "@gala-chain/api";
+import { TokenInstanceQueryKey, UserRef, asValidUserAlias, asValidUserRef } from "@gala-chain/api";
+import { GrantAllowanceQuantity } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 
-import {
-  GrantSwapAllowanceDto,
-  FetchSwapAllowancesDto,
-  DeleteSwapAllowancesDto
-} from "./SwapAllowanceDtos";
-import { GrantAllowanceQuantity } from "@gala-chain/api";
+import { DeleteSwapAllowancesDto, FetchSwapAllowancesDto, GrantSwapAllowanceDto } from "./SwapAllowanceDtos";
 
 describe("SwapAllowanceDtos", () => {
   describe("GrantSwapAllowanceDto", () => {

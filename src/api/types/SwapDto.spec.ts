@@ -15,8 +15,8 @@
 import { TokenClassKey } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 
-import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { SwapDto } from "./DexDtos";
+import { DexFeePercentageTypes } from "./DexFeeTypes";
 
 describe("SwapDto", () => {
   const token0 = new TokenClassKey();
@@ -24,13 +24,13 @@ describe("SwapDto", () => {
   token0.category = "category0";
   token0.type = "type0";
   token0.additionalKey = "additionalKey0";
-  
+
   const token1 = new TokenClassKey();
   token1.collection = "collection1";
   token1.category = "category1";
   token1.type = "type1";
   token1.additionalKey = "additionalKey1";
-  
+
   const fee = DexFeePercentageTypes.FEE_0_05_PERCENT;
   const amount = new BigNumber("100");
   const zeroForOne = true;

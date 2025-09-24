@@ -33,6 +33,7 @@ import {
 } from "../../api/";
 import { roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { processSwapSteps } from "./swap.helper";
+import { verifySwapAllowances } from "./swapAllowances";
 
 /**
  * @dev The swap function executes a token swap in a Dex liquidity pool within the GalaChain ecosystem.
@@ -108,6 +109,22 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
   //fetch token classes
   const tokenClasses = await Promise.all(tokenInstanceKeys.map((key) => fetchTokenClass(ctx, key)));
 
+  // Verify swap allowances for input tokens if provided
+  if (dto.allowancesToUse && dto.allowancesToUse.length > 0) {
+    const inputTokenIndex = zeroForOne ? 0 : 1;
+    const inputTokenKey = tokenInstanceKeys[inputTokenIndex];
+    const inputAmount = amounts[inputTokenIndex];
+
+    if (inputAmount.gt(0)) {
+      await verifySwapAllowances(
+        ctx,
+        inputTokenKey,
+        roundTokenAmount(inputAmount, tokenClasses[inputTokenIndex].decimals, true),
+        dto.allowancesToUse
+      );
+    }
+  }
+
   for (const [index, amount] of amounts.entries()) {
     if (amount.gt(0)) {
       if (dto.amountInMaximum && amount.gt(dto.amountInMaximum)) {
@@ -121,7 +138,7 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
         to: poolAlias,
         tokenInstanceKey: tokenInstanceKeys[index],
         quantity: roundTokenAmount(amount, tokenClasses[index].decimals, amount.isPositive()),
-        allowancesToUse: [],
+        allowancesToUse: dto.allowancesToUse || [],
         authorizedOnBehalf: undefined
       });
     }

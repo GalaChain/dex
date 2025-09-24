@@ -21,6 +21,7 @@ import {
   TokenInstanceQueryKey,
   UserRef
 } from "@gala-chain/api";
+import { GrantAllowanceQuantity } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { Type } from "class-transformer";
 import {
@@ -38,7 +39,6 @@ import {
 import { JSONSchema } from "class-validator-jsonschema";
 
 import { BigNumberIsPositive } from "../validators";
-import { GrantAllowanceQuantity } from "@gala-chain/api";
 
 @JSONSchema({
   description: "Defines swap allowances to be created."

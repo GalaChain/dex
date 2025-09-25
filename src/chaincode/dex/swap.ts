@@ -107,8 +107,8 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
 
   //fetch token classes
   const tokenClasses = await Promise.all(tokenInstanceKeys.map((key) => fetchTokenClass(ctx, key)));
-  
-      // Determine the from user - use tokenOwner if swapping on behalf of another user
+
+  // Determine the from user - use tokenOwner if swapping on behalf of another user
   const seller =
     dto.swapOnBehalfOfUser && dto.swapOnBehalfOfUser !== ctx.callingUser
       ? asValidUserAlias(dto.swapOnBehalfOfUser)
@@ -121,7 +121,6 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
           `Slippage tolerance exceeded: maximum allowed tokens (${dto.amountInMaximum}) is less than required amount (${amount}).`
         );
       }
-
 
       await transferToken(ctx, {
         from: seller,

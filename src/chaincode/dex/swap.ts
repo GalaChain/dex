@@ -107,6 +107,12 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
 
   //fetch token classes
   const tokenClasses = await Promise.all(tokenInstanceKeys.map((key) => fetchTokenClass(ctx, key)));
+  
+      // Determine the from user - use tokenOwner if swapping on behalf of another user
+  const seller =
+    dto.swapOnBehalfOfUser && dto.swapOnBehalfOfUser !== ctx.callingUser
+      ? asValidUserAlias(dto.swapOnBehalfOfUser)
+      : ctx.callingUser;
 
   for (const [index, amount] of amounts.entries()) {
     if (amount.gt(0)) {
@@ -116,14 +122,9 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
         );
       }
 
-      // Determine the from user - use tokenOwner if swapping on behalf of another user
-      const fromUser =
-        dto.swapOnBehalfOfUser && dto.swapOnBehalfOfUser !== ctx.callingUser
-          ? asValidUserAlias(dto.swapOnBehalfOfUser)
-          : ctx.callingUser;
 
       await transferToken(ctx, {
-        from: fromUser,
+        from: seller,
         to: poolAlias,
         tokenInstanceKey: tokenInstanceKeys[index],
         quantity: roundTokenAmount(amount, tokenClasses[index].decimals, amount.isPositive()),
@@ -153,7 +154,7 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
 
       await transferToken(ctx, {
         from: poolAlias,
-        to: ctx.callingUser,
+        to: seller,
         tokenInstanceKey: tokenInstanceKeys[index],
         quantity: roundedAmount,
         allowancesToUse: [],

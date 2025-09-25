@@ -25,6 +25,7 @@ import {
   createValidChainObject,
   randomUniqueKey
 } from "@gala-chain/api";
+import { fetchOrCreateBalance } from "@gala-chain/chaincode";
 import { currency, fixture, transactionError, transactionSuccess, users } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
@@ -409,7 +410,33 @@ describe("DEX Swaps with Allowances: End-to-End Test", () => {
     // Verify amounts
     expect(new BigNumber(swapResult.amount0).toNumber()).toBeGreaterThan(0); // User pays DEX
     expect(new BigNumber(swapResult.amount1).toNumber()).toBeLessThan(0); // User receives CURRENCY
+
+    // Verify that user1's balances changed correctly (user1 should pay DEX and receive CURRENCY)
+    const dexAmountPaid = new BigNumber(swapResult.amount0);
+    const currencyAmountReceived = new BigNumber(swapResult.amount1).abs();
+    
+    const finalUser1DexBalance = await fetchOrCreateBalance(ctx, users.testUser1.identityKey, dexClassKey);
+    const finalUser1CurrencyBalance = await fetchOrCreateBalance(ctx, users.testUser1.identityKey, currencyClassKey);
+
+    // User1 should have paid DEX tokens (balance decreased)
+    expect(finalUser1DexBalance.getQuantityTotal()).toEqual(
+      user1InitialDexBalance.minus(dexAmountPaid)
+    );
+
+    // User1 should have received CURRENCY tokens (balance increased)
+    expect(finalUser1CurrencyBalance.getQuantityTotal()).toEqual(
+      user1InitialCurrencyBalance.plus(currencyAmountReceived)
+    );
+
+    // Verify that user2's balances did NOT change (user2 should not receive any tokens)
+    const finalUser2DexBalance = await fetchOrCreateBalance(ctx, users.testUser2.identityKey, dexClassKey);
+    const finalUser2CurrencyBalance = await fetchOrCreateBalance(ctx, users.testUser2.identityKey, currencyClassKey);
+
+    // User2 should have the same balances as before (no tokens received)
+    expect(finalUser2DexBalance.getQuantityTotal()).toEqual(new BigNumber("0"));
+    expect(finalUser2CurrencyBalance.getQuantityTotal()).toEqual(new BigNumber("0"));
   });
+
 
   it("should successfully delete swap allowances", async () => {
     // Given

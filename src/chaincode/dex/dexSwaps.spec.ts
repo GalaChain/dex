@@ -14,6 +14,7 @@
  */
 import {
   AllowanceType,
+  TokenAllowance,
   TokenBalance,
   TokenClass,
   TokenClassKey,
@@ -21,6 +22,7 @@ import {
   TokenInstanceQueryKey,
   asValidUserAlias,
   asValidUserRef,
+  createValidChainObject,
   randomUniqueKey
 } from "@gala-chain/api";
 import { currency, fixture, transactionError, transactionSuccess, users } from "@gala-chain/test";
@@ -570,6 +572,21 @@ describe("DEX Swaps with Allowances: End-to-End Test", () => {
       quantity: user1InitialCurrencyBalance
     });
 
+    // Pre-create multiple allowances with different timestamps than the one granted later
+    const allowance1 = await createValidChainObject(TokenAllowance, {
+      grantedTo: users.testUser2.identityKey,
+      ...dexClassKey,
+      instance: new BigNumber("0"),
+      allowanceType: AllowanceType.Transfer,
+      grantedBy: users.testUser1.identityKey,
+      created: 1000, // Different timestamp
+      uses: new BigNumber("2"),
+      usesSpent: new BigNumber("0"),
+      expires: 0,
+      quantity: new BigNumber("500"),
+      quantitySpent: new BigNumber("0")
+    });
+
     const { ctx, contract } = fixture(DexV3Contract)
       .registeredUsers(users.testUser1, users.testUser2)
       .savedState(
@@ -581,10 +598,11 @@ describe("DEX Swaps with Allowances: End-to-End Test", () => {
         poolDexBalance,
         poolCurrencyBalance,
         user1DexBalance,
-        user1CurrencyBalance
+        user1CurrencyBalance,
+        allowance1
       );
 
-    // Grant multiple allowances
+    // Grant second allowance (this will be created with the current transaction timestamp)
     const grantAllowanceDto1 = new GrantSwapAllowanceDto();
     const tokenInstanceQueryKey1 = new TokenInstanceQueryKey();
     tokenInstanceQueryKey1.collection = dexClassKey.collection;
@@ -596,55 +614,24 @@ describe("DEX Swaps with Allowances: End-to-End Test", () => {
     grantAllowanceDto1.quantities = [
       {
         user: asValidUserAlias(users.testUser2.identityKey),
-        quantity: new BigNumber("500")
+        quantity: new BigNumber("400")
       }
     ];
     grantAllowanceDto1.uses = new BigNumber("2");
     grantAllowanceDto1.expires = 0;
     grantAllowanceDto1.uniqueKey = randomUniqueKey();
 
-    const grantAllowanceDto2 = new GrantSwapAllowanceDto();
-    const tokenInstanceQueryKey2 = new TokenInstanceQueryKey();
-    tokenInstanceQueryKey2.collection = dexClassKey.collection;
-    tokenInstanceQueryKey2.category = dexClassKey.category;
-    tokenInstanceQueryKey2.type = dexClassKey.type;
-    tokenInstanceQueryKey2.additionalKey = dexClassKey.additionalKey;
-    tokenInstanceQueryKey2.instance = new BigNumber("0");
-    grantAllowanceDto2.tokenInstance = tokenInstanceQueryKey2;
-    grantAllowanceDto2.quantities = [
-      {
-        user: asValidUserAlias(users.testUser2.identityKey),
-        quantity: new BigNumber("300")
-      }
-    ];
-    grantAllowanceDto2.uses = new BigNumber("1");
-    grantAllowanceDto2.expires = 0;
-    grantAllowanceDto2.uniqueKey = randomUniqueKey();
+    await contract.GrantSwapAllowance(ctx, grantAllowanceDto1.signed(users.testUser1.privateKey));
 
-    const grantResponse1 = await contract.GrantSwapAllowance(
-      ctx,
-      grantAllowanceDto1.signed(users.testUser1.privateKey)
-    );
-    const grantResponse2 = await contract.GrantSwapAllowance(
-      ctx,
-      grantAllowanceDto2.signed(users.testUser1.privateKey)
-    );
-
-    expect(grantResponse1).toEqual(transactionSuccess());
-    expect(grantResponse2).toEqual(transactionSuccess());
-
-    const allowanceKey1 = grantResponse1.Data![0].getCompositeKey();
-    const allowanceKey2 = grantResponse2.Data![0].getCompositeKey();
-
-    // Create swap DTO using swapOnBehalfOfUser (will automatically find both allowances)
+    // Create swap DTO using swapOnBehalfOfUser (will automatically find all allowances)
     const swapDto = new SwapDto(
       dexClassKey,
       currencyClassKey,
       fee,
-      new BigNumber("800"), // Amount that requires both allowances
+      new BigNumber("800"), // Amount that more than one allowance
       true, // zeroForOne
       new BigNumber("0.01"),
-      new BigNumber("800"),
+      new BigNumber("1300"),
       new BigNumber("-0.01"),
       users.testUser1.identityKey // user2 swapping on behalf of user1
     );

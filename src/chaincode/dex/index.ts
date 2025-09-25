@@ -27,6 +27,7 @@ export * from "./quoteFuncs";
 export * from "./placeLimitOrder";
 export * from "./setGlobalLimitOrderConfig";
 export * from "./swap";
+export * from "./swapAllowances";
 export * from "./setProtocolFee";
 export * from "./collectProtocolFees";
 export * from "./getPosition";

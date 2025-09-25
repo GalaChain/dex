@@ -12,11 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-  AllowanceType,
-  FetchAllowancesResponse,
-  TokenAllowance
-} from "@gala-chain/api";
+import { AllowanceType, FetchAllowancesResponse, TokenAllowance } from "@gala-chain/api";
 import {
   GalaChainContext,
   GrantAllowanceParams,
@@ -51,7 +47,6 @@ export async function grantSwapAllowance(
 
   return grantAllowance(ctx, params);
 }
-
 
 /**
  * Fetches swap allowances with pagination

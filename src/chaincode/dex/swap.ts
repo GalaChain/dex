@@ -117,7 +117,10 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
       }
 
       // Determine the from user - use tokenOwner if swapping on behalf of another user
-      const fromUser = dto.swapOnBehalfOfUser && dto.swapOnBehalfOfUser !== ctx.callingUser ? asValidUserAlias(dto.swapOnBehalfOfUser) : ctx.callingUser;
+      const fromUser =
+        dto.swapOnBehalfOfUser && dto.swapOnBehalfOfUser !== ctx.callingUser
+          ? asValidUserAlias(dto.swapOnBehalfOfUser)
+          : ctx.callingUser;
 
       await transferToken(ctx, {
         from: fromUser,

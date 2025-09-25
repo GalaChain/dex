@@ -19,9 +19,9 @@ import {
   TokenClassKey,
   TokenInstance,
   TokenInstanceQueryKey,
-  randomUniqueKey,
+  asValidUserAlias,
   asValidUserRef,
-  asValidUserAlias
+  randomUniqueKey
 } from "@gala-chain/api";
 import { currency, fixture, transactionError, transactionSuccess, users } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
@@ -29,7 +29,11 @@ import { plainToInstance } from "class-transformer";
 import { randomUUID } from "crypto";
 
 import { DexFeePercentageTypes, Pool, SwapDto, SwapResDto } from "../../api";
-import { GrantSwapAllowanceDto, FetchSwapAllowancesDto, DeleteSwapAllowancesDto } from "../../api/types/SwapAllowanceDtos";
+import {
+  DeleteSwapAllowancesDto,
+  FetchSwapAllowancesDto,
+  GrantSwapAllowanceDto
+} from "../../api/types/SwapAllowanceDtos";
 import { DexV3Contract } from "../DexV3Contract";
 import dex from "../test/dex";
 import { generateKeyFromClassKey } from "./dexUtils";

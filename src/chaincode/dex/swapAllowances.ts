@@ -15,22 +15,15 @@
 import {
   AllowanceType,
   FetchAllowancesResponse,
-  TokenAllowance,
-  TokenInstance,
-  TokenInstanceKey
+  TokenAllowance
 } from "@gala-chain/api";
 import {
-  DeleteAllowancesParams,
-  FetchAllowancesParams,
   GalaChainContext,
   GrantAllowanceParams,
   deleteAllowances,
   fetchAllowancesWithPagination,
-  fetchTokenInstance,
-  grantAllowance,
-  verifyAndUseAllowances
+  grantAllowance
 } from "@gala-chain/chaincode";
-import { BigNumber } from "bignumber.js";
 
 import {
   DeleteSwapAllowancesDto,
@@ -50,7 +43,7 @@ export async function grantSwapAllowance(
 ): Promise<TokenAllowance[]> {
   const params: GrantAllowanceParams = {
     tokenInstance: dto.tokenInstance,
-    allowanceType: AllowanceType.Swap,
+    allowanceType: AllowanceType.Transfer,
     quantities: dto.quantities,
     uses: dto.uses,
     expires: dto.expires ?? 0
@@ -59,38 +52,6 @@ export async function grantSwapAllowance(
   return grantAllowance(ctx, params);
 }
 
-/**
- * Verifies and consumes swap allowances for a token transfer
- * @param ctx - GalaChain context
- * @param tokenInstanceKey - The token instance key
- * @param quantity - The quantity to verify
- * @param allowancesToUse - Array of allowance composite keys to use
- */
-export async function verifySwapAllowances(
-  ctx: GalaChainContext,
-  tokenInstanceKey: TokenInstanceKey,
-  quantity: BigNumber,
-  allowancesToUse: string[]
-): Promise<void> {
-  if (allowancesToUse.length === 0) {
-    return; // No allowances to verify
-  }
-
-  // Fetch the token instance to get the token details
-  const tokenInstance = await fetchTokenInstance(ctx, tokenInstanceKey);
-
-  // Verify and use the allowances
-  await verifyAndUseAllowances(
-    ctx,
-    ctx.callingUser, // grantedBy
-    tokenInstanceKey,
-    quantity,
-    tokenInstance,
-    ctx.callingUser, // authorizedOnBehalf
-    AllowanceType.Swap,
-    allowancesToUse
-  );
-}
 
 /**
  * Fetches swap allowances with pagination
@@ -102,20 +63,8 @@ export async function fetchSwapAllowances(
   ctx: GalaChainContext,
   dto: FetchSwapAllowancesDto
 ): Promise<FetchAllowancesResponse> {
-  const params: FetchAllowancesParams = {
-    grantedTo: dto.grantedTo,
-    grantedBy: dto.grantedBy,
-    collection: dto.collection,
-    category: dto.category,
-    type: dto.type,
-    additionalKey: dto.additionalKey,
-    instance: dto.instance,
-    allowanceType: AllowanceType.Swap
-  };
-
   return fetchAllowancesWithPagination(ctx, {
-    ...params,
-    bookmark: dto.bookmark,
+    ...dto,
     limit: dto.limit ?? FetchSwapAllowancesDto.DEFAULT_LIMIT
   });
 }
@@ -130,16 +79,5 @@ export async function deleteSwapAllowances(
   ctx: GalaChainContext,
   dto: DeleteSwapAllowancesDto
 ): Promise<number> {
-  const params: DeleteAllowancesParams = {
-    grantedTo: dto.grantedTo,
-    grantedBy: dto.grantedBy,
-    collection: dto.collection,
-    category: dto.category,
-    type: dto.type,
-    additionalKey: dto.additionalKey,
-    instance: dto.instance,
-    allowanceType: AllowanceType.Swap
-  };
-
-  return deleteAllowances(ctx, params);
+  return deleteAllowances(ctx, dto);
 }

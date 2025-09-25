@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TokenClassKey } from "@gala-chain/api";
+import { TokenClassKey, asValidUserAlias } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 
 import { SwapDto } from "./DexDtos";
@@ -47,14 +47,14 @@ describe("SwapDto", () => {
     expect(dto.amount).toEqual(amount);
     expect(dto.zeroForOne).toBe(zeroForOne);
     expect(dto.sqrtPriceLimit).toEqual(sqrtPriceLimit);
-    expect(dto.allowancesToUse).toBeUndefined();
+    expect(dto.swapOnBehalfOfUser).toBeUndefined();
   });
 
   it("should create SwapDto with optional fields", () => {
     // Given
     const amountInMaximum = new BigNumber("110");
     const amountOutMinimum = new BigNumber("-90");
-    const allowancesToUse = ["allowance1", "allowance2"];
+    const swapOnBehalfOfUser = asValidUserAlias("client|user1");
 
     // When
     const dto = new SwapDto(
@@ -66,18 +66,18 @@ describe("SwapDto", () => {
       sqrtPriceLimit,
       amountInMaximum,
       amountOutMinimum,
-      allowancesToUse
+      swapOnBehalfOfUser
     );
 
     // Then
     expect(dto.amountInMaximum).toEqual(amountInMaximum);
     expect(dto.amountOutMinimum).toEqual(amountOutMinimum);
-    expect(dto.allowancesToUse).toEqual(allowancesToUse);
+    expect(dto.swapOnBehalfOfUser).toEqual(swapOnBehalfOfUser);
   });
 
-  it("should create SwapDto with only allowancesToUse optional field", () => {
+  it("should create SwapDto with only swapOnBehalfOfUser optional field", () => {
     // Given
-    const allowancesToUse = ["allowance1"];
+    const swapOnBehalfOfUser = asValidUserAlias("client|user1");
 
     // When
     const dto = new SwapDto(
@@ -89,19 +89,16 @@ describe("SwapDto", () => {
       sqrtPriceLimit,
       undefined,
       undefined,
-      allowancesToUse
+      swapOnBehalfOfUser
     );
 
     // Then
     expect(dto.amountInMaximum).toBeUndefined();
     expect(dto.amountOutMinimum).toBeUndefined();
-    expect(dto.allowancesToUse).toEqual(allowancesToUse);
+    expect(dto.swapOnBehalfOfUser).toEqual(swapOnBehalfOfUser);
   });
 
-  it("should handle empty allowancesToUse array", () => {
-    // Given
-    const allowancesToUse: string[] = [];
-
+  it("should handle undefined swapOnBehalfOfUser", () => {
     // When
     const dto = new SwapDto(
       token0,
@@ -112,10 +109,10 @@ describe("SwapDto", () => {
       sqrtPriceLimit,
       undefined,
       undefined,
-      allowancesToUse
+      undefined
     );
 
     // Then
-    expect(dto.allowancesToUse).toEqual([]);
+    expect(dto.swapOnBehalfOfUser).toBeUndefined();
   });
 });

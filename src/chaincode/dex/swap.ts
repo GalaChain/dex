@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ConflictError, TokenInstanceKey, ValidationFailedError } from "@gala-chain/api";
+import { ConflictError, TokenInstanceKey, ValidationFailedError, asValidUserAlias } from "@gala-chain/api";
 import {
   GalaChainContext,
   fetchOrCreateBalance,
@@ -33,7 +33,6 @@ import {
 } from "../../api/";
 import { roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { processSwapSteps } from "./swap.helper";
-import { verifySwapAllowances } from "./swapAllowances";
 
 /**
  * @dev The swap function executes a token swap in a Dex liquidity pool within the GalaChain ecosystem.
@@ -109,22 +108,6 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
   //fetch token classes
   const tokenClasses = await Promise.all(tokenInstanceKeys.map((key) => fetchTokenClass(ctx, key)));
 
-  // Verify swap allowances for input tokens if provided
-  if (dto.allowancesToUse && dto.allowancesToUse.length > 0) {
-    const inputTokenIndex = zeroForOne ? 0 : 1;
-    const inputTokenKey = tokenInstanceKeys[inputTokenIndex];
-    const inputAmount = amounts[inputTokenIndex];
-
-    if (inputAmount.gt(0)) {
-      await verifySwapAllowances(
-        ctx,
-        inputTokenKey,
-        roundTokenAmount(inputAmount, tokenClasses[inputTokenIndex].decimals, true),
-        dto.allowancesToUse
-      );
-    }
-  }
-
   for (const [index, amount] of amounts.entries()) {
     if (amount.gt(0)) {
       if (dto.amountInMaximum && amount.gt(dto.amountInMaximum)) {
@@ -133,12 +116,15 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
         );
       }
 
+      // Determine the from user - use tokenOwner if swapping on behalf of another user
+      const fromUser = dto.swapOnBehalfOfUser && dto.swapOnBehalfOfUser !== ctx.callingUser ? asValidUserAlias(dto.swapOnBehalfOfUser) : ctx.callingUser;
+
       await transferToken(ctx, {
-        from: ctx.callingUser,
+        from: fromUser,
         to: poolAlias,
         tokenInstanceKey: tokenInstanceKeys[index],
         quantity: roundTokenAmount(amount, tokenClasses[index].decimals, amount.isPositive()),
-        allowancesToUse: dto.allowancesToUse || [],
+        allowancesToUse: [],
         authorizedOnBehalf: undefined
       });
     }

@@ -284,6 +284,11 @@ describe("DEX Swaps with Allowances: End-to-End Test", () => {
     const fetchAllowancesDto = new FetchSwapAllowancesDto();
     fetchAllowancesDto.grantedTo = asValidUserRef(users.testUser2.identityKey);
     fetchAllowancesDto.grantedBy = asValidUserRef(users.testUser1.identityKey);
+    fetchAllowancesDto.collection = dexClassKey.collection;
+    fetchAllowancesDto.category = dexClassKey.category;
+    fetchAllowancesDto.type = dexClassKey.type;
+    fetchAllowancesDto.additionalKey = dexClassKey.additionalKey;
+    fetchAllowancesDto.instance = "0";
     fetchAllowancesDto.limit = 10;
 
     const signedDto = fetchAllowancesDto.signed(users.testUser2.privateKey);
@@ -414,6 +419,7 @@ describe("DEX Swaps with Allowances: End-to-End Test", () => {
     deleteAllowancesDto.category = dexClassKey.category;
     deleteAllowancesDto.type = dexClassKey.type;
     deleteAllowancesDto.additionalKey = dexClassKey.additionalKey;
+    deleteAllowancesDto.instance = "0";
     deleteAllowancesDto.uniqueKey = randomUniqueKey();
 
     const signedDto = deleteAllowancesDto.signed(users.testUser1.privateKey);
@@ -498,6 +504,11 @@ describe("DEX Swaps with Allowances: End-to-End Test", () => {
     const deleteAllowancesDto = new DeleteSwapAllowancesDto();
     deleteAllowancesDto.grantedTo = asValidUserRef(users.testUser2.identityKey);
     deleteAllowancesDto.grantedBy = asValidUserRef(users.testUser1.identityKey);
+    deleteAllowancesDto.collection = dexClassKey.collection;
+    deleteAllowancesDto.category = dexClassKey.category;
+    deleteAllowancesDto.type = dexClassKey.type;
+    deleteAllowancesDto.additionalKey = dexClassKey.additionalKey;
+    deleteAllowancesDto.instance = "0";
     deleteAllowancesDto.uniqueKey = randomUniqueKey();
 
     const deleteResponse = await contract.DeleteSwapAllowances(

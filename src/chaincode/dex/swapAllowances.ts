@@ -65,6 +65,7 @@ export async function fetchSwapAllowances(
 ): Promise<FetchAllowancesResponse> {
   return fetchAllowancesWithPagination(ctx, {
     ...dto,
+    allowanceType: AllowanceType.Transfer,
     limit: dto.limit ?? FetchSwapAllowancesDto.DEFAULT_LIMIT
   });
 }
@@ -79,5 +80,8 @@ export async function deleteSwapAllowances(
   ctx: GalaChainContext,
   dto: DeleteSwapAllowancesDto
 ): Promise<number> {
-  return deleteAllowances(ctx, dto);
+  return deleteAllowances(ctx, {
+    ...dto,
+    allowanceType: AllowanceType.Transfer
+  });
 }

@@ -144,8 +144,8 @@ export async function addLiquidity(
     }
   });
 
+  if (!launchpadAddress) await putChainObject(ctx, position); //Dont put the launchpad token graduation position on chain to prevent any tampering
   await putChainObject(ctx, pool);
-  await putChainObject(ctx, position);
   await putChainObject(ctx, tickUpperData);
   await putChainObject(ctx, tickLowerData);
 

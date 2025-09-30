@@ -16,7 +16,13 @@ import { TokenInstanceQueryKey, UserRef, asValidUserAlias, asValidUserRef } from
 import { GrantAllowanceQuantity } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 
-import { DeleteSwapAllowancesDto, FetchSwapAllowancesDto, GrantSwapAllowanceDto } from "./SwapAllowanceDtos";
+import {
+  DeleteSwapAllowancesDto,
+  FetchSwapAllowancesDto,
+  GrantBulkSwapAllowanceDto,
+  GrantSwapAllowanceDto,
+  TokenQuantity
+} from "./SwapAllowanceDtos";
 
 describe("SwapAllowanceDtos", () => {
   describe("GrantSwapAllowanceDto", () => {
@@ -156,6 +162,179 @@ describe("SwapAllowanceDtos", () => {
       expect(dto.type).toBe("type");
       expect(dto.additionalKey).toBe("additionalKey");
       expect(dto.instance).toBe("0");
+    });
+  });
+
+  describe("TokenQuantity", () => {
+    const tokenInstance = new TokenInstanceQueryKey();
+    tokenInstance.collection = "TestCollection";
+    tokenInstance.category = "TestCategory";
+    tokenInstance.type = "TestType";
+    tokenInstance.additionalKey = "TestAdditionalKey";
+    tokenInstance.instance = new BigNumber("0");
+
+    it("should create TokenQuantity with finite quantity", () => {
+      // Given
+      const quantity = new BigNumber("1000");
+
+      // When
+      const tokenQuantity = new TokenQuantity(tokenInstance, quantity);
+
+      // Then
+      expect(tokenQuantity.tokenInstanceKey).toEqual(tokenInstance);
+      expect(tokenQuantity.quantity.toString()).toBe("1000");
+    });
+
+    it("should create TokenQuantity with infinite quantity", () => {
+      // Given
+      const quantity = new BigNumber(Infinity);
+
+      // When
+      const tokenQuantity = new TokenQuantity(tokenInstance, quantity);
+
+      // Then
+      expect(tokenQuantity.tokenInstanceKey).toEqual(tokenInstance);
+      expect(tokenQuantity.quantity.toString()).toBe("Infinity");
+    });
+
+    it("should create TokenQuantity with constructor parameters", () => {
+      // When
+      const tokenQuantity = new TokenQuantity(tokenInstance, new BigNumber("500"));
+
+      // Then
+      expect(tokenQuantity.tokenInstanceKey).toEqual(tokenInstance);
+      expect(tokenQuantity.quantity.toString()).toBe("500");
+    });
+
+    it("should create TokenQuantity with empty constructor", () => {
+      // When
+      const tokenQuantity = new TokenQuantity();
+
+      // Then
+      expect(tokenQuantity.tokenInstanceKey).toBeUndefined();
+      expect(tokenQuantity.quantity).toBeUndefined();
+    });
+  });
+
+  describe("GrantBulkSwapAllowanceDto", () => {
+    const tokenInstance1 = new TokenInstanceQueryKey();
+    tokenInstance1.collection = "collection1";
+    tokenInstance1.category = "category1";
+    tokenInstance1.type = "type1";
+    tokenInstance1.additionalKey = "additionalKey1";
+    tokenInstance1.instance = new BigNumber("0");
+
+    const tokenInstance2 = new TokenInstanceQueryKey();
+    tokenInstance2.collection = "collection2";
+    tokenInstance2.category = "category2";
+    tokenInstance2.type = "type2";
+    tokenInstance2.additionalKey = "additionalKey2";
+    tokenInstance2.instance = new BigNumber("0");
+
+    const tokenQuantity1 = new TokenQuantity(tokenInstance1, new BigNumber("1000"));
+    const tokenQuantity2 = new TokenQuantity(tokenInstance2, new BigNumber("2000"));
+
+    const grantedTo = asValidUserAlias("client|user1");
+
+    it("should create GrantBulkSwapAllowanceDto with required fields", () => {
+      // Given
+      const uses = new BigNumber("5");
+
+      // When
+      const dto = new GrantBulkSwapAllowanceDto();
+      dto.tokenQuantities = [tokenQuantity1, tokenQuantity2];
+      dto.grantedTo = grantedTo;
+      dto.uses = uses;
+
+      // Then
+      expect(dto.tokenQuantities).toEqual([tokenQuantity1, tokenQuantity2]);
+      expect(dto.grantedTo).toEqual(grantedTo);
+      expect(dto.uses).toEqual(uses);
+      expect(dto.expires).toBeUndefined();
+    });
+
+    it("should create GrantBulkSwapAllowanceDto with optional expires field", () => {
+      // Given
+      const uses = new BigNumber("5");
+      const expires = 1234567890;
+
+      // When
+      const dto = new GrantBulkSwapAllowanceDto();
+      dto.tokenQuantities = [tokenQuantity1];
+      dto.grantedTo = grantedTo;
+      dto.uses = uses;
+      dto.expires = expires;
+
+      // Then
+      expect(dto.expires).toBe(expires);
+    });
+
+    it("should handle single token quantity", () => {
+      // Given
+      const uses = new BigNumber("3");
+
+      // When
+      const dto = new GrantBulkSwapAllowanceDto();
+      dto.tokenQuantities = [tokenQuantity1];
+      dto.grantedTo = grantedTo;
+      dto.uses = uses;
+
+      // Then
+      expect(dto.tokenQuantities).toHaveLength(1);
+      expect(dto.tokenQuantities[0]).toEqual(tokenQuantity1);
+      expect(dto.grantedTo).toEqual(grantedTo);
+    });
+
+    it("should handle multiple tokens for single user", () => {
+      // Given
+      const uses = new BigNumber("10");
+
+      // When
+      const dto = new GrantBulkSwapAllowanceDto();
+      dto.tokenQuantities = [tokenQuantity1, tokenQuantity2];
+      dto.grantedTo = grantedTo;
+      dto.uses = uses;
+
+      // Then
+      expect(dto.tokenQuantities).toHaveLength(2);
+      expect(dto.grantedTo).toEqual(grantedTo);
+      expect(dto.uses).toEqual(uses);
+    });
+
+    it("should handle infinite quantities in TokenQuantity", () => {
+      // Given
+      const infiniteTokenQuantity = new TokenQuantity(tokenInstance1, new BigNumber(Infinity));
+      const uses = new BigNumber(Infinity);
+
+      // When
+      const dto = new GrantBulkSwapAllowanceDto();
+      dto.tokenQuantities = [infiniteTokenQuantity];
+      dto.grantedTo = grantedTo;
+      dto.uses = uses;
+
+      // Then
+      expect(dto.tokenQuantities).toHaveLength(1);
+      expect(dto.tokenQuantities[0].quantity.toString()).toBe("Infinity");
+      expect(dto.uses.toString()).toBe("Infinity");
+    });
+
+    it("should handle mixed finite and infinite quantities", () => {
+      // Given
+      const finiteTokenQuantity = new TokenQuantity(tokenInstance1, new BigNumber("1000"));
+      const infiniteTokenQuantity = new TokenQuantity(tokenInstance2, new BigNumber(Infinity));
+      const uses = new BigNumber("5");
+
+      // When
+      const dto = new GrantBulkSwapAllowanceDto();
+      dto.tokenQuantities = [finiteTokenQuantity, infiniteTokenQuantity];
+      dto.grantedTo = grantedTo;
+      dto.uses = uses;
+
+      // Then
+      expect(dto.tokenQuantities).toHaveLength(2);
+      expect(dto.tokenQuantities[0].quantity.toString()).toBe("1000");
+      expect(dto.tokenQuantities[1].quantity.toString()).toBe("Infinity");
+      expect(dto.uses.toString()).toBe("5");
     });
   });
 });

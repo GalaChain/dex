@@ -35,7 +35,9 @@ import { DexFeePercentageTypes, Pool, SwapDto, SwapResDto } from "../../api";
 import {
   DeleteSwapAllowancesDto,
   FetchSwapAllowancesDto,
-  GrantSwapAllowanceDto
+  GrantBulkSwapAllowanceDto,
+  GrantSwapAllowanceDto,
+  TokenQuantity
 } from "../../api/types/SwapAllowanceDtos";
 import { DexV3Contract } from "../DexV3Contract";
 import dex from "../test/dex";
@@ -682,5 +684,172 @@ describe("DEX Swaps with Allowances: End-to-End Test", () => {
     expect(swapResult.userAddress).toBe(users.testUser2.identityKey);
     expect(swapResult.token0).toBe(dexClass.symbol);
     expect(swapResult.token1).toBe(currencyClass.symbol);
+  });
+
+  it("should successfully grant bulk swap allowances for multiple tokens", async () => {
+    // Given
+    const { ctx, contract } = fixture(DexV3Contract)
+      .registeredUsers(users.testUser1, users.testUser2)
+      .savedState(currencyClass, currencyInstance, dexClass, dexInstance);
+
+    // Create token quantities for multiple tokens
+    const dexTokenInstanceQueryKey = new TokenInstanceQueryKey();
+    dexTokenInstanceQueryKey.collection = dexClassKey.collection;
+    dexTokenInstanceQueryKey.category = dexClassKey.category;
+    dexTokenInstanceQueryKey.type = dexClassKey.type;
+    dexTokenInstanceQueryKey.additionalKey = dexClassKey.additionalKey;
+    dexTokenInstanceQueryKey.instance = new BigNumber("0");
+
+    const currencyTokenInstanceQueryKey = new TokenInstanceQueryKey();
+    currencyTokenInstanceQueryKey.collection = currencyClassKey.collection;
+    currencyTokenInstanceQueryKey.category = currencyClassKey.category;
+    currencyTokenInstanceQueryKey.type = currencyClassKey.type;
+    currencyTokenInstanceQueryKey.additionalKey = currencyClassKey.additionalKey;
+    currencyTokenInstanceQueryKey.instance = new BigNumber("0");
+
+    const dexTokenQuantity = new TokenQuantity(dexTokenInstanceQueryKey, new BigNumber("1000"));
+    const currencyTokenQuantity = new TokenQuantity(currencyTokenInstanceQueryKey, new BigNumber("2000"));
+
+    // Create bulk allowance DTO
+    const bulkAllowanceDto = new GrantBulkSwapAllowanceDto();
+    bulkAllowanceDto.tokenQuantities = [dexTokenQuantity, currencyTokenQuantity];
+    bulkAllowanceDto.grantedTo = asValidUserAlias(users.testUser2.identityKey);
+    bulkAllowanceDto.uses = new BigNumber("3");
+    bulkAllowanceDto.expires = 0;
+    bulkAllowanceDto.uniqueKey = randomUniqueKey();
+
+    const signedDto = bulkAllowanceDto.signed(users.testUser1.privateKey);
+
+    // When
+    const response = await contract.GrantBulkSwapAllowance(ctx, signedDto);
+
+    // Then
+    expect(response).toEqual(transactionSuccess());
+    expect(response.Data).toBeDefined();
+    expect(Array.isArray(response.Data)).toBe(true);
+    expect(response.Data!.length).toBe(2); // Should create 2 allowances (one for each token)
+
+    // Verify allowance properties for DEX token
+    const dexAllowance = response.Data![0];
+    expect(dexAllowance.allowanceType).toBe(AllowanceType.Transfer);
+    expect(dexAllowance.grantedBy).toBe(users.testUser1.identityKey);
+    expect(dexAllowance.grantedTo).toBe(users.testUser2.identityKey);
+    expect(dexAllowance.quantity.toString()).toBe("1000");
+    expect(dexAllowance.uses.toString()).toBe("3");
+
+    // Verify allowance properties for CURRENCY token
+    const currencyAllowance = response.Data![1];
+    expect(currencyAllowance.allowanceType).toBe(AllowanceType.Transfer);
+    expect(currencyAllowance.grantedBy).toBe(users.testUser1.identityKey);
+    expect(currencyAllowance.grantedTo).toBe(users.testUser2.identityKey);
+    expect(currencyAllowance.quantity.toString()).toBe("2000");
+    expect(currencyAllowance.uses.toString()).toBe("3");
+  });
+
+  it("should successfully grant bulk swap allowances for a single token", async () => {
+    // Given
+    const { ctx, contract } = fixture(DexV3Contract)
+      .registeredUsers(users.testUser1, users.testUser2)
+      .savedState(currencyClass, currencyInstance, dexClass, dexInstance);
+
+    // Create token quantity for DEX token
+    const dexTokenInstanceQueryKey = new TokenInstanceQueryKey();
+    dexTokenInstanceQueryKey.collection = dexClassKey.collection;
+    dexTokenInstanceQueryKey.category = dexClassKey.category;
+    dexTokenInstanceQueryKey.type = dexClassKey.type;
+    dexTokenInstanceQueryKey.additionalKey = dexClassKey.additionalKey;
+    dexTokenInstanceQueryKey.instance = new BigNumber("0");
+
+    const dexTokenQuantity = new TokenQuantity(dexTokenInstanceQueryKey, new BigNumber("1000"));
+
+    // Create bulk allowance DTO with single user
+    const bulkAllowanceDto = new GrantBulkSwapAllowanceDto();
+    bulkAllowanceDto.tokenQuantities = [dexTokenQuantity];
+    bulkAllowanceDto.grantedTo = asValidUserAlias(users.testUser2.identityKey);
+    bulkAllowanceDto.uses = new BigNumber("2");
+    bulkAllowanceDto.expires = 0;
+    bulkAllowanceDto.uniqueKey = randomUniqueKey();
+
+    const signedDto = bulkAllowanceDto.signed(users.testUser1.privateKey);
+
+    // When
+    const response = await contract.GrantBulkSwapAllowance(ctx, signedDto);
+
+    // Then
+    expect(response).toEqual(transactionSuccess());
+    expect(response.Data).toBeDefined();
+    expect(Array.isArray(response.Data)).toBe(true);
+    expect(response.Data!.length).toBe(1); // Should create 1 allowance
+
+    // Verify allowance properties
+    const allowance = response.Data![0];
+    expect(allowance.allowanceType).toBe(AllowanceType.Transfer);
+    expect(allowance.grantedBy).toBe(users.testUser1.identityKey);
+    expect(allowance.grantedTo).toBe(users.testUser2.identityKey);
+    expect(allowance.quantity.toString()).toBe("1000"); // Quantity comes from TokenQuantity
+    expect(allowance.uses.toString()).toBe("2");
+  });
+
+  it("should successfully grant bulk swap allowances with mixed finite and infinite quantities", async () => {
+    // Given
+    const { ctx, contract } = fixture(DexV3Contract)
+      .registeredUsers(users.testUser1, users.testUser2)
+      .savedState(currencyClass, currencyInstance, dexClass, dexInstance);
+
+    // Create token quantities - one with finite amount, one with infinite amount
+    const dexTokenInstanceQueryKey = new TokenInstanceQueryKey();
+    dexTokenInstanceQueryKey.collection = dexClassKey.collection;
+    dexTokenInstanceQueryKey.category = dexClassKey.category;
+    dexTokenInstanceQueryKey.type = dexClassKey.type;
+    dexTokenInstanceQueryKey.additionalKey = dexClassKey.additionalKey;
+    dexTokenInstanceQueryKey.instance = new BigNumber("0");
+
+    const currencyTokenInstanceQueryKey = new TokenInstanceQueryKey();
+    currencyTokenInstanceQueryKey.collection = currencyClassKey.collection;
+    currencyTokenInstanceQueryKey.category = currencyClassKey.category;
+    currencyTokenInstanceQueryKey.type = currencyClassKey.type;
+    currencyTokenInstanceQueryKey.additionalKey = currencyClassKey.additionalKey;
+    currencyTokenInstanceQueryKey.instance = new BigNumber("0");
+
+    // DEX token with finite quantity
+    const dexTokenQuantity = new TokenQuantity(dexTokenInstanceQueryKey, new BigNumber("1000"));
+
+    // CURRENCY token with infinite quantity
+    const currencyTokenQuantity = new TokenQuantity(currencyTokenInstanceQueryKey, new BigNumber(Infinity));
+
+    // Create bulk allowance DTO with infinite uses
+    const bulkAllowanceDto = new GrantBulkSwapAllowanceDto();
+    bulkAllowanceDto.tokenQuantities = [dexTokenQuantity, currencyTokenQuantity];
+    bulkAllowanceDto.grantedTo = asValidUserAlias(users.testUser2.identityKey);
+    bulkAllowanceDto.uses = new BigNumber(Infinity); // Infinite uses
+    bulkAllowanceDto.expires = 0;
+    bulkAllowanceDto.uniqueKey = randomUniqueKey();
+
+    const signedDto = bulkAllowanceDto.signed(users.testUser1.privateKey);
+
+    // When
+    const response = await contract.GrantBulkSwapAllowance(ctx, signedDto);
+
+    // Then
+    expect(response).toEqual(transactionSuccess());
+    expect(response.Data).toBeDefined();
+    expect(Array.isArray(response.Data)).toBe(true);
+    expect(response.Data!.length).toBe(2); // Should create 2 allowances (one for each token)
+
+    // Verify allowance properties for DEX token (finite quantity)
+    const dexAllowance = response.Data![0];
+    expect(dexAllowance.allowanceType).toBe(AllowanceType.Transfer);
+    expect(dexAllowance.grantedBy).toBe(users.testUser1.identityKey);
+    expect(dexAllowance.grantedTo).toBe(users.testUser2.identityKey);
+    expect(dexAllowance.quantity.toString()).toBe("1000"); // Quantity comes from TokenQuantity
+    expect(dexAllowance.uses.toString()).toBe("Infinity");
+
+    // Verify allowance properties for CURRENCY token (infinite quantity)
+    const currencyAllowance = response.Data![1];
+    expect(currencyAllowance.allowanceType).toBe(AllowanceType.Transfer);
+    expect(currencyAllowance.grantedBy).toBe(users.testUser1.identityKey);
+    expect(currencyAllowance.grantedTo).toBe(users.testUser2.identityKey);
+    expect(currencyAllowance.quantity.toString()).toBe("Infinity"); // Quantity comes from TokenQuantity
+    expect(currencyAllowance.uses.toString()).toBe("Infinity");
   });
 });

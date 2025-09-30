@@ -19,6 +19,7 @@ import {
   SubmitCallDTO,
   TokenInstance,
   TokenInstanceQueryKey,
+  UserAlias,
   UserRef
 } from "@gala-chain/api";
 import { GrantAllowanceQuantity } from "@gala-chain/api";
@@ -39,6 +40,32 @@ import {
 import { JSONSchema } from "class-validator-jsonschema";
 
 import { BigNumberIsPositive } from "../validators";
+
+export class TokenQuantity {
+  @JSONSchema({
+    description: "Token instance key for the token quantity."
+  })
+  @ValidateNested()
+  @Type(() => TokenInstanceQueryKey)
+  @IsNotEmpty()
+  public tokenInstanceKey: TokenInstanceQueryKey;
+
+  @JSONSchema({
+    description: "Quantity of tokens for this allowance."
+  })
+  @BigNumberIsPositive()
+  @BigNumberProperty({ allowInfinity: true })
+  public quantity: BigNumber;
+
+  constructor(tokenInstanceKey?: TokenInstanceQueryKey, quantity?: BigNumber) {
+    if (tokenInstanceKey) {
+      this.tokenInstanceKey = tokenInstanceKey;
+    }
+    if (quantity) {
+      this.quantity = quantity;
+    }
+  }
+}
 
 @JSONSchema({
   description: "Defines swap allowances to be created."
@@ -77,6 +104,45 @@ export class GrantSwapAllowanceDto extends SubmitCallDTO {
     description:
       "Unix timestamp of the date when the allowances should expire. 0 means that it won't expire. " +
       `By default set to ${GrantSwapAllowanceDto.DEFAULT_EXPIRES}.`
+  })
+  @IsOptional()
+  public expires?: number;
+}
+
+@JSONSchema({
+  description: "Defines bulk swap allowances to be created for multiple tokens."
+})
+export class GrantBulkSwapAllowanceDto extends SubmitCallDTO {
+  static DEFAULT_EXPIRES = 0;
+
+  @JSONSchema({
+    description:
+      "List of token quantities for which allowances should be granted. " +
+      "Each token will have allowances created for the specified user."
+  })
+  @ValidateNested({ each: true })
+  @Type(() => TokenQuantity)
+  @ArrayNotEmpty()
+  @IsArray()
+  public tokenQuantities: Array<TokenQuantity>;
+
+  @JSONSchema({
+    description: "User to grant allowances to."
+  })
+  @IsNotEmpty()
+  public grantedTo: UserAlias;
+
+  @JSONSchema({
+    description: "How many times each allowance can be used."
+  })
+  @BigNumberIsPositive()
+  @BigNumberProperty({ allowInfinity: true })
+  public uses: BigNumber;
+
+  @JSONSchema({
+    description:
+      "Unix timestamp of the date when the allowances should expire. 0 means that it won't expire. " +
+      `By default set to ${GrantBulkSwapAllowanceDto.DEFAULT_EXPIRES}.`
   })
   @IsOptional()
   public expires?: number;

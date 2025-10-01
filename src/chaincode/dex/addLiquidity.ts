@@ -88,6 +88,7 @@ export async function addLiquidity(
     tickUpper,
     tickLower,
     dto.uniqueKey,
+    liquidityProvider,
     dto.positionId
   );
   const { tickUpperData, tickLowerData } = await fetchOrCreateTickDataPair(

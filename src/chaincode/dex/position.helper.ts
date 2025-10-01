@@ -27,8 +27,12 @@ import { genTickRange, getUserPositionIds } from "./dexUtils";
  * @param pool - The liquidity pool in which this position exists
  * @param tickUpper - The upper bound of the tick range
  * @param tickLower - The lower bound of the tick range
- * @param owner - (Optional) The user address; defaults to the calling user
+ * @param uniqueKey - A unique key used to deterministically generate a position ID if none exists
+ * @param liquidityProvider - The user address or alias of the liquidity provider
+ * @param positionId - (Optional) The explicit position ID to fetch; if not provided, one is derived from the tick range
  * @returns The DexPositionData object representing the user's position
+ * @throws NotFoundError - If the provided positionId does not match the given tick range
+ * @throws ValidationError - If the user’s position record fails validation
  */
 export async function fetchOrCreateDexPosition(
   ctx: GalaChainContext,

@@ -108,11 +108,9 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
   //fetch token classes
   const tokenClasses = await Promise.all(tokenInstanceKeys.map((key) => fetchTokenClass(ctx, key)));
 
-  // Determine the from user - use tokenOwner if swapping on behalf of another user
+  // Determine the seller - this may be different from the caller if swapping on behalf of another user
   const seller =
-    dto.swapOnBehalfOfUser && dto.swapOnBehalfOfUser !== ctx.callingUser
-      ? asValidUserAlias(dto.swapOnBehalfOfUser)
-      : ctx.callingUser;
+    dto.recipient && dto.recipient !== ctx.callingUser ? asValidUserAlias(dto.recipient) : ctx.callingUser;
 
   for (const [index, amount] of amounts.entries()) {
     if (amount.gt(0)) {

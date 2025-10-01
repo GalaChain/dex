@@ -71,6 +71,7 @@ import {
   GetTickDataDto,
   GetUserPositionsDto,
   GetUserPositionsResDto,
+  GrantBulkSwapAllowanceDto,
   GrantSwapAllowanceDto,
   PlaceLimitOrderDto,
   PlaceLimitOrderResDto,
@@ -112,6 +113,7 @@ import {
   getRemoveLiquidityEstimation,
   getSlot0,
   getUserPositions,
+  grantBulkSwapAllowance,
   grantSwapAllowance,
   placeLimitOrder,
   quoteExactAmount,
@@ -581,6 +583,27 @@ export class DexV3Contract extends GalaContract {
     dto: GrantSwapAllowanceDto
   ): Promise<TokenAllowance[]> {
     return grantSwapAllowance(ctx, dto);
+  }
+
+  /**
+   * Grants swap allowances for multiple token instances in a single operation.
+   *
+   * This method allows users to create allowances for multiple tokens at once,
+   * enabling third-party services to execute swaps on behalf of the user across
+   * different token types efficiently.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Bulk swap allowance grant parameters
+   * @returns Array of created TokenAllowance objects
+   */
+  @Submit({
+    in: GrantBulkSwapAllowanceDto
+  })
+  public async GrantBulkSwapAllowance(
+    ctx: GalaChainContext,
+    dto: GrantBulkSwapAllowanceDto
+  ): Promise<TokenAllowance[]> {
+    return grantBulkSwapAllowance(ctx, dto);
   }
 
   /**

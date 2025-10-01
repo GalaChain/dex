@@ -24,6 +24,7 @@ import {
 import {
   DeleteSwapAllowancesDto,
   FetchSwapAllowancesDto,
+  GrantBulkSwapAllowanceDto,
   GrantSwapAllowanceDto
 } from "../../api/types/SwapAllowanceDtos";
 
@@ -46,6 +47,35 @@ export async function grantSwapAllowance(
   };
 
   return grantAllowance(ctx, params);
+}
+
+/**
+ * Grants swap allowances for multiple token instances in a single operation
+ * @param ctx - GalaChain context
+ * @param dto - Grant bulk swap allowance DTO
+ * @returns Array of created TokenAllowance objects
+ */
+export async function grantBulkSwapAllowance(
+  ctx: GalaChainContext,
+  dto: GrantBulkSwapAllowanceDto
+): Promise<TokenAllowance[]> {
+  const allAllowances: TokenAllowance[] = [];
+
+  // For each token quantity, create allowance for the single user
+  for (const tokenQuantity of dto.tokenQuantities) {
+    const params: GrantAllowanceParams = {
+      tokenInstance: tokenQuantity.tokenInstanceKey,
+      allowanceType: AllowanceType.Transfer,
+      quantities: [{ user: dto.grantedTo, quantity: tokenQuantity.quantity }],
+      uses: dto.uses,
+      expires: dto.expires ?? 0
+    };
+
+    const allowances = await grantAllowance(ctx, params);
+    allAllowances.push(...allowances);
+  }
+
+  return allAllowances;
 }
 
 /**

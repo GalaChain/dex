@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ChainError, NotFoundError } from "@gala-chain/api";
+import { ChainError, NotFoundError, UserAlias } from "@gala-chain/api";
 import { GalaChainContext, getObjectByKey, putChainObject } from "@gala-chain/chaincode";
 import { keccak256 } from "js-sha3";
 
@@ -36,11 +36,12 @@ export async function fetchOrCreateDexPosition(
   tickUpper: number,
   tickLower: number,
   uniqueKey: string,
+  liquidityProvider: UserAlias,
   positionId?: string
 ): Promise<DexPositionData> {
   const poolHash = pool.genPoolHash();
   const tickRange = genTickRange(tickLower, tickUpper);
-  const emptyUserPosition = new DexPositionOwner(ctx.callingUser, poolHash);
+  const emptyUserPosition = new DexPositionOwner(liquidityProvider, poolHash);
 
   // Fetch or initialize positionHolder's DEX position owner record
   const fetchedUserPosition = await getObjectByKey(

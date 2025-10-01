@@ -213,7 +213,7 @@ describe("DEX Swaps with Allowances: End-to-End Test", () => {
         user1CurrencyBalance
       );
 
-    // Create swap DTO with swapOnBehalfOfUser but no actual allowances granted
+    // Create swap DTO with recipient but no actual allowances granted
     const swapDto = new SwapDto(
       dexClassKey,
       currencyClassKey,

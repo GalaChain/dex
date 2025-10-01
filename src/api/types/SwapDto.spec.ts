@@ -47,14 +47,14 @@ describe("SwapDto", () => {
     expect(dto.amount).toEqual(amount);
     expect(dto.zeroForOne).toBe(zeroForOne);
     expect(dto.sqrtPriceLimit).toEqual(sqrtPriceLimit);
-    expect(dto.swapOnBehalfOfUser).toBeUndefined();
+    expect(dto.recipient).toBeUndefined();
   });
 
   it("should create SwapDto with optional fields", () => {
     // Given
     const amountInMaximum = new BigNumber("110");
     const amountOutMinimum = new BigNumber("-90");
-    const swapOnBehalfOfUser = asValidUserAlias("client|user1");
+    const recipient = asValidUserAlias("client|user1");
 
     // When
     const dto = new SwapDto(
@@ -66,18 +66,18 @@ describe("SwapDto", () => {
       sqrtPriceLimit,
       amountInMaximum,
       amountOutMinimum,
-      swapOnBehalfOfUser
+      recipient
     );
 
     // Then
     expect(dto.amountInMaximum).toEqual(amountInMaximum);
     expect(dto.amountOutMinimum).toEqual(amountOutMinimum);
-    expect(dto.swapOnBehalfOfUser).toEqual(swapOnBehalfOfUser);
+    expect(dto.recipient).toEqual(recipient);
   });
 
-  it("should create SwapDto with only swapOnBehalfOfUser optional field", () => {
+  it("should create SwapDto with only recipient optional field", () => {
     // Given
-    const swapOnBehalfOfUser = asValidUserAlias("client|user1");
+    const recipient = asValidUserAlias("client|user1");
 
     // When
     const dto = new SwapDto(
@@ -89,16 +89,16 @@ describe("SwapDto", () => {
       sqrtPriceLimit,
       undefined,
       undefined,
-      swapOnBehalfOfUser
+      recipient
     );
 
     // Then
     expect(dto.amountInMaximum).toBeUndefined();
     expect(dto.amountOutMinimum).toBeUndefined();
-    expect(dto.swapOnBehalfOfUser).toEqual(swapOnBehalfOfUser);
+    expect(dto.recipient).toEqual(recipient);
   });
 
-  it("should handle undefined swapOnBehalfOfUser", () => {
+  it("should handle undefined recipient", () => {
     // When
     const dto = new SwapDto(
       token0,
@@ -113,6 +113,6 @@ describe("SwapDto", () => {
     );
 
     // Then
-    expect(dto.swapOnBehalfOfUser).toBeUndefined();
+    expect(dto.recipient).toBeUndefined();
   });
 });

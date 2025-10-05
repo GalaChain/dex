@@ -410,26 +410,30 @@ export class Pool extends ChainObject {
     amount0Requested: BigNumber,
     amount1Requested: BigNumber
   ) {
-    if (
-      new BigNumber(position.tokensOwed0).lt(amount0Requested) ||
-      new BigNumber(position.tokensOwed1).lt(amount1Requested)
-    ) {
-      const [tokensOwed0, tokensOwed1] = this.getFeeCollectedEstimation(
-        position,
-        tickLowerData,
-        tickUpperData
-      );
-      if (tokensOwed0.isGreaterThan(0) || tokensOwed1.isGreaterThan(0)) {
-        position.tokensOwed0 = new BigNumber(position.tokensOwed0).plus(tokensOwed0);
-        position.tokensOwed1 = new BigNumber(position.tokensOwed1).plus(tokensOwed1);
-      }
-    }
+    // Always synchronize fees first by calculating current feeGrowthInside
+    // and updating the position. This ensures checkpoint and tokensOwed
+    // are always updated together atomically, preventing double-counting.
+    const tickCurrent = sqrtPriceToTick(this.sqrtPrice);
+    const [feeGrowthInside0, feeGrowthInside1] = getFeeGrowthInside(
+      tickLowerData,
+      tickUpperData,
+      tickCurrent,
+      this.feeGrowthGlobal0,
+      this.feeGrowthGlobal1
+    );
+
+    // Use updatePosition to properly sync fees and checkpoint together
+    position.updatePosition(new BigNumber(0), feeGrowthInside0, feeGrowthInside1);
+
+    // Now verify sufficient balance after fee synchronization
     if (
       new BigNumber(position.tokensOwed0).lt(amount0Requested) ||
       new BigNumber(position.tokensOwed1).lt(amount1Requested)
     ) {
       throw new ConflictError("Less balance accumulated");
     }
+
+    // Deduct the collected amounts
     position.tokensOwed0 = new BigNumber(position.tokensOwed0).minus(amount0Requested);
     position.tokensOwed1 = new BigNumber(position.tokensOwed1).minus(amount1Requested);
 
@@ -466,9 +470,9 @@ export class Pool extends ChainObject {
       .minus(new BigNumber(position.feeGrowthInside1Last))
       .times(new BigNumber(position.liquidity));
 
-    // Update position to track its last fee collection
-    position.feeGrowthInside0Last = feeGrowthInside0;
-    position.feeGrowthInside1Last = feeGrowthInside1;
+    // FIXED: Removed side effects - this is now a pure estimation function
+    // that doesn't modify the position. Checkpoint updates should only happen
+    // when fees are actually accumulated via updatePosition().
 
     return [tokensOwed0, tokensOwed1];
   }

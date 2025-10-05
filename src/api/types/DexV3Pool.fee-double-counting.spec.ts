@@ -349,11 +349,7 @@ describe("DexV3Pool - Fee Double-Counting Bug", () => {
     expect(positionData.tokensOwed1.toString()).toBe("50100");
 
     // If we call updatePosition again (no new fees), nothing should change
-    positionData.updatePosition(
-      new BigNumber(0),
-      currentFeeGrowthInside0,
-      currentFeeGrowthInside1
-    );
+    positionData.updatePosition(new BigNumber(0), currentFeeGrowthInside0, currentFeeGrowthInside1);
 
     expect(positionData.tokensOwed0.toString()).toBe("50100"); // Unchanged
     expect(positionData.tokensOwed1.toString()).toBe("50100"); // Unchanged
@@ -361,4 +357,3 @@ describe("DexV3Pool - Fee Double-Counting Bug", () => {
     expect(positionData.feeGrowthInside1Last.toString()).toBe("200"); // Unchanged
   });
 });
-

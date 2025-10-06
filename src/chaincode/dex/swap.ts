@@ -33,6 +33,7 @@ import {
 } from "../../api/";
 import { roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { processSwapSteps } from "./swap.helper";
+import { validatePrivatePoolAccess } from "./privatePoolUtils";
 
 /**
  * @dev The swap function executes a token swap in a Dex liquidity pool within the GalaChain ecosystem.
@@ -55,6 +56,9 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
 
   const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
   const pool = await getObjectByKey(ctx, Pool, key);
+
+  // Check private pool access
+  validatePrivatePoolAccess(pool, ctx.callingUser);
 
   // Validate sqrtPriceLimit and input amount
   if (zeroForOne) {

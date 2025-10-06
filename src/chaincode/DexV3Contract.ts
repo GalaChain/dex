@@ -73,6 +73,8 @@ import {
   GetUserPositionsResDto,
   GrantBulkSwapAllowanceDto,
   GrantSwapAllowanceDto,
+  MakePoolPublicDto,
+  ManageWhitelistDto,
   PlaceLimitOrderDto,
   PlaceLimitOrderResDto,
   Pool,
@@ -115,6 +117,8 @@ import {
   getUserPositions,
   grantBulkSwapAllowance,
   grantSwapAllowance,
+  makePoolPublic,
+  manageWhitelist,
   placeLimitOrder,
   quoteExactAmount,
   setGlobalLimitOrderConfig,
@@ -678,5 +682,35 @@ export class DexV3Contract extends GalaContract {
     dto: FetchBatchSubmitAuthoritiesDto
   ): Promise<BatchSubmitAuthoritiesResDto> {
     return await getBatchSubmitAuthorities(ctx, dto);
+  }
+
+  /**
+   * Makes a private pool public. Only whitelisted users can make pools public.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Pool identification parameters
+   * @returns void
+   */
+  @Submit({
+    in: MakePoolPublicDto,
+    out: ChainCallDTO
+  })
+  public async MakePoolPublic(ctx: GalaChainContext, dto: MakePoolPublicDto): Promise<void> {
+    return await makePoolPublic(ctx, dto);
+  }
+
+  /**
+   * Manages the whitelist for a private pool. Only whitelisted users can modify the whitelist.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Whitelist management parameters
+   * @returns void
+   */
+  @Submit({
+    in: ManageWhitelistDto,
+    out: ChainCallDTO
+  })
+  public async ManageWhitelist(ctx: GalaChainContext, dto: ManageWhitelistDto): Promise<void> {
+    return await manageWhitelist(ctx, dto);
   }
 }

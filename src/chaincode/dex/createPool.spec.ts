@@ -136,6 +136,7 @@ describe("createPool", () => {
       new BigNumber("1"),
       dexFeeConfig.protocolFee
     );
+    expectedPool.creator = users.testUser1.identityKey;
 
     const expectedResponse = new CreatePoolResDto(
       currencyClassKey,

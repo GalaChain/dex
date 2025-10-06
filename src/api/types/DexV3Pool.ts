@@ -24,7 +24,7 @@ import {
 } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { Exclude, Type } from "class-transformer";
-import { IsNumber, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsBoolean, IsNumber, IsString, ValidateNested } from "class-validator";
 import { JSONSchema } from "class-validator-jsonschema";
 import { keccak256 } from "js-sha3";
 
@@ -113,6 +113,16 @@ export class Pool extends ChainObject {
   @BigNumberProperty()
   public protocolFeesToken1: BigNumber;
 
+  @IsBoolean()
+  public isPrivate: boolean = false;
+
+  @IsArray()
+  @IsString({ each: true })
+  public whitelist: string[] = [];
+
+  @IsString()
+  public creator: string = "";
+
   /**
    * @dev Creates and initializes a new Pool with a given sqrtPrice.
    * @param token0 TokenKey0 used to create a composite key for the pool.
@@ -121,6 +131,10 @@ export class Pool extends ChainObject {
    * @param token1ClassKey Token class key to identify token1.
    * @param fee Fee parameter that determines the pool's fee structure and tick spacing.
    * @param initialSqrtPrice Initial square root price for the V3 pool.
+   * @param protocolFees Protocol fee percentage (default 0).
+   * @param isPrivate Whether the pool is private (default false).
+   * @param whitelist Array of whitelisted user addresses (default empty).
+   * @param creator Address of the pool creator (default empty).
    */
   constructor(
     token0: string,
@@ -129,7 +143,10 @@ export class Pool extends ChainObject {
     token1ClassKey: TokenClassKey,
     fee: DexFeePercentageTypes,
     initialSqrtPrice: BigNumber,
-    protocolFees = 0
+    protocolFees = 0,
+    isPrivate = false,
+    whitelist: string[] = [],
+    creator = ""
   ) {
     super();
     this.token0 = token0;
@@ -153,6 +170,9 @@ export class Pool extends ChainObject {
     this.protocolFees = protocolFees;
     this.protocolFeesToken0 = new BigNumber(0);
     this.protocolFeesToken1 = new BigNumber(0);
+    this.isPrivate = isPrivate;
+    this.whitelist = whitelist;
+    this.creator = creator;
   }
 
   /**
@@ -570,5 +590,81 @@ export class Pool extends ChainObject {
         : new BigNumber(amountSpecified).minus(state.amountSpecifiedRemaining);
 
     return [amount0, amount1];
+  }
+
+  /**
+   * @dev Checks if a user is whitelisted for this private pool
+   * @param user The user address to check
+   * @returns true if user is whitelisted or pool is public
+   */
+  public isWhitelisted(user: string): boolean {
+    if (!this.isPrivate) {
+      return true; // Public pools allow all users
+    }
+    return this.whitelist.includes(user);
+  }
+
+  /**
+   * @dev Checks if a user can make this pool public
+   * @param user The user address to check
+   * @returns true if user is whitelisted
+   */
+  public canMakePublic(user: string): boolean {
+    return this.isPrivate && this.whitelist.includes(user);
+  }
+
+  /**
+   * @dev Makes a private pool public
+   * @param user The user requesting to make the pool public
+   * @throws ValidationFailedError if user is not whitelisted or pool is already public
+   */
+  public makePublic(user: string): void {
+    if (!this.isPrivate) {
+      throw new ValidationFailedError("Pool is already public");
+    }
+    if (!this.whitelist.includes(user)) {
+      throw new ValidationFailedError("Only whitelisted users can make pools public");
+    }
+    this.isPrivate = false;
+  }
+
+  /**
+   * @dev Adds a user to the whitelist
+   * @param user The user requesting to add someone
+   * @param newUser The user to add to the whitelist
+   * @throws ValidationFailedError if requesting user is not whitelisted
+   */
+  public addToWhitelist(user: string, newUser: string): void {
+    if (!this.isPrivate) {
+      throw new ValidationFailedError("Cannot modify whitelist for public pools");
+    }
+    if (!this.whitelist.includes(user)) {
+      throw new ValidationFailedError("Only whitelisted users can modify the whitelist");
+    }
+    if (!this.whitelist.includes(newUser)) {
+      this.whitelist.push(newUser);
+    }
+  }
+
+  /**
+   * @dev Removes a user from the whitelist
+   * @param user The user requesting to remove someone
+   * @param userToRemove The user to remove from the whitelist
+   * @throws ValidationFailedError if requesting user is not whitelisted or trying to remove creator
+   */
+  public removeFromWhitelist(user: string, userToRemove: string): void {
+    if (!this.isPrivate) {
+      throw new ValidationFailedError("Cannot modify whitelist for public pools");
+    }
+    if (!this.whitelist.includes(user)) {
+      throw new ValidationFailedError("Only whitelisted users can modify the whitelist");
+    }
+    if (userToRemove === this.creator) {
+      throw new ValidationFailedError("Cannot remove the pool creator from the whitelist");
+    }
+    const index = this.whitelist.indexOf(userToRemove);
+    if (index > -1) {
+      this.whitelist.splice(index, 1);
+    }
   }
 }

@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 import { ValidationFailedError } from "@gala-chain/api";
+import { TokenClassKey } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 
-import { Pool } from "./DexV3Pool";
 import { DexFeePercentageTypes } from "./DexFeeTypes";
-import { TokenClassKey } from "@gala-chain/api";
+import { Pool } from "./DexV3Pool";
 
 describe("Pool Private Pool Functionality", () => {
   const token0ClassKey = new TokenClassKey();
@@ -25,7 +25,7 @@ describe("Pool Private Pool Functionality", () => {
   token0ClassKey.category = "Unit";
   token0ClassKey.type = "none";
   token0ClassKey.additionalKey = "none";
-  
+
   const token1ClassKey = new TokenClassKey();
   token1ClassKey.collection = "Token";
   token1ClassKey.category = "Unit";
@@ -208,9 +208,7 @@ describe("Pool Private Pool Functionality", () => {
       );
 
       // When & Then
-      expect(() => pool.makePublic("anyUser")).toThrow(
-        new ValidationFailedError("Pool is already public")
-      );
+      expect(() => pool.makePublic("anyUser")).toThrow(new ValidationFailedError("Pool is already public"));
     });
 
     it("should throw error when non-whitelisted user tries to make pool public", () => {
@@ -281,7 +279,7 @@ describe("Pool Private Pool Functionality", () => {
       pool.addToWhitelist("user1", "user2");
 
       // Then
-      expect(pool.whitelist.filter(user => user === "user2")).toHaveLength(1);
+      expect(pool.whitelist.filter((user) => user === "user2")).toHaveLength(1);
     });
 
     it("should throw error when trying to modify whitelist for public pool", () => {

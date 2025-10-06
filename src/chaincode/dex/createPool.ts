@@ -49,19 +49,17 @@ export async function createPool(ctx: GalaChainContext, dto: CreatePoolDto): Pro
   const isPrivate = dto.isPrivate ?? false;
   const whitelist = dto.whitelist ?? [];
   const creator = ctx.callingUser;
-  
+
   // Ensure creator is in whitelist for private pools
-  const finalWhitelist = isPrivate && !whitelist.includes(creator) 
-    ? [creator, ...whitelist] 
-    : whitelist;
-  
+  const finalWhitelist = isPrivate && !whitelist.includes(creator) ? [creator, ...whitelist] : whitelist;
+
   const pool = new Pool(
-    token0, 
-    token1, 
-    dto.token0, 
-    dto.token1, 
-    dto.fee, 
-    dto.initialSqrtPrice, 
+    token0,
+    token1,
+    dto.token0,
+    dto.token1,
+    dto.fee,
+    dto.initialSqrtPrice,
     protocolFee,
     isPrivate,
     finalWhitelist,

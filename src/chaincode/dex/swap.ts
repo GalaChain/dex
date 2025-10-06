@@ -32,8 +32,8 @@ import {
   sqrtPriceToTick
 } from "../../api/";
 import { roundTokenAmount, validateTokenOrder } from "./dexUtils";
-import { processSwapSteps } from "./swap.helper";
 import { validatePrivatePoolAccess } from "./privatePoolUtils";
+import { processSwapSteps } from "./swap.helper";
 
 /**
  * @dev The swap function executes a token swap in a Dex liquidity pool within the GalaChain ecosystem.

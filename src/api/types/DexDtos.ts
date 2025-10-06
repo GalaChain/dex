@@ -1309,11 +1309,7 @@ export class MakePoolPublicDto extends SubmitCallDTO {
   @EnumProperty(DexFeePercentageTypes)
   public fee: DexFeePercentageTypes;
 
-  constructor(
-    token0: TokenClassKey,
-    token1: TokenClassKey,
-    fee: DexFeePercentageTypes
-  ) {
+  constructor(token0: TokenClassKey, token1: TokenClassKey, fee: DexFeePercentageTypes) {
     super();
     this.token0 = token0;
     this.token1 = token1;

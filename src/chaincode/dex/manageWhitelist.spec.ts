@@ -25,7 +25,14 @@ import { GalaChainContext } from "@gala-chain/chaincode";
 import { currency, fixture, users, writesMap } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 
-import { CreatePoolDto, CreatePoolResDto, DexFeeConfig, DexFeePercentageTypes, ManageWhitelistDto, Pool } from "../../api/";
+import {
+  CreatePoolDto,
+  CreatePoolResDto,
+  DexFeeConfig,
+  DexFeePercentageTypes,
+  ManageWhitelistDto,
+  Pool
+} from "../../api/";
 import { DexV3Contract } from "../DexV3Contract";
 import dexTestUtils from "../test/dex";
 import { generateKeyFromClassKey } from "./dexUtils";
@@ -206,7 +213,9 @@ describe("manageWhitelist", () => {
 
     // When & Then
     const response = await contract.ManageWhitelist(ctx, manageDto);
-    expect(response).toEqual(GalaChainResponse.Error("Only whitelisted users can modify the whitelist", 400, "VALIDATION_FAILED"));
+    expect(response).toEqual(
+      GalaChainResponse.Error("Only whitelisted users can modify the whitelist", 400, "VALIDATION_FAILED")
+    );
   });
 
   it("should throw error when trying to manage whitelist for public pool", async () => {
@@ -262,7 +271,9 @@ describe("manageWhitelist", () => {
 
     // When & Then
     const response = await contract.ManageWhitelist(ctx, manageDto);
-    expect(response).toEqual(GalaChainResponse.Error("Cannot modify whitelist for public pools", 400, "VALIDATION_FAILED"));
+    expect(response).toEqual(
+      GalaChainResponse.Error("Cannot modify whitelist for public pools", 400, "VALIDATION_FAILED")
+    );
   });
 
   it("should throw error when trying to remove creator from whitelist", async () => {
@@ -320,6 +331,8 @@ describe("manageWhitelist", () => {
 
     // When & Then
     const response = await contract.ManageWhitelist(ctx, manageDto);
-    expect(response).toEqual(GalaChainResponse.Error("Cannot remove the pool creator from the whitelist", 400, "VALIDATION_FAILED"));
+    expect(response).toEqual(
+      GalaChainResponse.Error("Cannot remove the pool creator from the whitelist", 400, "VALIDATION_FAILED")
+    );
   });
 });

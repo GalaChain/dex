@@ -73,12 +73,12 @@ describe("createPool - Private Pool Support", () => {
     const [token0, token1] = [dto.token0, dto.token1].map(generateKeyFromClassKey);
     const expectedWhitelist = [users.testUser1.identityKey, ...whitelist];
     const expectedPool = new Pool(
-      token0, 
-      token1, 
-      dto.token0, 
-      dto.token1, 
-      dto.fee, 
-      dto.initialSqrtPrice, 
+      token0,
+      token1,
+      dto.token0,
+      dto.token1,
+      dto.fee,
+      dto.initialSqrtPrice,
       0.1,
       true,
       expectedWhitelist,
@@ -148,12 +148,12 @@ describe("createPool - Private Pool Support", () => {
 
     const [token0, token1] = [dto.token0, dto.token1].map(generateKeyFromClassKey);
     const expectedPool = new Pool(
-      token0, 
-      token1, 
-      dto.token0, 
-      dto.token1, 
-      dto.fee, 
-      dto.initialSqrtPrice, 
+      token0,
+      token1,
+      dto.token0,
+      dto.token1,
+      dto.fee,
+      dto.initialSqrtPrice,
       0.1,
       true,
       whitelist, // Should remain unchanged since creator is already included
@@ -222,12 +222,12 @@ describe("createPool - Private Pool Support", () => {
 
     const [token0, token1] = [dto.token0, dto.token1].map(generateKeyFromClassKey);
     const expectedPool = new Pool(
-      token0, 
-      token1, 
-      dto.token0, 
-      dto.token1, 
-      dto.fee, 
-      dto.initialSqrtPrice, 
+      token0,
+      token1,
+      dto.token0,
+      dto.token1,
+      dto.fee,
+      dto.initialSqrtPrice,
       0.1,
       false,
       [],

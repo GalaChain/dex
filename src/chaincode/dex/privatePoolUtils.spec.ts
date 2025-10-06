@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 import { UnauthorizedError } from "@gala-chain/api";
+import { TokenClassKey } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 
 import { Pool } from "../../api";
 import { DexFeePercentageTypes } from "../../api/types/DexFeeTypes";
-import { TokenClassKey } from "@gala-chain/api";
 import { canMakePoolPublic, isWhitelisted, validatePrivatePoolAccess } from "./privatePoolUtils";
 
 describe("Private Pool Utils", () => {
@@ -26,7 +26,7 @@ describe("Private Pool Utils", () => {
   token0ClassKey.category = "Unit";
   token0ClassKey.type = "none";
   token0ClassKey.additionalKey = "none";
-  
+
   const token1ClassKey = new TokenClassKey();
   token1ClassKey.collection = "Token";
   token1ClassKey.category = "Unit";

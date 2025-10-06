@@ -49,5 +49,3 @@ export function canMakePoolPublic(pool: Pool, user: string): boolean {
 export function isWhitelisted(pool: Pool, user: string): boolean {
   return pool.isWhitelisted(user);
 }
-
-

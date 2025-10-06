@@ -25,15 +25,13 @@ import { validateTokenOrder } from "./dexUtils";
  */
 export async function makePoolPublic(ctx: GalaChainContext, dto: MakePoolPublicDto): Promise<void> {
   const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
-  
+
   const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
   const pool = await getObjectByKey(ctx, Pool, key);
-  
+
   // Make the pool public (this validates that the caller is whitelisted)
   pool.makePublic(ctx.callingUser);
-  
+
   // Save the updated pool
   await putChainObject(ctx, pool);
 }
-
-

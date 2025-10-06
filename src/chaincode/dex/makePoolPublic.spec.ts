@@ -25,7 +25,14 @@ import { GalaChainContext } from "@gala-chain/chaincode";
 import { currency, fixture, users, writesMap } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 
-import { CreatePoolDto, CreatePoolResDto, DexFeeConfig, DexFeePercentageTypes, MakePoolPublicDto, Pool } from "../../api/";
+import {
+  CreatePoolDto,
+  CreatePoolResDto,
+  DexFeeConfig,
+  DexFeePercentageTypes,
+  MakePoolPublicDto,
+  Pool
+} from "../../api/";
 import { DexV3Contract } from "../DexV3Contract";
 import dexTestUtils from "../test/dex";
 import { generateKeyFromClassKey } from "./dexUtils";
@@ -142,7 +149,9 @@ describe("makePoolPublic", () => {
 
     // When & Then
     const response = await contract.MakePoolPublic(ctx, makePublicDto);
-    expect(response).toEqual(GalaChainResponse.Error("Only whitelisted users can make pools public", 400, "VALIDATION_FAILED"));
+    expect(response).toEqual(
+      GalaChainResponse.Error("Only whitelisted users can make pools public", 400, "VALIDATION_FAILED")
+    );
   });
 
   it("should throw error when trying to make public pool public", async () => {

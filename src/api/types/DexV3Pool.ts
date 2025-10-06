@@ -114,14 +114,14 @@ export class Pool extends ChainObject {
   public protocolFeesToken1: BigNumber;
 
   @IsBoolean()
-  public isPrivate: boolean = false;
+  public isPrivate = false;
 
   @IsArray()
   @IsString({ each: true })
   public whitelist: string[] = [];
 
   @IsString()
-  public creator: string = "";
+  public creator = "";
 
   /**
    * @dev Creates and initializes a new Pool with a given sqrtPrice.

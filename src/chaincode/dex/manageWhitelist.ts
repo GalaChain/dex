@@ -25,10 +25,10 @@ import { validateTokenOrder } from "./dexUtils";
  */
 export async function manageWhitelist(ctx: GalaChainContext, dto: ManageWhitelistDto): Promise<void> {
   const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
-  
+
   const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
   const pool = await getObjectByKey(ctx, Pool, key);
-  
+
   if (dto.isAdd) {
     // Add user to whitelist
     pool.addToWhitelist(ctx.callingUser, dto.targetUser);
@@ -36,9 +36,7 @@ export async function manageWhitelist(ctx: GalaChainContext, dto: ManageWhitelis
     // Remove user from whitelist
     pool.removeFromWhitelist(ctx.callingUser, dto.targetUser);
   }
-  
+
   // Save the updated pool
   await putChainObject(ctx, pool);
 }
-
-

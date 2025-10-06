@@ -1,6 +1,6 @@
 {
   "name": "@gala-chain/dex",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "description": "GalaChain DEX Chaincode",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",

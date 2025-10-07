@@ -22,7 +22,7 @@ import { Pool } from "../../api/";
  * @param user The user address to validate
  * @throws UnauthorizedError if user is not whitelisted for private pools
  */
-export function validatePrivatePoolAccess(pool: Pool, user: string): void {
+export function validateOrRejectPrivatePoolAccess(pool: Pool, user: string): void {
   if (pool.isPrivate && !pool.isWhitelisted(user)) {
     throw new UnauthorizedError(
       `Access denied: Pool is private and user ${user} is not whitelisted. Whitelisted users: ${pool.whitelist.join(", ")}`

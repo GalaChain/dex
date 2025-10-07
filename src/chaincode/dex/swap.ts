@@ -32,7 +32,7 @@ import {
   sqrtPriceToTick
 } from "../../api/";
 import { roundTokenAmount, validateTokenOrder } from "./dexUtils";
-import { validatePrivatePoolAccess } from "./privatePoolUtils";
+import { validateOrRejectPrivatePoolAccess } from "./privatePoolUtils";
 import { processSwapSteps } from "./swap.helper";
 
 /**
@@ -58,7 +58,7 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
   const pool = await getObjectByKey(ctx, Pool, key);
 
   // Check private pool access
-  validatePrivatePoolAccess(pool, ctx.callingUser);
+  validateOrRejectPrivatePoolAccess(pool, ctx.callingUser);
 
   // Validate sqrtPriceLimit and input amount
   if (zeroForOne) {

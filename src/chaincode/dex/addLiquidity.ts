@@ -34,7 +34,7 @@ import {
 import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchOrCreateDexPosition } from "./position.helper";
-import { validatePrivatePoolAccess } from "./privatePoolUtils";
+import { validateOrRejectPrivatePoolAccess } from "./privatePoolUtils";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
 
 /**
@@ -55,7 +55,7 @@ export async function addLiquidity(
   const pool = await getObjectByKey(ctx, Pool, key);
 
   // Check private pool access
-  validatePrivatePoolAccess(pool, ctx.callingUser);
+  validateOrRejectPrivatePoolAccess(pool, ctx.callingUser);
 
   const currentSqrtPrice = pool.sqrtPrice;
 

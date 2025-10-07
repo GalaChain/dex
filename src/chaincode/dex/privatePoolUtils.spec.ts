@@ -18,7 +18,7 @@ import BigNumber from "bignumber.js";
 
 import { Pool } from "../../api";
 import { DexFeePercentageTypes } from "../../api/types/DexFeeTypes";
-import { canMakePoolPublic, isWhitelisted, validatePrivatePoolAccess } from "./privatePoolUtils";
+import { canMakePoolPublic, isWhitelisted, validateOrRejectPrivatePoolAccess } from "./privatePoolUtils";
 
 describe("Private Pool Utils", () => {
   const token0ClassKey = new TokenClassKey();
@@ -36,7 +36,7 @@ describe("Private Pool Utils", () => {
   const initialSqrtPrice = new BigNumber("1");
   const protocolFee = 0.1;
 
-  describe("validatePrivatePoolAccess", () => {
+  describe("validateOrRejectPrivatePoolAccess", () => {
     it("should not throw for public pools", () => {
       // Given
       const pool = new Pool(
@@ -53,7 +53,7 @@ describe("Private Pool Utils", () => {
       );
 
       // When & Then
-      expect(() => validatePrivatePoolAccess(pool, "anyUser")).not.toThrow();
+      expect(() => validateOrRejectPrivatePoolAccess(pool, "anyUser")).not.toThrow();
     });
 
     it("should not throw for whitelisted users in private pools", () => {
@@ -73,8 +73,8 @@ describe("Private Pool Utils", () => {
       );
 
       // When & Then
-      expect(() => validatePrivatePoolAccess(pool, "user1")).not.toThrow();
-      expect(() => validatePrivatePoolAccess(pool, "user2")).not.toThrow();
+      expect(() => validateOrRejectPrivatePoolAccess(pool, "user1")).not.toThrow();
+      expect(() => validateOrRejectPrivatePoolAccess(pool, "user2")).not.toThrow();
     });
 
     it("should throw UnauthorizedError for non-whitelisted users in private pools", () => {
@@ -94,8 +94,8 @@ describe("Private Pool Utils", () => {
       );
 
       // When & Then
-      expect(() => validatePrivatePoolAccess(pool, "nonWhitelisted")).toThrow(UnauthorizedError);
-      expect(() => validatePrivatePoolAccess(pool, "nonWhitelisted")).toThrow(
+      expect(() => validateOrRejectPrivatePoolAccess(pool, "nonWhitelisted")).toThrow(UnauthorizedError);
+      expect(() => validateOrRejectPrivatePoolAccess(pool, "nonWhitelisted")).toThrow(
         "Access denied: Pool is private and user nonWhitelisted is not whitelisted"
       );
     });

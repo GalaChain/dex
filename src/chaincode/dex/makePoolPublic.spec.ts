@@ -62,8 +62,7 @@ describe("makePoolPublic", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     // Create a private pool first
     const whitelist = [users.testUser1.identityKey, users.testUser2.identityKey];
@@ -120,8 +119,7 @@ describe("makePoolPublic", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     // Create a private pool first
     const whitelist = [users.testUser1.identityKey]; // Only user1 is whitelisted
@@ -178,8 +176,7 @@ describe("makePoolPublic", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     // Create a public pool first
     const createDto = new CreatePoolDto(

@@ -55,8 +55,7 @@ describe("createPool - Private Pool Support", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     const whitelist = ["user2", "user3"];
     const dto = new CreatePoolDto(
@@ -131,8 +130,7 @@ describe("createPool - Private Pool Support", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     const whitelist = [users.testUser1.identityKey, "user2", "user3"];
     const dto = new CreatePoolDto(
@@ -206,8 +204,7 @@ describe("createPool - Private Pool Support", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     const dto = new CreatePoolDto(
       dexClassKey,

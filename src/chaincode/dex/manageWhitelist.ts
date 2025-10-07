@@ -14,7 +14,7 @@
  */
 import { GalaChainContext, getObjectByKey, putChainObject } from "@gala-chain/chaincode";
 
-import { ManageWhitelistDto, Pool } from "../../api/";
+import { ManageWhitelistDto, Pool, PoolWhitelistOperation } from "../../api/";
 import { validateTokenOrder } from "./dexUtils";
 
 /**
@@ -29,7 +29,7 @@ export async function manageWhitelist(ctx: GalaChainContext, dto: ManageWhitelis
   const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
   const pool = await getObjectByKey(ctx, Pool, key);
 
-  if (dto.isAdd) {
+  if (dto.operation === PoolWhitelistOperation.ADD) {
     // Add user to whitelist
     pool.addToWhitelist(ctx.callingUser, dto.targetUser);
   } else {

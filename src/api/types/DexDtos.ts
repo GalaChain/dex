@@ -19,6 +19,7 @@ import {
   IsBigNumber,
   IsUserAlias,
   IsUserRef,
+  StringEnumProperty,
   SubmitCallDTO,
   TokenBalance,
   TokenClassKey,
@@ -49,6 +50,11 @@ import { CompositePoolDto } from "./CompositePoolDto";
 import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { IDexLimitOrderModel } from "./DexLimitOrderModel";
 import { TickData } from "./TickData";
+
+export enum PoolWhitelistOperation {
+  ADD = "ADD",
+  REMOVE = "REMOVE"
+}
 
 export class CreatePoolDto extends SubmitCallDTO {
   @IsNotEmpty()
@@ -1337,20 +1343,20 @@ export class ManageWhitelistDto extends SubmitCallDTO {
 
   @IsNotEmpty()
   @StringEnumProperty(PoolWhitelistOperation)
-  public operation?: PoolWhitelistOperation;
+  public operation: PoolWhitelistOperation;
 
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
     fee: DexFeePercentageTypes,
     targetUser: string,
-    isAdd: boolean
+    operation: PoolWhitelistOperation
   ) {
     super();
     this.token0 = token0;
     this.token1 = token1;
     this.fee = fee;
     this.targetUser = targetUser;
-    this.isAdd = isAdd;
+    this.operation = operation;
   }
 }

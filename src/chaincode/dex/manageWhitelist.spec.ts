@@ -31,7 +31,8 @@ import {
   DexFeeConfig,
   DexFeePercentageTypes,
   ManageWhitelistDto,
-  Pool
+  Pool,
+  PoolWhitelistOperation
 } from "../../api/";
 import { DexV3Contract } from "../DexV3Contract";
 import dexTestUtils from "../test/dex";
@@ -62,8 +63,7 @@ describe("manageWhitelist", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     // Create a private pool first
     const whitelist = [users.testUser1.identityKey];
@@ -86,7 +86,7 @@ describe("manageWhitelist", () => {
       currencyClassKey,
       DexFeePercentageTypes.FEE_1_PERCENT,
       users.testUser2.identityKey,
-      true // isAdd = true
+      PoolWhitelistOperation.ADD
     );
     manageDto.uniqueKey = "test-manage-1";
     manageDto.sign(users.testUser1.privateKey); // Whitelisted user
@@ -122,8 +122,7 @@ describe("manageWhitelist", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     // Create a private pool with multiple users in whitelist
     const whitelist = [users.testUser1.identityKey, users.testUser2.identityKey];
@@ -146,7 +145,7 @@ describe("manageWhitelist", () => {
       currencyClassKey,
       DexFeePercentageTypes.FEE_1_PERCENT,
       users.testUser2.identityKey,
-      false // isAdd = false (remove)
+      PoolWhitelistOperation.REMOVE
     );
     manageDto.uniqueKey = "test-manage-2";
     manageDto.sign(users.testUser1.privateKey); // Whitelisted user
@@ -182,8 +181,7 @@ describe("manageWhitelist", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     // Create a private pool first
     const whitelist = [users.testUser1.identityKey]; // Only user1 is whitelisted
@@ -206,7 +204,7 @@ describe("manageWhitelist", () => {
       currencyClassKey,
       DexFeePercentageTypes.FEE_1_PERCENT,
       "newUser",
-      true // isAdd = true
+      PoolWhitelistOperation.ADD
     );
     manageDto.uniqueKey = "test-manage-3";
     manageDto.sign(users.testUser2.privateKey); // Non-whitelisted user
@@ -242,8 +240,7 @@ describe("manageWhitelist", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     // Create a public pool first
     const createDto = new CreatePoolDto(
@@ -264,7 +261,7 @@ describe("manageWhitelist", () => {
       currencyClassKey,
       DexFeePercentageTypes.FEE_1_PERCENT,
       "newUser",
-      true // isAdd = true
+      PoolWhitelistOperation.ADD
     );
     manageDto.uniqueKey = "test-manage-4";
     manageDto.sign(users.testUser1.privateKey);
@@ -300,8 +297,7 @@ describe("manageWhitelist", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     // Create a private pool first
     const whitelist = [users.testUser1.identityKey, users.testUser2.identityKey];
@@ -324,7 +320,7 @@ describe("manageWhitelist", () => {
       currencyClassKey,
       DexFeePercentageTypes.FEE_1_PERCENT,
       users.testUser1.identityKey, // Creator
-      false // isAdd = false (remove)
+      PoolWhitelistOperation.REMOVE
     );
     manageDto.uniqueKey = "test-manage-5";
     manageDto.sign(users.testUser2.privateKey); // Whitelisted user

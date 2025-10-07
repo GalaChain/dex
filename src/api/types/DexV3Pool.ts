@@ -636,14 +636,14 @@ export class Pool extends ChainObject {
    * @dev Adds a user to the whitelist
    * @param user The user requesting to add someone
    * @param newUser The user to add to the whitelist
-   * @throws ValidationFailedError if requesting user is not whitelisted
+   * @throws ValidationFailedError if requesting user is not creator
    */
   public addToWhitelist(user: string, newUser: string): void {
     if (!this.isPrivate) {
       throw new ValidationFailedError("Cannot modify whitelist for public pools");
     }
-    if (!this.whitelist.includes(user)) {
-      throw new ValidationFailedError("Only whitelisted users can modify the whitelist");
+    if (user != this.creator) {
+      throw new ValidationFailedError("Only creator users can modify the whitelist");
     }
     if (!this.whitelist.includes(newUser)) {
       this.whitelist.push(newUser);
@@ -654,14 +654,14 @@ export class Pool extends ChainObject {
    * @dev Removes a user from the whitelist
    * @param user The user requesting to remove someone
    * @param userToRemove The user to remove from the whitelist
-   * @throws ValidationFailedError if requesting user is not whitelisted or trying to remove creator
+   * @throws ValidationFailedError if requesting user is not creator or trying to remove creator
    */
   public removeFromWhitelist(user: string, userToRemove: string): void {
     if (!this.isPrivate) {
       throw new ValidationFailedError("Cannot modify whitelist for public pools");
     }
-    if (!this.whitelist.includes(user)) {
-      throw new ValidationFailedError("Only whitelisted users can modify the whitelist");
+    if (user != this.creator) {
+      throw new ValidationFailedError("Only creator users can modify the whitelist");
     }
     if (userToRemove === this.creator) {
       throw new ValidationFailedError("Cannot remove the pool creator from the whitelist");

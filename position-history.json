@@ -1,0 +1,56 @@
+{
+    "data": {
+      "allChainObjectHistories": {
+        "nodes": [
+          {
+            "key0": "GCDXCLPOR",
+            "key1": "client|5c806869e7fd0e2384461ce9",
+            "key2": "cc93185e6902353cc0e912099790826089d3e3cba8e1e5aa3d5eba9d0c31d742",
+            "value": "{\"owner\":\"client|5c806869e7fd0e2384461ce9\",\"poolHash\":\"cc93185e6902353cc0e912099790826089d3e3cba8e1e5aa3d5eba9d0c31d742\",\"tickRangeMap\":{\"-42800:-38800\":[\"1d0ebb94b43834db538a6ac516e40745a3fa06f7904eb935e5705c06d71c9b5e\"],\"-44200:-40200\":[\"b8c92737d6883358dc54933db59b2e9b60cb47b88f243151f36f081a697678e8\"]}}",
+            "transactionId": "27c053cfce15cebdd831f915a22f64de451dfd61c6bf50bb068acf5bcae2cd63",
+            "blockNumber": 8830558
+          },
+          {
+            "key0": "GCDXCLPOR",
+            "key1": "client|5c806869e7fd0e2384461ce9",
+            "key2": "cc93185e6902353cc0e912099790826089d3e3cba8e1e5aa3d5eba9d0c31d742",
+            "value": "{\"owner\":\"client|5c806869e7fd0e2384461ce9\",\"poolHash\":\"cc93185e6902353cc0e912099790826089d3e3cba8e1e5aa3d5eba9d0c31d742\",\"tickRangeMap\":{\"-44200:-40200\":[\"b8c92737d6883358dc54933db59b2e9b60cb47b88f243151f36f081a697678e8\"]}}",
+            "transactionId": "d9cf87aebf01814d448ba990cb7a14fc0d00d6570d415e53e8bcf35a86114f40",
+            "blockNumber": 8830555
+          },
+          {
+            "key0": "GCDXCLPOR",
+            "key1": "client|5c806869e7fd0e2384461ce9",
+            "key2": "cc93185e6902353cc0e912099790826089d3e3cba8e1e5aa3d5eba9d0c31d742",
+            "value": "{\"owner\":\"client|5c806869e7fd0e2384461ce9\",\"poolHash\":\"cc93185e6902353cc0e912099790826089d3e3cba8e1e5aa3d5eba9d0c31d742\",\"tickRangeMap\":{\"-41400:-37800\":[\"faacef68ed0dbb2c367c8628f0b2a1999445d9e6a695cac7ab0918b2c10a4707\"],\"-44200:-40200\":[\"b8c92737d6883358dc54933db59b2e9b60cb47b88f243151f36f081a697678e8\"]}}",
+            "transactionId": "c4253b61c2dae966511eba012ba9af5f9bf2c3614de03eaaab01dcbd16fd4517",
+            "blockNumber": 8673159
+          },
+          {
+            "key0": "GCDXCLPOR",
+            "key1": "client|5c806869e7fd0e2384461ce9",
+            "key2": "cc93185e6902353cc0e912099790826089d3e3cba8e1e5aa3d5eba9d0c31d742",
+            "value": "{\"owner\":\"client|5c806869e7fd0e2384461ce9\",\"poolHash\":\"cc93185e6902353cc0e912099790826089d3e3cba8e1e5aa3d5eba9d0c31d742\",\"tickRangeMap\":{\"-41400:-37800\":[\"faacef68ed0dbb2c367c8628f0b2a1999445d9e6a695cac7ab0918b2c10a4707\"]}}",
+            "transactionId": "9fb86260f5744f002d93ee25eba889631c7f0e4aacdc2e41ee2dafac711f8b2c",
+            "blockNumber": 8640201
+          },
+          {
+            "key0": "GCDXCLPOR",
+            "key1": "client|5c806869e7fd0e2384461ce9",
+            "key2": "cc93185e6902353cc0e912099790826089d3e3cba8e1e5aa3d5eba9d0c31d742",
+            "value": null,
+            "transactionId": "3748fe9a695f0b5b2851e9e7506a3cbfe2f43a69d46df89b8661f19726b51b60",
+            "blockNumber": 8640192
+          },
+          {
+            "key0": "GCDXCLPOR",
+            "key1": "client|5c806869e7fd0e2384461ce9",
+            "key2": "cc93185e6902353cc0e912099790826089d3e3cba8e1e5aa3d5eba9d0c31d742",
+            "value": "{\"owner\":\"client|5c806869e7fd0e2384461ce9\",\"poolHash\":\"cc93185e6902353cc0e912099790826089d3e3cba8e1e5aa3d5eba9d0c31d742\",\"tickRangeMap\":{\"-43600:-39400\":[\"1f8f2345d40d0b5c00402aeb9be38c78c47adcc9f1e3b79c9fbfdc5e24ade07d\"]}}",
+            "transactionId": "c11ac8b9ae5d2b86743c2bd2fd5301554be435039b09f697ee436975b58787c2",
+            "blockNumber": 8553738
+          }
+        ]
+      }
+    }
+  }

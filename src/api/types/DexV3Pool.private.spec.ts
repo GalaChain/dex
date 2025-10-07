@@ -235,7 +235,7 @@ describe("Pool Private Pool Functionality", () => {
   });
 
   describe("addToWhitelist", () => {
-    it("should add user to whitelist when called by whitelisted user", () => {
+    it("should fail add user to whitelist when called by whitelisted user", () => {
       // Given
       const whitelist = ["user1"];
       const pool = new Pool(
@@ -252,11 +252,10 @@ describe("Pool Private Pool Functionality", () => {
       );
 
       // When
-      pool.addToWhitelist("user1", "newUser");
-
       // Then
-      expect(pool.whitelist).toContain("newUser");
-      expect(pool.whitelist).toContain("user1");
+      expect(() => pool.addToWhitelist("user1", "newUser")).toThrow(
+        new ValidationFailedError("Only creator users can modify the whitelist")
+      );
     });
 
     it("should not add duplicate users to whitelist", () => {
@@ -276,7 +275,7 @@ describe("Pool Private Pool Functionality", () => {
       );
 
       // When
-      pool.addToWhitelist("user1", "user2");
+      pool.addToWhitelist("creator", "user2");
 
       // Then
       expect(pool.whitelist.filter((user) => user === "user2")).toHaveLength(1);
@@ -302,32 +301,10 @@ describe("Pool Private Pool Functionality", () => {
         new ValidationFailedError("Cannot modify whitelist for public pools")
       );
     });
-
-    it("should throw error when non-whitelisted user tries to add to whitelist", () => {
-      // Given
-      const whitelist = ["user1"];
-      const pool = new Pool(
-        token0ClassKey.toStringKey(),
-        token1ClassKey.toStringKey(),
-        token0ClassKey,
-        token1ClassKey,
-        fee,
-        initialSqrtPrice,
-        protocolFee,
-        true,
-        whitelist,
-        "creator"
-      );
-
-      // When & Then
-      expect(() => pool.addToWhitelist("nonWhitelisted", "newUser")).toThrow(
-        new ValidationFailedError("Only whitelisted users can modify the whitelist")
-      );
-    });
   });
 
   describe("removeFromWhitelist", () => {
-    it("should remove user from whitelist when called by whitelisted user", () => {
+    it("should fail to remove user from whitelist when called by whitelisted user", () => {
       // Given
       const whitelist = ["user1", "user2", "user3"];
       const pool = new Pool(
@@ -344,12 +321,12 @@ describe("Pool Private Pool Functionality", () => {
       );
 
       // When
-      pool.removeFromWhitelist("user1", "user2");
+      expect(() => pool.removeFromWhitelist("user1", "user2")).toThrow(
+        new ValidationFailedError("Only creator users can modify the whitelist")
+      );
 
       // Then
-      expect(pool.whitelist).not.toContain("user2");
-      expect(pool.whitelist).toContain("user1");
-      expect(pool.whitelist).toContain("user3");
+      expect(pool.whitelist).toEqual(whitelist);
     });
 
     it("should throw error when trying to remove creator from whitelist", () => {
@@ -369,7 +346,7 @@ describe("Pool Private Pool Functionality", () => {
       );
 
       // When & Then
-      expect(() => pool.removeFromWhitelist("user1", "creator")).toThrow(
+      expect(() => pool.removeFromWhitelist("creator", "creator")).toThrow(
         new ValidationFailedError("Cannot remove the pool creator from the whitelist")
       );
     });
@@ -392,28 +369,6 @@ describe("Pool Private Pool Functionality", () => {
       // When & Then
       expect(() => pool.removeFromWhitelist("anyUser", "userToRemove")).toThrow(
         new ValidationFailedError("Cannot modify whitelist for public pools")
-      );
-    });
-
-    it("should throw error when non-whitelisted user tries to remove from whitelist", () => {
-      // Given
-      const whitelist = ["user1", "user2"];
-      const pool = new Pool(
-        token0ClassKey.toStringKey(),
-        token1ClassKey.toStringKey(),
-        token0ClassKey,
-        token1ClassKey,
-        fee,
-        initialSqrtPrice,
-        protocolFee,
-        true,
-        whitelist,
-        "creator"
-      );
-
-      // When & Then
-      expect(() => pool.removeFromWhitelist("nonWhitelisted", "user1")).toThrow(
-        new ValidationFailedError("Only whitelisted users can modify the whitelist")
       );
     });
   });

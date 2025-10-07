@@ -19,6 +19,7 @@ import {
   IsBigNumber,
   IsUserAlias,
   IsUserRef,
+  StringEnumProperty,
   SubmitCallDTO,
   TokenBalance,
   TokenClassKey,
@@ -50,6 +51,11 @@ import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { IDexLimitOrderModel } from "./DexLimitOrderModel";
 import { TickData } from "./TickData";
 
+export enum PoolWhitelistOperation {
+  ADD = "ADD",
+  REMOVE = "REMOVE"
+}
+
 export class CreatePoolDto extends SubmitCallDTO {
   @IsNotEmpty()
   @ValidateNested()
@@ -68,17 +74,30 @@ export class CreatePoolDto extends SubmitCallDTO {
   @BigNumberProperty()
   public initialSqrtPrice: BigNumber;
 
+  @IsOptional()
+  @IsBoolean()
+  public isPrivate?: boolean = false;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  public whitelist?: string[] = [];
+
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
     fee: DexFeePercentageTypes,
-    initialSqrtPrice: BigNumber
+    initialSqrtPrice: BigNumber,
+    isPrivate?: boolean,
+    whitelist?: string[]
   ) {
     super();
     this.token0 = token0;
     this.token1 = token1;
     this.fee = fee;
     this.initialSqrtPrice = initialSqrtPrice;
+    this.isPrivate = isPrivate ?? false;
+    this.whitelist = whitelist ?? [];
   }
 }
 
@@ -1279,5 +1298,65 @@ export class SetGlobalLimitOrderConfigDto extends SubmitCallDTO {
     const data: ISetGlobalLimitOrderConfig = args as ISetGlobalLimitOrderConfig;
     this.limitOrderAdminWallets = data?.limitOrderAdminWallets;
     this.uniqueKey = data?.uniqueKey;
+  }
+}
+
+export class MakePoolPublicDto extends SubmitCallDTO {
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token0: TokenClassKey;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token1: TokenClassKey;
+
+  @EnumProperty(DexFeePercentageTypes)
+  public fee: DexFeePercentageTypes;
+
+  constructor(token0: TokenClassKey, token1: TokenClassKey, fee: DexFeePercentageTypes) {
+    super();
+    this.token0 = token0;
+    this.token1 = token1;
+    this.fee = fee;
+  }
+}
+
+export class ManageWhitelistDto extends SubmitCallDTO {
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token0: TokenClassKey;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token1: TokenClassKey;
+
+  @EnumProperty(DexFeePercentageTypes)
+  public fee: DexFeePercentageTypes;
+
+  @IsNotEmpty()
+  @IsString()
+  public targetUser: string;
+
+  @IsNotEmpty()
+  @StringEnumProperty(PoolWhitelistOperation)
+  public operation: PoolWhitelistOperation;
+
+  constructor(
+    token0: TokenClassKey,
+    token1: TokenClassKey,
+    fee: DexFeePercentageTypes,
+    targetUser: string,
+    operation: PoolWhitelistOperation
+  ) {
+    super();
+    this.token0 = token0;
+    this.token1 = token1;
+    this.fee = fee;
+    this.targetUser = targetUser;
+    this.operation = operation;
   }
 }

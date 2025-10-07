@@ -40,3 +40,6 @@ export * from "./dexUtils";
 export * from "./configurePoolDexFee";
 export * from "./batchSubmitAuthorizations";
 export * from "./swap.helper";
+export * from "./makePoolPublic";
+export * from "./manageWhitelist";
+export * from "./privatePoolUtils";

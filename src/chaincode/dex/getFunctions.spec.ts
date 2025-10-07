@@ -87,8 +87,7 @@ describe("createPool", () => {
     // Given
     const { ctx, contract } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
       .registeredUsers(users.testUser1)
-      .savedState(pool)
-      .savedRangeState([]);
+      .savedState(pool);
 
     const getPoolDto = new GetPoolDto(token0ClassKey, token1ClassKey, DexFeePercentageTypes.FEE_1_PERCENT);
 

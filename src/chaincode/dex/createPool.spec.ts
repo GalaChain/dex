@@ -55,8 +55,7 @@ describe("createPool", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     const dto = new CreatePoolDto(
       dexClassKey,
@@ -108,8 +107,7 @@ describe("createPool", () => {
 
     const { ctx, contract, getWrites } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
       .registeredUsers(users.testUser1)
-      .savedState(currencyClass, dexFeeConfig, dexClass)
-      .savedRangeState([]);
+      .savedState(currencyClass, dexFeeConfig, dexClass);
 
     const dto = new CreatePoolDto(
       currencyClassKey,
@@ -136,6 +134,7 @@ describe("createPool", () => {
       new BigNumber("1"),
       dexFeeConfig.protocolFee
     );
+    expectedPool.creator = users.testUser1.identityKey;
 
     const expectedResponse = new CreatePoolResDto(
       currencyClassKey,

@@ -1336,8 +1336,8 @@ export class ManageWhitelistDto extends SubmitCallDTO {
   public targetUser: string;
 
   @IsNotEmpty()
-  @IsBoolean()
-  public isAdd: boolean; // true to add, false to remove
+  @StringEnumProperty(PoolWhitelistOperation)
+  public operation?: PoolWhitelistOperation;
 
   constructor(
     token0: TokenClassKey,

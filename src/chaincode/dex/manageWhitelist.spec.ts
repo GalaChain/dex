@@ -198,7 +198,7 @@ describe("manageWhitelist", () => {
 
     await contract.CreatePool(ctx, createDto);
 
-    // Try to manage whitelist with non-whitelisted user
+    // Try to manage whitelist with non-creator user
     const manageDto = new ManageWhitelistDto(
       dexClassKey,
       currencyClassKey,
@@ -207,12 +207,12 @@ describe("manageWhitelist", () => {
       PoolWhitelistOperation.ADD
     );
     manageDto.uniqueKey = "test-manage-3";
-    manageDto.sign(users.testUser2.privateKey); // Non-whitelisted user
+    manageDto.sign(users.testUser2.privateKey); // Non-creator user
 
     // When & Then
     const response = await contract.ManageWhitelist(ctx, manageDto);
     expect(response).toEqual(
-      GalaChainResponse.Error("Only whitelisted users can modify the whitelist", 400, "VALIDATION_FAILED")
+      GalaChainResponse.Error("Only creator users can modify the whitelist", 400, "VALIDATION_FAILED")
     );
   });
 
@@ -323,7 +323,7 @@ describe("manageWhitelist", () => {
       PoolWhitelistOperation.REMOVE
     );
     manageDto.uniqueKey = "test-manage-5";
-    manageDto.sign(users.testUser2.privateKey); // Whitelisted user
+    manageDto.sign(users.testUser1.privateKey); // Whitelisted user
 
     // When & Then
     const response = await contract.ManageWhitelist(ctx, manageDto);

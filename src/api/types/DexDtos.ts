@@ -1150,15 +1150,15 @@ export class GetBitMapResDto {
 }
 
 export class GetPoolBalanceDeltaResDto extends ChainCallDTO {
-  @BigNumberIsPositive()
-  @BigNumberProperty()
-  amount0Delta: BigNumber;
+  @IsNotEmpty()
+  @IsString()
+  amount0Delta: string;
 
-  @BigNumberIsPositive()
-  @BigNumberProperty()
-  amount1Delta: BigNumber;
+  @IsNotEmpty()
+  @IsString()
+  amount1Delta: string;
 
-  constructor(amount0Delta: BigNumber, amount1Delta: BigNumber) {
+  constructor(amount0Delta: string, amount1Delta: string) {
     super();
     this.amount0Delta = amount0Delta;
     this.amount1Delta = amount1Delta;

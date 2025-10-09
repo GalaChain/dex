@@ -78,8 +78,8 @@ export async function getBalanceDelta(
   );
 
   return new GetPoolBalanceDeltaResDto(
-    totalOwed0.minus(poolToken0Balance.getQuantityTotal()),
-    totalOwed1.minus(poolToken1Balance.getQuantityTotal())
+    totalOwed0.minus(poolToken0Balance.getQuantityTotal()).toString(),
+    totalOwed1.minus(poolToken1Balance.getQuantityTotal()).toString()
   );
 }
 

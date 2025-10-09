@@ -12,76 +12,65 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {
-    GalaChainContext,
-    getObjectByKey,
-    getObjectsByPartialCompositeKey,
-  } from "@gala-chain/chaincode";
-  import BigNumber from "bignumber.js";
-  
-  import {
-    DexPositionData,
-    GetBitMapResDto,
-    GetPoolDto,
-    Pool,
-    flipTick,
-    sqrtPriceToTick
-  } from "../../api";
-  import { validateTokenOrder } from "./dexUtils";
-  
-  /**
-   * @dev The getBitMapChanges function retrieves the current bitmap and liquidity state
-   *      of a specified pool, based on its active positions and ticks.
-   * @param ctx GalaChainContext – The execution context providing access to the GalaChain environment.
-   * @param dto GetPoolDto – A data transfer object containing:
-   *        - token0, token1 – The two tokens that define the pool.
-   *        - fee – The fee tier of the pool.
-   * @returns GetBitMapResDto – An object containing the updated bitmap, expected liquidity,
-   *          and the current pool liquidity.
-   */
-  export async function getBitMapChanges(ctx: GalaChainContext, dto: GetPoolDto): Promise<GetBitMapResDto> {
-    const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
-  
-    const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
-    const pool = await getObjectByKey(ctx, Pool, key);
-  
-    return getPoolChanges(ctx, pool);
-  }
-  
-  async function getPoolChanges(ctx: GalaChainContext, pool: Pool): Promise<GetBitMapResDto> {
-    const positions = await getObjectsByPartialCompositeKey(
-      ctx,
-      DexPositionData.INDEX_KEY,
-      [pool.genPoolHash()],
-      DexPositionData
-    );
-  
-    const set = new Set<number>();
-    const bitMap: { [key: string]: any } = {}; // Create an empty bitmap
-    const tickSpacing = pool.tickSpacing;
-    const currentSqrtPrice = pool.sqrtPrice;
-    let expectedLiquidity = new BigNumber("0");
-    const currentTick = sqrtPriceToTick(currentSqrtPrice); // Calculate the current price tick the pool is at
-    for (const position of positions) {
-      const tickLower = position.tickLower;
-      const tickUpper = position.tickUpper;
-      const liquidity = position.liquidity;
-      // Track all the ticks that hold liquidity and are "flipped"
-      set.add(tickLower);
-      set.add(tickUpper);
-  
-      if (tickLower <= currentTick && tickUpper >= currentTick) {
-        // If position is in range of current price, calculate the amount of liquidity we currently have
-        const currentLiquidity = new BigNumber(liquidity);
-        expectedLiquidity = expectedLiquidity.plus(currentLiquidity);
-      }
+import { GalaChainContext, getObjectByKey, getObjectsByPartialCompositeKey } from "@gala-chain/chaincode";
+import BigNumber from "bignumber.js";
+
+import { DexPositionData, GetBitMapResDto, GetPoolDto, Pool, flipTick, sqrtPriceToTick } from "../../api";
+import { validateTokenOrder } from "./dexUtils";
+
+/**
+ * @dev The getBitMapChanges function retrieves the current bitmap and liquidity state
+ *      of a specified pool, based on its active positions and ticks.
+ * @param ctx GalaChainContext – The execution context providing access to the GalaChain environment.
+ * @param dto GetPoolDto – A data transfer object containing:
+ *        - token0, token1 – The two tokens that define the pool.
+ *        - fee – The fee tier of the pool.
+ * @returns GetBitMapResDto – An object containing the updated bitmap, expected liquidity,
+ *          and the current pool liquidity.
+ */
+export async function getBitMapChanges(ctx: GalaChainContext, dto: GetPoolDto): Promise<GetBitMapResDto> {
+  const [token0, token1] = validateTokenOrder(dto.token0, dto.token1);
+
+  const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
+  const pool = await getObjectByKey(ctx, Pool, key);
+
+  return getPoolChanges(ctx, pool);
+}
+
+async function getPoolChanges(ctx: GalaChainContext, pool: Pool): Promise<GetBitMapResDto> {
+  const positions = await getObjectsByPartialCompositeKey(
+    ctx,
+    DexPositionData.INDEX_KEY,
+    [pool.genPoolHash()],
+    DexPositionData
+  );
+
+  const set = new Set<number>();
+  const bitMap: { [key: string]: any } = {}; // Create an empty bitmap
+  const tickSpacing = pool.tickSpacing;
+  const currentSqrtPrice = pool.sqrtPrice;
+  let expectedLiquidity = new BigNumber("0");
+  const currentTick = sqrtPriceToTick(currentSqrtPrice); // Calculate the current price tick the pool is at
+  for (const position of positions) {
+    const tickLower = position.tickLower;
+    const tickUpper = position.tickUpper;
+    const liquidity = position.liquidity;
+    // Track all the ticks that hold liquidity and are "flipped"
+    set.add(tickLower);
+    set.add(tickUpper);
+
+    if (tickLower <= currentTick && tickUpper >= currentTick) {
+      // If position is in range of current price, calculate the amount of liquidity we currently have
+      const currentLiquidity = new BigNumber(liquidity);
+      expectedLiquidity = expectedLiquidity.plus(currentLiquidity);
     }
-  
-    const toInitalizeTicks = [...set]; //Convert set to array
-  
-    toInitalizeTicks.forEach((tick) => {
-      // Update the bitmap using the ticks that currently hold some liquidity
-      flipTick(bitMap, tick, tickSpacing);
-    });
-    return { bitMap, expectedLiquidity, liquidity: pool.liquidity };
   }
+
+  const toInitalizeTicks = [...set]; //Convert set to array
+
+  toInitalizeTicks.forEach((tick) => {
+    // Update the bitmap using the ticks that currently hold some liquidity
+    flipTick(bitMap, tick, tickSpacing);
+  });
+  return { bitMap, expectedLiquidity, liquidity: pool.liquidity };
+}

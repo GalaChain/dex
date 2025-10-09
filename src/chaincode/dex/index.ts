@@ -44,3 +44,4 @@ export * from "./makePoolPublic";
 export * from "./manageWhitelist";
 export * from "./privatePoolUtils";
 export * from "./updateBitmap";
+export * from "./transferUnclaimedFunds";

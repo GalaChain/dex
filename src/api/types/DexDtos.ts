@@ -1149,6 +1149,22 @@ export class GetBitMapResDto {
   liquidity: BigNumber;
 }
 
+export class GetPoolBalanceDeltaResDto extends ChainCallDTO {
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  amount0Delta: BigNumber;
+
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  amount1Delta: BigNumber;
+
+  constructor(amount0Delta: BigNumber, amount1Delta: BigNumber) {
+    super();
+    this.amount0Delta = amount0Delta;
+    this.amount1Delta = amount1Delta;
+  }
+}
+
 export interface IPlaceLimitOrderDto {
   hash: string;
   expires: number;

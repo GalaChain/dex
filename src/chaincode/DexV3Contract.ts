@@ -65,6 +65,7 @@ import {
   GetBitMapResDto,
   GetCompositePoolDto,
   GetLiquidityResDto,
+  GetPoolBalanceDeltaResDto,
   GetPoolDto,
   GetPositionByIdDto,
   GetPositionDto,
@@ -106,6 +107,7 @@ import {
   fetchSwapAllowances,
   fillLimitOrder,
   getAddLiquidityEstimation,
+  getBalanceDelta,
   getBatchSubmitAuthorities,
   getBitMapChanges,
   getCompositePool,
@@ -459,6 +461,15 @@ export class DexV3Contract extends GalaContract {
   })
   public async GetBitMapChanges(ctx: GalaChainContext, dto: GetPoolDto): Promise<GetBitMapResDto> {
     return getBitMapChanges(ctx, dto);
+  }
+
+  @GalaTransaction({
+    type: EVALUATE,
+    in: GetPoolDto,
+    out: GetPoolBalanceDeltaResDto
+  })
+  public async GetBalanceDelta(ctx: GalaChainContext, dto: GetPoolDto): Promise<GetPoolBalanceDeltaResDto> {
+    return await getBalanceDelta(ctx, dto);
   }
 
   @Submit({

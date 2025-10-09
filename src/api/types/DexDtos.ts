@@ -1143,6 +1143,12 @@ export class CreatePoolResDto extends ChainCallDTO {
   }
 }
 
+export class GetBitMapResDto {
+  bitMap: { [key: string]: any };
+  expectedLiquidity: BigNumber;
+  liquidity: BigNumber;
+}
+
 export interface IPlaceLimitOrderDto {
   hash: string;
   expires: number;

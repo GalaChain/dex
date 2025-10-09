@@ -62,6 +62,7 @@ import {
   FillLimitOrderDto,
   GetAddLiquidityEstimationDto,
   GetAddLiquidityEstimationResDto,
+  GetBitMapResDto,
   GetCompositePoolDto,
   GetLiquidityResDto,
   GetPoolDto,
@@ -93,6 +94,7 @@ import {
   addLiquidity,
   authorizeBatchSubmitter,
   burn,
+  getBitMapChanges,
   cancelLimitOrder,
   collect,
   collectProtocolFees,
@@ -448,6 +450,15 @@ export class DexV3Contract extends GalaContract {
     dto: ConfigureDexFeeAddressDto
   ): Promise<DexFeeConfig> {
     return configureDexFeeAddress(ctx, dto);
+  }
+
+  @GalaTransaction({
+    type: EVALUATE,
+    in: GetPoolDto,
+    out: GetBitMapResDto
+  })
+  public async GetBitMapChanges(ctx: GalaChainContext, dto: GetPoolDto): Promise<GetBitMapResDto> {
+    return getBitMapChanges(ctx, dto);
   }
 
   @Submit({

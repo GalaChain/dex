@@ -120,18 +120,18 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
     });
   }
 
-  await updateOrRemovePosition(ctx, pool, position, tokenDecimals[0], tokenDecimals[1]);
+  await updateOrRemovePosition(ctx, pool, position, tokenDecimals[0], tokenDecimals[1], recipient);
   await putChainObject(ctx, pool);
 
   // Return position holder's new token balances
   const liquidityProviderToken0Balance = await fetchOrCreateBalance(
     ctx,
-    ctx.callingUser,
+    recipient,
     tokenInstanceKeys[0]
   );
   const liquidityProviderToken1Balance = await fetchOrCreateBalance(
     ctx,
-    ctx.callingUser,
+    recipient,
     tokenInstanceKeys[1]
   );
   const userBalances = new UserBalanceResDto(liquidityProviderToken0Balance, liquidityProviderToken1Balance);
@@ -143,6 +143,6 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
     position.positionId,
     poolAlias,
     pool.fee,
-    ctx.callingUser
+    recipient
   );
 }

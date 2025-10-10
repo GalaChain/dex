@@ -12,13 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { asValidUserAlias, NotFoundError, TokenInstanceKey } from "@gala-chain/api";
+import { asValidUserAlias, NotFoundError, TokenInstanceKey, AllowanceType } from "@gala-chain/api";
 import {
   GalaChainContext,
   fetchOrCreateBalance,
   getObjectByKey,
   putChainObject,
-  transferToken
+  transferToken,
+  fetchAllowancesWithPagination
 } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
@@ -44,19 +45,59 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
 
   const poolHash = pool.genPoolHash();
   const poolAlias = pool.getPoolAlias();
+  // Determine the recipient - this may be different from the caller if collecting on behalf of another user
+  const recipient = dto.recipient && dto.recipient !== ctx.callingUser
+    ? asValidUserAlias(dto.recipient)
+    : ctx.callingUser;
+
+  // Security check: Validate that the recipient actually owns the position
+  // This prevents theft by ensuring only the position owner can receive the collected fees
   const position = await fetchUserPositionInTickRange(
     ctx,
     poolHash,
     dto.tickUpper,
     dto.tickLower,
-    dto.positionId
+    dto.positionId,
+    recipient // Pass recipient to check if they own the position
   );
-  if (!position) throw new NotFoundError(`User doesn't hold any positions with this tick range in this pool`);
+  if (!position) throw new NotFoundError(`Recipient does not own any positions with this tick range in this pool`);
 
-  // Determine the recipient - this may be different from the caller if collecting on behalf of another user
-  const recipient = dto.recipient && dto.recipient !== ctx.callingUser
-    ? asValidUserAlias(dto.recipient)
-    : ctx.callingUser;
+  // Additional security check: If collecting on behalf of another user, verify they have granted transfer allowances
+  if (recipient !== ctx.callingUser) {
+    // Check if the recipient has granted transfer allowances to the calling user for token0
+    const token0Allowances = await fetchAllowancesWithPagination(ctx, {
+      grantedTo: ctx.callingUser,
+      grantedBy: recipient,
+      collection: pool.token0ClassKey.collection,
+      category: pool.token0ClassKey.category,
+      type: pool.token0ClassKey.type,
+      additionalKey: pool.token0ClassKey.additionalKey,
+      instance: "0",
+      allowanceType: AllowanceType.Transfer,
+      limit: 1
+    });
+
+    if (!token0Allowances.results || token0Allowances.results.length === 0) {
+      throw new NotFoundError(`Recipient has not granted transfer allowances to the calling user for token0`);
+    }
+
+    // Check if the recipient has granted transfer allowances to the calling user for token1
+    const token1Allowances = await fetchAllowancesWithPagination(ctx, {
+      grantedTo: ctx.callingUser,
+      grantedBy: recipient,
+      collection: pool.token1ClassKey.collection,
+      category: pool.token1ClassKey.category,
+      type: pool.token1ClassKey.type,
+      additionalKey: pool.token1ClassKey.additionalKey,
+      instance: "0",
+      allowanceType: AllowanceType.Transfer,
+      limit: 1
+    });
+
+    if (!token1Allowances.results || token1Allowances.results.length === 0) {
+      throw new NotFoundError(`Recipient has not granted transfer allowances to the calling user for token1`);
+    }
+  }
 
   // Create token instance keys and fetch token decimals
   const tokenInstanceKeys = [pool.token0ClassKey, pool.token1ClassKey].map(TokenInstanceKey.fungibleKey);

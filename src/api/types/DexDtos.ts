@@ -305,6 +305,10 @@ export class BurnDto extends SubmitCallDTO {
   @IsString()
   public positionId?: string;
 
+  @IsOptional()
+  @IsUserAlias()
+  public recipient?: UserAlias;
+
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
@@ -314,7 +318,8 @@ export class BurnDto extends SubmitCallDTO {
     tickUpper: number,
     amount0Min: BigNumber,
     amount1Min: BigNumber,
-    positionId: string | undefined
+    positionId: string | undefined,
+    recipient?: UserAlias
   ) {
     super();
     this.tickLower = tickLower;
@@ -326,6 +331,7 @@ export class BurnDto extends SubmitCallDTO {
     this.amount0Min = amount0Min;
     this.amount1Min = amount1Min;
     this.positionId = positionId;
+    this.recipient = recipient;
   }
 }
 
@@ -570,6 +576,10 @@ export class CollectDto extends SubmitCallDTO {
   @IsString()
   public positionId?: string;
 
+  @IsOptional()
+  @IsUserAlias()
+  public recipient?: UserAlias;
+
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
@@ -578,7 +588,8 @@ export class CollectDto extends SubmitCallDTO {
     amount1Requested: BigNumber,
     tickLower: number,
     tickUpper: number,
-    positionId: string | undefined
+    positionId: string | undefined,
+    recipient?: UserAlias
   ) {
     super();
     this.token0 = token0;
@@ -589,6 +600,7 @@ export class CollectDto extends SubmitCallDTO {
     this.tickLower = tickLower;
     this.tickUpper = tickUpper;
     this.positionId = positionId;
+    this.recipient = recipient;
   }
 }
 
@@ -637,6 +649,10 @@ export class AddLiquidityDTO extends SubmitCallDTO {
   @IsString()
   public positionId?: string;
 
+  @IsOptional()
+  @IsUserAlias()
+  public liquidityProvider?: UserAlias;
+
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
@@ -647,7 +663,8 @@ export class AddLiquidityDTO extends SubmitCallDTO {
     amount1Desired: BigNumber,
     amount0Min: BigNumber,
     amount1Min: BigNumber,
-    positionId: string | undefined
+    positionId: string | undefined,
+    liquidityProvider?: UserAlias
   ) {
     super();
     this.token0 = token0;
@@ -660,6 +677,7 @@ export class AddLiquidityDTO extends SubmitCallDTO {
     this.amount0Min = amount0Min;
     this.amount1Min = amount1Min;
     this.positionId = positionId;
+    this.liquidityProvider = liquidityProvider;
   }
 }
 

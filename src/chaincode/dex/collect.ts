@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NotFoundError, TokenInstanceKey } from "@gala-chain/api";
+import { asValidUserAlias, NotFoundError, TokenInstanceKey } from "@gala-chain/api";
 import {
   GalaChainContext,
   fetchOrCreateBalance,
@@ -52,6 +52,11 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
     dto.positionId
   );
   if (!position) throw new NotFoundError(`User doesn't hold any positions with this tick range in this pool`);
+
+  // Determine the recipient - this may be different from the caller if collecting on behalf of another user
+  const recipient = dto.recipient && dto.recipient !== ctx.callingUser
+    ? asValidUserAlias(dto.recipient)
+    : ctx.callingUser;
 
   // Create token instance keys and fetch token decimals
   const tokenInstanceKeys = [pool.token0ClassKey, pool.token1ClassKey].map(TokenInstanceKey.fungibleKey);
@@ -104,7 +109,7 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
 
     await transferToken(ctx, {
       from: poolAlias,
-      to: ctx.callingUser,
+      to: recipient,
       tokenInstanceKey: tokenInstanceKeys[index],
       quantity: index === 0 ? roundedToken0Amount : roundedToken1Amount,
       allowancesToUse: [],

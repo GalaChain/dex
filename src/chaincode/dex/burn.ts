@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NotFoundError, TokenInstanceKey } from "@gala-chain/api";
+import { asValidUserAlias, NotFoundError, TokenInstanceKey } from "@gala-chain/api";
 import {
   GalaChainContext,
   fetchOrCreateBalance,
@@ -62,6 +62,11 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
 
   if (!position)
     throw new NotFoundError(`User doesn't hold any positions with this tick rangeData in thisData pool`);
+
+  // Determine the recipient - this may be different from the caller if burning on behalf of another user
+  const recipient = dto.recipient && dto.recipient !== ctx.callingUser
+    ? asValidUserAlias(dto.recipient)
+    : ctx.callingUser;
 
   const tickLower = parseInt(dto.tickLower.toString()),
     tickUpper = parseInt(dto.tickUpper.toString());
@@ -113,10 +118,10 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
     );
   }
 
-  // Transfer tokens to positon holder
+  // Transfer tokens to recipient
   await transferToken(ctx, {
     from: poolAlias,
-    to: ctx.callingUser,
+    to: recipient,
     tokenInstanceKey: token0InstanceKey,
     quantity: roundedToken0Amount,
     allowancesToUse: [],
@@ -128,7 +133,7 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
 
   await transferToken(ctx, {
     from: poolAlias,
-    to: ctx.callingUser,
+    to: recipient,
     tokenInstanceKey: token1InstanceKey,
     quantity: roundedToken1Amount,
     allowancesToUse: [],

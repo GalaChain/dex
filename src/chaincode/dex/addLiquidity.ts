@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TokenInstanceKey, UserAlias } from "@gala-chain/api";
+import { asValidUserAlias, TokenInstanceKey, UserAlias } from "@gala-chain/api";
 import {
   GalaChainContext,
   fetchOrCreateBalance,
@@ -63,7 +63,10 @@ export async function addLiquidity(
   const token0InstanceKey = TokenInstanceKey.fungibleKey(pool.token0ClassKey);
   const token1InstanceKey = TokenInstanceKey.fungibleKey(pool.token1ClassKey);
 
-  const liquidityProvider = launchpadAddress ?? ctx.callingUser;
+  // Determine the actual liquidity provider - this may be different from the caller if adding liquidity on behalf of another user
+  const liquidityProvider = dto.liquidityProvider && dto.liquidityProvider !== ctx.callingUser
+    ? asValidUserAlias(dto.liquidityProvider)
+    : (launchpadAddress ?? ctx.callingUser);
   const tickLower = parseInt(dto.tickLower.toString()),
     tickUpper = parseInt(dto.tickUpper.toString());
 
@@ -131,10 +134,7 @@ export async function addLiquidity(
     tokenInstanceKey: token0InstanceKey,
     quantity: roundedToken0Amount,
     allowancesToUse: [],
-    authorizedOnBehalf: {
-      callingOnBehalf: liquidityProvider,
-      callingUser: liquidityProvider
-    }
+    authorizedOnBehalf: undefined
   });
 
   // transfer token1
@@ -144,10 +144,7 @@ export async function addLiquidity(
     tokenInstanceKey: token1InstanceKey,
     quantity: roundedToken1Amount,
     allowancesToUse: [],
-    authorizedOnBehalf: {
-      callingOnBehalf: liquidityProvider,
-      callingUser: liquidityProvider
-    }
+    authorizedOnBehalf: undefined
   });
 
   await putChainObject(ctx, pool);

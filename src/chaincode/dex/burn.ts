@@ -12,14 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { asValidUserAlias, NotFoundError, TokenInstanceKey, AllowanceType } from "@gala-chain/api";
+import { AllowanceType, NotFoundError, TokenInstanceKey, asValidUserAlias } from "@gala-chain/api";
 import {
   GalaChainContext,
+  fetchAllowancesWithPagination,
   fetchOrCreateBalance,
   getObjectByKey,
   putChainObject,
-  transferToken,
-  fetchAllowancesWithPagination
+  transferToken
 } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
@@ -53,11 +53,10 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
 
   const poolAlias = pool.getPoolAlias();
   const poolHash = pool.genPoolHash();
-  
+
   // Determine the recipient - this may be different from the caller if burning on behalf of another user
-  const recipient = dto.recipient && dto.recipient !== ctx.callingUser
-    ? asValidUserAlias(dto.recipient)
-    : ctx.callingUser;
+  const recipient =
+    dto.recipient && dto.recipient !== ctx.callingUser ? asValidUserAlias(dto.recipient) : ctx.callingUser;
 
   // Security check: Validate that the recipient actually owns the position
   // This prevents theft by ensuring only the position owner can receive the burned tokens
@@ -102,11 +101,15 @@ export async function burn(ctx: GalaChainContext, dto: BurnDto): Promise<DexOper
     });
 
     if (!token0Allowances.results || token0Allowances.results.length === 0) {
-      throw new NotFoundError(`Recipient has not granted transfer allowances to the calling user for token0 in this operation`);
+      throw new NotFoundError(
+        `Recipient has not granted transfer allowances to the calling user for token0 in this operation`
+      );
     }
 
     if (!token1Allowances.results || token1Allowances.results.length === 0) {
-      throw new NotFoundError(`Recipient has not granted transfer allowances to the calling user for token1 in this operation`);
+      throw new NotFoundError(
+        `Recipient has not granted transfer allowances to the calling user for token1 in this operation`
+      );
     }
   }
 

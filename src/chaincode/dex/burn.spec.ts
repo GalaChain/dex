@@ -789,7 +789,9 @@ describe("Remove Liquidity Test", () => {
       tokenInstanceQueryKey0.additionalKey = dexClassKey.additionalKey;
       tokenInstanceQueryKey0.instance = new BigNumber("0");
       grantAllowanceDto0.tokenInstance = tokenInstanceQueryKey0;
-      grantAllowanceDto0.quantities = [{ user: users.testUser2.identityKey, quantity: new BigNumber("1000") }];
+      grantAllowanceDto0.quantities = [
+        { user: users.testUser2.identityKey, quantity: new BigNumber("1000") }
+      ];
       grantAllowanceDto0.uses = new BigNumber(5);
       grantAllowanceDto0.expires = 0;
       grantAllowanceDto0.uniqueKey = randomUUID();
@@ -803,7 +805,9 @@ describe("Remove Liquidity Test", () => {
       tokenInstanceQueryKey1.additionalKey = currencyClassKey.additionalKey;
       tokenInstanceQueryKey1.instance = new BigNumber("0");
       grantAllowanceDto1.tokenInstance = tokenInstanceQueryKey1;
-      grantAllowanceDto1.quantities = [{ user: users.testUser2.identityKey, quantity: new BigNumber("1000") }];
+      grantAllowanceDto1.quantities = [
+        { user: users.testUser2.identityKey, quantity: new BigNumber("1000") }
+      ];
       grantAllowanceDto1.uses = new BigNumber(5);
       grantAllowanceDto1.expires = 0;
       grantAllowanceDto1.uniqueKey = randomUUID();
@@ -916,7 +920,9 @@ describe("Remove Liquidity Test", () => {
 
       //Then
       expect(burnRes.Status).toBe(0);
-      expect(burnRes.Message).toContain("Recipient has not granted transfer allowances to the calling user for token0");
+      expect(burnRes.Message).toContain(
+        "Recipient has not granted transfer allowances to the calling user for token0"
+      );
     });
 
     it("Should throw error when trying to burn on behalf of a user who doesn't own the position", async () => {

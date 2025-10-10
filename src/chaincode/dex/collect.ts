@@ -12,14 +12,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { asValidUserAlias, NotFoundError, TokenInstanceKey, AllowanceType } from "@gala-chain/api";
+import { AllowanceType, NotFoundError, TokenInstanceKey, asValidUserAlias } from "@gala-chain/api";
 import {
   GalaChainContext,
+  fetchAllowancesWithPagination,
   fetchOrCreateBalance,
   getObjectByKey,
   putChainObject,
-  transferToken,
-  fetchAllowancesWithPagination
+  transferToken
 } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
@@ -46,9 +46,8 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
   const poolHash = pool.genPoolHash();
   const poolAlias = pool.getPoolAlias();
   // Determine the recipient - this may be different from the caller if collecting on behalf of another user
-  const recipient = dto.recipient && dto.recipient !== ctx.callingUser
-    ? asValidUserAlias(dto.recipient)
-    : ctx.callingUser;
+  const recipient =
+    dto.recipient && dto.recipient !== ctx.callingUser ? asValidUserAlias(dto.recipient) : ctx.callingUser;
 
   // Security check: Validate that the recipient actually owns the position
   // This prevents theft by ensuring only the position owner can receive the collected fees
@@ -60,7 +59,8 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
     dto.positionId,
     recipient // Pass recipient to check if they own the position
   );
-  if (!position) throw new NotFoundError(`Recipient does not own any positions with this tick range in this pool`);
+  if (!position)
+    throw new NotFoundError(`Recipient does not own any positions with this tick range in this pool`);
 
   // Additional security check: If collecting on behalf of another user, verify they have granted transfer allowances
   if (recipient !== ctx.callingUser) {
@@ -165,16 +165,8 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
   await putChainObject(ctx, pool);
 
   // Return position holder's new token balances
-  const liquidityProviderToken0Balance = await fetchOrCreateBalance(
-    ctx,
-    recipient,
-    tokenInstanceKeys[0]
-  );
-  const liquidityProviderToken1Balance = await fetchOrCreateBalance(
-    ctx,
-    recipient,
-    tokenInstanceKeys[1]
-  );
+  const liquidityProviderToken0Balance = await fetchOrCreateBalance(ctx, recipient, tokenInstanceKeys[0]);
+  const liquidityProviderToken1Balance = await fetchOrCreateBalance(ctx, recipient, tokenInstanceKeys[1]);
   const userBalances = new UserBalanceResDto(liquidityProviderToken0Balance, liquidityProviderToken1Balance);
 
   return new DexOperationResDto(

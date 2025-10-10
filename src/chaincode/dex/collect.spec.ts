@@ -14,6 +14,7 @@
  */
 import { GalaChainResponse, NotFoundError, asValidUserAlias } from "@gala-chain/api";
 import { TokenBalance, TokenClass, TokenClassKey, TokenInstance } from "@gala-chain/api";
+import { TokenInstanceQueryKey } from "@gala-chain/api";
 import { currency, transactionSuccess } from "@gala-chain/test";
 import { fixture, users } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
@@ -31,10 +32,9 @@ import {
   TickData,
   UserBalanceResDto
 } from "../../api";
-import { TokenInstanceQueryKey } from "@gala-chain/api";
 import { DexV3Contract } from "../DexV3Contract";
-import { NegativeAmountError } from "./dexError";
 import dex from "../test/dex";
+import { NegativeAmountError } from "./dexError";
 
 describe("Collect Position Fees Test", () => {
   const fee = DexFeePercentageTypes.FEE_0_05_PERCENT;
@@ -189,14 +189,14 @@ describe("Collect Position Fees Test", () => {
     //When
     const res = await contract.CollectPositionFees(ctx, dto);
 
-      //Then
-      expect(res).toEqual(
-        GalaChainResponse.Error(
-          new NotFoundError(
-            "Cannot find any position with the id NON-EXISTENT in the tick range 75920:76110 that belongs to client|testUser1 in this pool."
-          )
+    //Then
+    expect(res).toEqual(
+      GalaChainResponse.Error(
+        new NotFoundError(
+          "Cannot find any position with the id NON-EXISTENT in the tick range 75920:76110 that belongs to client|testUser1 in this pool."
         )
-      );
+      )
+    );
   });
 
   it("Should throw error for negative amounts", async () => {
@@ -252,9 +252,9 @@ describe("Collect Position Fees Test", () => {
     //When
     const res = await contract.CollectPositionFees(ctx, dto);
 
-      //Then
-      expect(res.Status).toBe(0);
-      expect(res.Message).toContain("BigNumberIsPositive: amount0Requested must be positive but is -100");
+    //Then
+    expect(res.Status).toBe(0);
+    expect(res.Message).toContain("BigNumberIsPositive: amount0Requested must be positive but is -100");
   });
 
   describe("Collect with Transfer Allowances", () => {
@@ -287,7 +287,9 @@ describe("Collect Position Fees Test", () => {
       tokenInstanceQueryKey0.additionalKey = dexClassKey.additionalKey;
       tokenInstanceQueryKey0.instance = new BigNumber("0");
       grantAllowanceDto0.tokenInstance = tokenInstanceQueryKey0;
-      grantAllowanceDto0.quantities = [{ user: users.testUser2.identityKey, quantity: new BigNumber("1000") }];
+      grantAllowanceDto0.quantities = [
+        { user: users.testUser2.identityKey, quantity: new BigNumber("1000") }
+      ];
       grantAllowanceDto0.uses = new BigNumber(5);
       grantAllowanceDto0.expires = 0;
       grantAllowanceDto0.uniqueKey = randomUUID();
@@ -301,7 +303,9 @@ describe("Collect Position Fees Test", () => {
       tokenInstanceQueryKey1.additionalKey = currencyClassKey.additionalKey;
       tokenInstanceQueryKey1.instance = new BigNumber("0");
       grantAllowanceDto1.tokenInstance = tokenInstanceQueryKey1;
-      grantAllowanceDto1.quantities = [{ user: users.testUser2.identityKey, quantity: new BigNumber("1000") }];
+      grantAllowanceDto1.quantities = [
+        { user: users.testUser2.identityKey, quantity: new BigNumber("1000") }
+      ];
       grantAllowanceDto1.uses = new BigNumber(5);
       grantAllowanceDto1.expires = 0;
       grantAllowanceDto1.uniqueKey = randomUUID();
@@ -413,7 +417,9 @@ describe("Collect Position Fees Test", () => {
 
       //Then
       expect(collectRes.Status).toBe(0);
-      expect(collectRes.Message).toContain("Recipient has not granted transfer allowances to the calling user for token0");
+      expect(collectRes.Message).toContain(
+        "Recipient has not granted transfer allowances to the calling user for token0"
+      );
     });
 
     it("Should throw error when trying to collect on behalf of another user with only token0 allowance (missing token1)", async () => {
@@ -445,7 +451,9 @@ describe("Collect Position Fees Test", () => {
       tokenInstanceQueryKey0.additionalKey = dexClassKey.additionalKey;
       tokenInstanceQueryKey0.instance = new BigNumber("0");
       grantAllowanceDto0.tokenInstance = tokenInstanceQueryKey0;
-      grantAllowanceDto0.quantities = [{ user: users.testUser2.identityKey, quantity: new BigNumber("1000") }];
+      grantAllowanceDto0.quantities = [
+        { user: users.testUser2.identityKey, quantity: new BigNumber("1000") }
+      ];
       grantAllowanceDto0.uses = new BigNumber(5);
       grantAllowanceDto0.expires = 0;
       grantAllowanceDto0.uniqueKey = randomUUID();
@@ -490,7 +498,9 @@ describe("Collect Position Fees Test", () => {
 
       //Then
       expect(collectRes.Status).toBe(0);
-      expect(collectRes.Message).toContain("Recipient has not granted transfer allowances to the calling user for token1");
+      expect(collectRes.Message).toContain(
+        "Recipient has not granted transfer allowances to the calling user for token1"
+      );
     });
 
     it("Should throw error when trying to collect on behalf of a user who doesn't own the position", async () => {

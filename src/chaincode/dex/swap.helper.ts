@@ -79,8 +79,7 @@ export async function processSwapSteps(
       pool.bitmap,
       state.tick,
       pool.tickSpacing,
-      zeroForOne,
-      state.sqrtPrice
+      zeroForOne
     );
 
     // Reject if next tick is out of bounds

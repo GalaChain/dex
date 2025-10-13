@@ -373,7 +373,7 @@ describe("swap", () => {
     });
   });
 
-  it.only("should not skip ticks when exiting active tick liquidity range", async () => {
+  it("should not skip ticks when exiting active tick liquidity range", async () => {
     // When
     const currencyInstance: TokenInstance = currency.tokenInstance();
     const currencyClassKey: TokenClassKey = currency.tokenClassKey();

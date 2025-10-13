@@ -108,6 +108,7 @@ export function nextInitialisedTickWithInSameWord(
   lte: boolean
 ): [number, boolean] {
   let compressed = Math.trunc(tick / tickSpacing);
+  if (tick < 0 && tick % tickSpacing != 0) compressed--;
 
   if (lte) {
     const [word, pos] = position(compressed);

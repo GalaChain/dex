@@ -91,19 +91,6 @@ export function flipTick(bitmap: Record<string, string>, tick: number, tickSpaci
   bitmap[word] = newMask.toString();
 }
 
-function isTickInitialized(tick: number, tickSpacing: number, bitmap: Record<string, string>): boolean {
-  tick /= tickSpacing;
-  const [word, pos] = position(tick);
-  const mask = BigInt(1) << BigInt(pos);
-
-  if (bitmap[word] === undefined) return false;
-
-  const currentMask = BigInt(bitmap[word]);
-  const newMask = currentMask ^ mask;
-
-  return newMask == BigInt(0);
-}
-
 /**
  *
  *  @notice Returns the next initialized tick contained in the same word (or adjacent word) as the tick that is either
@@ -118,19 +105,10 @@ export function nextInitialisedTickWithInSameWord(
   bitmap: Record<string, string>,
   tick: number,
   tickSpacing: number,
-  lte: boolean,
-  sqrtPrice: BigNumber
+  lte: boolean
 ): [number, boolean] {
   let compressed = Math.trunc(tick / tickSpacing);
   if (tick < 0 && tick % tickSpacing != 0) compressed--;
-  if (tick == sqrtPriceToTick(sqrtPrice)) {
-    const tickPrice = tickToSqrtPrice(tick);
-    if (lte && tickPrice.lt(sqrtPrice)) {
-      return [tick, isTickInitialized(tick, tickSpacing, bitmap)];
-    } else if (!lte && tickPrice.gt(sqrtPrice)) {
-      return [tick, isTickInitialized(tick, tickSpacing, bitmap)];
-    }
-  }
 
   if (lte) {
     const [word, pos] = position(compressed);

@@ -87,13 +87,7 @@ describe("tick.helper", () => {
       flipTick(bitmap, tick, tickSpacing);
 
       // When
-      const [nextTick, initialized] = nextInitialisedTickWithInSameWord(
-        bitmap,
-        tick,
-        tickSpacing,
-        true,
-        sqrtPrice
-      );
+      const [nextTick, initialized] = nextInitialisedTickWithInSameWord(bitmap, tick, tickSpacing, true);
 
       // Then
       expect(nextTick).toBe(tick);
@@ -109,13 +103,7 @@ describe("tick.helper", () => {
       flipTick(bitmap, tick, tickSpacing);
 
       // When
-      const [nextTick, initialized] = nextInitialisedTickWithInSameWord(
-        bitmap,
-        tick - 1,
-        tickSpacing,
-        false,
-        sqrtPrice
-      );
+      const [nextTick, initialized] = nextInitialisedTickWithInSameWord(bitmap, tick - 1, tickSpacing, false);
 
       // Then
       expect(nextTick).toBe(tick);

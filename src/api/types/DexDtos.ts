@@ -329,6 +329,61 @@ export class BurnDto extends SubmitCallDTO {
   }
 }
 
+export class UpdateTickFeeGrowthDto extends SubmitCallDTO {
+  @IsNotEmpty()
+  @IsString()
+  poolHash: string;
+
+  @IsNotEmpty()
+  @IsString()
+  tickNumber: string;
+
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  newFeeGrowthOutside0: BigNumber;
+
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  newFeeGrowthOutside1: BigNumber;
+}
+
+export class UpdatePositionFeeGrowthDto extends SubmitCallDTO {
+  @IsNotEmpty()
+  @IsString()
+  poolHash: string;
+
+  @IsNotEmpty()
+  @IsInt()
+  @Max(TickData.MAX_TICK)
+  public tickUpper: number;
+
+  @IsNotEmpty()
+  @IsInt()
+  @Min(TickData.MIN_TICK)
+  @IsLessThan("tickUpper")
+  public tickLower: number;
+
+  @IsNotEmpty()
+  @IsString()
+  public positionId: string;
+
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  newFeeGrowthInside0Last: BigNumber;
+
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  newFeeGrowthInside1Last: BigNumber;
+
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  newTokenOwed0: BigNumber;
+
+  @BigNumberIsPositive()
+  @BigNumberProperty()
+  newTokenOwed1: BigNumber;
+}
+
 export class GetPoolDto extends ChainCallDTO {
   @IsNotEmpty()
   @ValidateNested()

@@ -45,3 +45,5 @@ export * from "./manageWhitelist";
 export * from "./privatePoolUtils";
 export * from "./updateBitmap";
 export * from "./transferUnclaimedFunds";
+export * from "./updatePositionFeeGrowth";
+export * from "./updateTicksFeeGrowth";

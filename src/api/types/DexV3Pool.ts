@@ -85,6 +85,9 @@ export class Pool extends ChainObject {
   @BigNumberProperty()
   public sqrtPrice: BigNumber;
 
+  @IsNumber()
+  public tick: number;
+
   @BigNumberProperty()
   public liquidity: BigNumber;
 
@@ -148,6 +151,7 @@ export class Pool extends ChainObject {
     whitelist: string[] = [],
     creator = ""
   ) {
+    console.log(token0, token1, fee, initialSqrtPrice?.toString());
     super();
     this.token0 = token0;
     this.token1 = token1;
@@ -157,6 +161,7 @@ export class Pool extends ChainObject {
     this.bitmap = {};
 
     this.sqrtPrice = initialSqrtPrice;
+    this.tick = sqrtPriceToTick(initialSqrtPrice);
     this.liquidity = new BigNumber(0);
     this.grossPoolLiquidity = new BigNumber(0);
     this.feeGrowthGlobal0 = new BigNumber(0);
@@ -568,6 +573,7 @@ export class Pool extends ChainObject {
 
     // update to new price
     this.sqrtPrice = state.sqrtPrice;
+    this.tick = state.tick;
 
     // Updating global liquidity
     if (this.liquidity != state.liquidity) this.liquidity = state.liquidity;

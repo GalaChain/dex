@@ -40,7 +40,6 @@ import dex from "../test/dex";
 import { generateKeyFromClassKey } from "./dexUtils";
 
 describe("swap", () => {
-  return
   it("should execute a successful token swap in the happy path", async () => {
     // Given
     const currencyClass: TokenClass = currency.tokenClass();
@@ -487,5 +486,144 @@ describe("swap", () => {
         ]
       ).liquidity.toString()
     ).toBe("23878265.392413653072044669"); // Liquidity updated from 40348205.111202970299780229 to 23878265.392413653072044669 after crossing tick
+  });
+
+  it("should update liquidity just once after crossing active tick range", async () => {
+    // Given
+    const currencyClass: TokenClass = currency.tokenClass();
+    const currencyInstance: TokenInstance = currency.tokenInstance();
+    const currencyClassKey: TokenClassKey = currency.tokenClassKey();
+    const dexClass: TokenClass = dex.tokenClass();
+    const dexInstance: TokenInstance = dex.tokenInstance();
+    const dexClassKey: TokenClassKey = dex.tokenClassKey();
+
+    // Create normalized token keys for pool
+    const token0Key = generateKeyFromClassKey(dexClassKey);
+    const token1Key = generateKeyFromClassKey(currencyClassKey);
+    const fee = DexFeePercentageTypes.FEE_1_PERCENT;
+
+    // Initialize pool with manual values
+    const pool = new Pool(
+      token0Key,
+      token1Key,
+      dexClassKey,
+      currencyClassKey,
+      fee,
+      new BigNumber("0.01664222241481084743"),
+      0.1
+    );
+
+    const bitmap: Record<string, string> = {
+      "-1": "0",
+      "-18": "23945242826029513411849172299223580994042798784118784",
+      "-2": "0",
+      "-3": "49953716203675230926547966876428155357409312768",
+      "-4": "0",
+      "-5": "0",
+      "-6": "0",
+      "0": "0",
+      "17": "4835703278458516698824704"
+    };
+
+    // Add initial liquidity to the pool
+    pool.liquidity = new BigNumber("51894.052960771992826126");
+    pool.grossPoolLiquidity = new BigNumber("140626027.1242109361992286");
+    pool.sqrtPrice = new BigNumber("0.00171275284101657628");
+    // pool.tick = sqrtPriceToTick(pool.sqrtPrice) - 1;
+    pool.feeGrowthGlobal0 = new BigNumber("13169.45941045617373241884");
+    pool.feeGrowthGlobal1 = new BigNumber("0.10035999774600691582");
+    pool.bitmap = bitmap;
+    // Create pool balances - pool needs tokens to pay out
+    const poolAlias = pool.getPoolAlias();
+    const poolDexBalance = plainToInstance(TokenBalance, {
+      ...dex.tokenBalance(),
+      owner: poolAlias,
+      quantity: new BigNumber("999999999999999999999.238975330345368866")
+    });
+    const poolCurrencyBalance = plainToInstance(TokenBalance, {
+      ...currency.tokenBalance(),
+      owner: poolAlias,
+      quantity: new BigNumber("188000000000000000000809.790718")
+    });
+
+    // Create user balances - user needs tokens to swap
+    const userDexBalance = plainToInstance(TokenBalance, {
+      ...dex.tokenBalance(),
+      owner: users.testUser1.identityKey,
+      quantity: new BigNumber("1000000000") // User has 10k DEX tokens
+    });
+    const userCurrencyBalance = plainToInstance(TokenBalance, {
+      ...currency.tokenBalance(),
+      owner: users.testUser1.identityKey,
+      quantity: new BigNumber("10000000") // User has 10k CURRENCY tokens
+    });
+
+    const tick = new TickData(pool.genPoolHash(), -127400);
+    tick.feeGrowthOutside0 = new BigNumber("13168.50053798325261353893");
+    tick.feeGrowthOutside1 = new BigNumber("0.10035870645928495739");
+    tick.initialised = true;
+    tick.liquidityNet = new BigNumber("5758.917555145966312845");
+    tick.liquidityGross = new BigNumber("5758.917555145966312845");
+
+    // Setup the fixture
+    const { ctx, contract, getWrites } = fixture(DexV3Contract)
+      .registeredUsers(users.testUser1)
+      .savedState(
+        currencyClass,
+        currencyInstance,
+        dexClass,
+        dexInstance,
+        pool,
+        poolDexBalance,
+        poolCurrencyBalance,
+        userDexBalance,
+        userCurrencyBalance,
+        tick
+      );
+
+    const swapDto = new SwapDto(
+      dexClassKey,
+      currencyClassKey,
+      fee,
+      new BigNumber("10035.358114233908"),
+      true, // zeroForOne - swapping token0 (DEX) for token1 (CURRENCY)
+      new BigNumber("0.0017127045987670274462"),
+      new BigNumber("10035.358114233908"),
+      new BigNumber("-0.000001")
+    );
+
+    swapDto.uniqueKey = randomUniqueKey();
+
+    const signedDto = swapDto.signed(users.testUser1.privateKey);
+
+    // When
+    const response = await contract.Swap(ctx, signedDto);
+
+    {
+      const swapDto = new SwapDto(
+        dexClassKey,
+        currencyClassKey,
+        fee,
+        new BigNumber("10035.358114233908"),
+        true, // zeroForOne - swapping token0 (DEX) for token1 (CURRENCY)
+        new BigNumber("0.0017126049987670274462"),
+        new BigNumber("10035.358114233908"),
+        new BigNumber("-0.000000")
+      );
+
+      swapDto.uniqueKey = randomUniqueKey();
+
+      const signedDto = swapDto.signed(users.testUser1.privateKey);
+      const response = await contract.Swap(ctx, signedDto);
+    }
+
+    // Then
+    expect(
+      JSON.parse(
+        getWrites()[
+          "\x00GCDXCHLPL\x00TEST$Currency$DEX$client:6337024724eec8c292f0118d\x00TEST$Currency$TEST$none\x0010000\x00"
+        ]
+      ).liquidity
+    ).toBe("46135.135405625026513281"); // Liquidity updated from 51894.052960771992826126 to 46135.135405625026513281 just once after crossing tick
   });
 });

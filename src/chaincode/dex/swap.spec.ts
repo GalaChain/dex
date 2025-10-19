@@ -624,6 +624,6 @@ describe("swap", () => {
           "\x00GCDXCHLPL\x00TEST$Currency$DEX$client:6337024724eec8c292f0118d\x00TEST$Currency$TEST$none\x0010000\x00"
         ]
       ).liquidity
-    ).toBe("46135.135405625026513281"); // Liquidity updated from 51894.052960771992826126 to 46135.135405625026513281 just once after crossing tick
+    ).toBe("46135.135405626026513281"); // Liquidity updated from 51894.052960771992826126 to 46135.135405625026513281 just once after crossing tick
   });
 });

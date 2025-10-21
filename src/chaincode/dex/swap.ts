@@ -84,7 +84,7 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
 
   const slot0 = {
     sqrtPrice: new BigNumber(pool.sqrtPrice),
-    tick: sqrtPriceToTick(pool.sqrtPrice),
+    tick: pool.tick ?? sqrtPriceToTick(pool.sqrtPrice),
     liquidity: new BigNumber(pool.liquidity)
   };
 

@@ -24,7 +24,7 @@ import {
 } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { Exclude, Type } from "class-transformer";
-import { IsArray, IsBoolean, IsNumber, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
 import { JSONSchema } from "class-validator-jsonschema";
 import { keccak256 } from "js-sha3";
 
@@ -84,6 +84,10 @@ export class Pool extends ChainObject {
 
   @BigNumberProperty()
   public sqrtPrice: BigNumber;
+
+  @IsOptional()
+  @IsNumber()
+  public tick?: number;
 
   @BigNumberProperty()
   public liquidity: BigNumber;
@@ -568,6 +572,7 @@ export class Pool extends ChainObject {
 
     // update to new price
     this.sqrtPrice = state.sqrtPrice;
+    this.tick = state.tick;
 
     // Updating global liquidity
     if (this.liquidity != state.liquidity) this.liquidity = state.liquidity;

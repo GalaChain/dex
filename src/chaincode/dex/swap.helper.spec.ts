@@ -285,14 +285,17 @@ describe("swap.helper", () => {
      * This test reproduces the scenario where:
      * 1. Pool has active liquidity at tick -44220 (adjusted from -44240 for tick spacing)
      * 2. A swap crosses a tick that reduces active liquidity to zero
-     * 3. Swap continues with zero liquidity (bug behavior)
-     * 4. Price moves through empty ranges without consuming/producing tokens
-     * 5. Out-of-range positions can be incorrectly accessed
+     * 3. Swap should FAIL when liquidity becomes zero (correct behavior)
+     * 4. If swap continues with zero liquidity, that's the bug and test will FAIL
+     * 5. Out-of-range positions should never be accessed when liquidity is exhausted
      *
-     * Expected behavior (after fix): Swap should fail when liquidity becomes zero
-     * Current behavior (bug): Swap continues with zero liquidity and price moves incorrectly
+     * Expected behavior: Swap should fail with "Not enough liquidity available in pool"
+     * Bug behavior: Swap continues with zero liquidity and price moves incorrectly
+     *
+     * This test will FAIL if the bug exists (swap continues with zero liquidity)
+     * This test will PASS after the fix (swap correctly fails with error)
      */
-    test("should fail or prevent swaps when liquidity becomes zero after tick crossing", async () => {
+    test("should fail swap when liquidity becomes zero after tick crossing", async () => {
       // Given - Setup pool matching the scenario from the issue report
       const poolHash = "out-of-range-bug-pool";
       const fee = DexFeePercentageTypes.FEE_0_3_PERCENT;
@@ -417,54 +420,36 @@ describe("swap.helper", () => {
         throw error; // Re-throw unexpected errors
       }
 
-      // Then - Validate the bug hypothesis
-      
-      // BUG VALIDATION: This test confirms the bug exists
+      // Then - Validate that the bug does NOT exist
       // Expected behavior (after fix): Swap should fail with "Not enough liquidity" error
-      // Current behavior (bug): Swap continues with zero liquidity
+      // If we reach here, either:
+      //   1. The bug exists (liquidity became zero but swap continued) - TEST SHOULD FAIL
+      //   2. Liquidity didn't become zero and swap completed normally - TEST SHOULD PASS
       
       if (liquidityBecameZero) {
-        // BUG CONFIRMED: Liquidity became zero but swap continued
+        // BUG DETECTED: Liquidity became zero but swap continued
         // This violates the concentrated liquidity invariant
+        // The swap should have failed, but it didn't
         
-        // Verify the bug symptoms:
-        // 1. Price moved with zero liquidity (should not be possible)
         const priceAfterExhaustion = resultState.sqrtPrice;
         const tickAfterSwap = sqrtPriceToTick(priceAfterExhaustion);
-        
-        // Price moved below -44220 where liquidity was exhausted - this is the bug
-        expect(tickAfterSwap).toBeLessThanOrEqual(-44220);
-        
-        // 2. With zero liquidity, swap should have failed but didn't
-        // The fact that we reached here (instead of throwing an error) confirms the bug
-        
-        // 3. Verify swap continued even with zero liquidity
-        if (swapCompletedWithZeroLiquidity) {
-          // This confirms the bug: swap continued with zero liquidity
-          // amountSpecifiedRemaining might not decrease much because with zero liquidity,
-          // computeSwapStep returns zero amounts but still moves price
-          expect(resultState.liquidity.isLessThanOrEqualTo(0)).toBe(true);
-        }
-        
-        // 4. Check if price moved into out-of-range position's range (another symptom)
         const finalTick = resultState.tick;
+        
+        // Check if price moved into out-of-range position's range
         const outOfRangePositionIsAffected = finalTick <= tickUpper && finalTick >= tickLower;
         
-        if (outOfRangePositionIsAffected) {
-          console.warn(
-            "BUG CONFIRMED: Price moved into out-of-range position's tick range " +
-            "after liquidity exhaustion. This violates the concentrated liquidity invariant."
-          );
-        }
-        
-        // Document the bug for debugging
-        console.warn(
-          `BUG DETECTED: Liquidity exhausted at tick -44220 but swap continued. ` +
-          `Final tick: ${finalTick}, Final liquidity: ${resultState.liquidity.toString()}`
+        // FAIL the test - this bug should not be allowed
+        throw new Error(
+          `CRITICAL BUG DETECTED: Swap continued with zero liquidity! ` +
+          `This violates concentrated liquidity invariants. ` +
+          `Liquidity exhausted at tick -44220, but swap continued to tick ${finalTick}. ` +
+          `Final liquidity: ${resultState.liquidity.toString()}. ` +
+          `Out-of-range position affected: ${outOfRangePositionIsAffected}. ` +
+          `The swap should have failed with "Not enough liquidity available in pool" when liquidity became zero.`
         );
       } else {
-        // If liquidity didn't become zero, the swap should have completed normally
-        // OR the fix has been applied and swap failed with error (caught in try-catch above)
+        // Swap completed normally without exhausting liquidity
+        // This is valid - the swap consumed all amount before hitting zero liquidity
         expect(resultState.liquidity.toNumber()).toBeGreaterThan(0);
         expect(resultState.amountSpecifiedRemaining.toNumber()).toBeLessThan(largeSwapAmount.toNumber());
       }

@@ -81,7 +81,10 @@ export async function ensureSufficientLiquidityForBurn(
         );
         // Inform user what is the maximum amount of liquidity they can burn right now
         throw new InsufficientLiquidityError(
-          `Pool lacks ${pool.token0} tokens to carry out this transaction. Can burn ${maximumBurnableLiquidity.dividedBy(positionLiquidityBefore ?? position.liquidity).multipliedBy(100)} percentage of this atmost.`
+          `Pool token0 lacks ${pool.token0} tokens to carry out this transaction. Can burn ` +
+            `${maximumBurnableLiquidity.dividedBy(positionLiquidityBefore ?? position.liquidity).multipliedBy(100)} ` +
+            `percentage of this atmost. maximumBurnableLiquidity: ${maximumBurnableLiquidity}, ` +
+            `position liquidity: ${positionLiquidityBefore ?? position.liquidity}`
         );
       } else {
         maximumBurnableLiquidity = liquidity1(
@@ -91,7 +94,10 @@ export async function ensureSufficientLiquidityForBurn(
         );
         // Inform user what is the maximum amount of liquidity they can burn right now
         throw new InsufficientLiquidityError(
-          `Pool lacks ${pool.token1} tokens to carry out this transaction. Can burn ${maximumBurnableLiquidity.dividedBy(positionLiquidityBefore ?? position.liquidity).multipliedBy(100)} percentage of this atmost.`
+          `Pool token1 lacks ${pool.token1} tokens to carry out this transaction. Can burn ` +
+            `${maximumBurnableLiquidity.dividedBy(positionLiquidityBefore ?? position.liquidity).multipliedBy(100)} ` +
+            `percentage of this atmost. maximumBurnableLiquidity: ${maximumBurnableLiquidity}, ` +
+            `position liquidity: ${positionLiquidityBefore ?? position.liquidity}`
         );
       }
     }

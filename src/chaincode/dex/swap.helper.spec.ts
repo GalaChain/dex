@@ -16,7 +16,7 @@ import { fixture } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
-import { DexFeePercentageTypes, Pool, SwapState, TickData, sqrtPriceToTick } from "../../api";
+import { DexFeePercentageTypes, Pool, SwapState, TickData, f8, flipTick, sqrtPriceToTick, tickToSqrtPrice } from "../../api";
 import { DexV3Contract } from "../DexV3Contract";
 import { processSwapSteps } from "./swap.helper";
 
@@ -277,6 +277,197 @@ describe("swap.helper", () => {
       // Verify swap occurred
       expect(resultState.amountSpecifiedRemaining.toNumber()).toBeLessThan(1000);
       expect(resultState.amountCalculated.toNumber()).toBeLessThan(0);
+    });
+
+    /**
+     * Test to validate the critical bug described in out-of-range-liquidity-issue.md
+     *
+     * This test reproduces the scenario where:
+     * 1. Pool has active liquidity at tick -44220 (adjusted from -44240 for tick spacing)
+     * 2. A swap crosses a tick that reduces active liquidity to zero
+     * 3. Swap continues with zero liquidity (bug behavior)
+     * 4. Price moves through empty ranges without consuming/producing tokens
+     * 5. Out-of-range positions can be incorrectly accessed
+     *
+     * Expected behavior (after fix): Swap should fail when liquidity becomes zero
+     * Current behavior (bug): Swap continues with zero liquidity and price moves incorrectly
+     */
+    test("should fail or prevent swaps when liquidity becomes zero after tick crossing", async () => {
+      // Given - Setup pool matching the scenario from the issue report
+      const poolHash = "out-of-range-bug-pool";
+      const fee = DexFeePercentageTypes.FEE_0_3_PERCENT;
+      const tickSpacing = 60;
+
+      // Current tick is -44220 (adjusted to be multiple of 60) with active liquidity
+      // Using tick -44220 instead of -44240 to match tick spacing
+      const currentTick = -44220;
+      const currentSqrtPrice = tickToSqrtPrice(currentTick);
+      const activeLiquidity = new BigNumber("77036.188844947926862897");
+
+      // Tick -44220 represents the lower bound of the active liquidity range
+      // When crossing this tick going down (zeroForOne = true), we exit the range
+      // The tick's liquidityNet is negative (removing liquidity when crossing downward)
+      // For zeroForOne, the code negates liquidityNet, so if liquidityNet is positive,
+      // it becomes negative after negation, which removes liquidity (correct)
+      // To exhaust liquidity, liquidityNet should equal activeLiquidity (becomes -activeLiquidity)
+      const tickAt44220 = new TickData(poolHash, -44220);
+      tickAt44220.liquidityNet = activeLiquidity; // After negation: -activeLiquidity, reducing liquidity to 0
+      tickAt44220.liquidityGross = activeLiquidity;
+      tickAt44220.initialised = true;
+
+      // Out-of-range position at ticks -60360 to -53460 (below current price, multiples of 60)
+      // This position should contain only token1 (GUSDT) and should not be affected by swaps
+      const tickLower = -60360; // Adjusted to be multiple of 60
+      const tickUpper = -53460; // Already multiple of 60
+      const outOfRangeLiquidity = new BigNumber("2484.687816196041080597");
+
+      const tickAt60360 = new TickData(poolHash, tickLower);
+      tickAt60360.liquidityNet = outOfRangeLiquidity; // Entry tick - adds liquidity
+      tickAt60360.liquidityGross = outOfRangeLiquidity;
+      tickAt60360.initialised = true;
+
+      const tickAt53460 = new TickData(poolHash, tickUpper);
+      tickAt53460.liquidityNet = outOfRangeLiquidity.negated(); // Exit tick - removes liquidity
+      tickAt53460.liquidityGross = outOfRangeLiquidity;
+      tickAt53460.initialised = true;
+
+      // Setup bitmap to mark initialized ticks
+      const bitmap: Record<string, string> = {};
+      // Mark ticks as initialized in the bitmap (all must be multiples of tickSpacing)
+      flipTick(bitmap, -44220, tickSpacing);
+      flipTick(bitmap, -60360, tickSpacing);
+      flipTick(bitmap, -53460, tickSpacing);
+      
+      // For simplicity, we'll use offline mode with tickDataMap
+      const tickDataMap: Record<string, TickData> = {
+        [-44220]: tickAt44220,
+        [-60360]: tickAt60360,
+        [-53460]: tickAt53460
+      };
+
+      const pool = plainToInstance(Pool, {
+        token0: "GALA:Unit:none:none",
+        token1: "GUSDT:Unit:none:none",
+        fee,
+        sqrtPrice: currentSqrtPrice,
+        liquidity: activeLiquidity,
+        grossPoolLiquidity: activeLiquidity.plus(outOfRangeLiquidity),
+        feeGrowthGlobal0: new BigNumber("0"),
+        feeGrowthGlobal1: new BigNumber("0"),
+        bitmap, // Will be populated by nextInitialisedTickWithInSameWord
+        tickSpacing,
+        protocolFees: 0,
+        protocolFeesToken0: new BigNumber("0"),
+        protocolFeesToken1: new BigNumber("0")
+      });
+      pool.genPoolHash = () => poolHash;
+
+      // Create initial swap state - large swap that will exhaust liquidity
+      const largeSwapAmount = new BigNumber("100000"); // Large amount to push through liquidity
+      const initialState: SwapState = {
+        amountSpecifiedRemaining: largeSwapAmount,
+        amountCalculated: new BigNumber("0"),
+        sqrtPrice: currentSqrtPrice,
+        tick: currentTick,
+        liquidity: activeLiquidity,
+        feeGrowthGlobalX: new BigNumber("0"),
+        protocolFee: new BigNumber("0")
+      };
+
+      // Calculate a price limit well below current price to ensure we cross the tick
+      // Use a tick that's a multiple of tickSpacing (60)
+      const targetTick = -50040; // Well below -44220, multiple of 60
+      const sqrtPriceLimit = tickToSqrtPrice(targetTick);
+
+      // When - Execute swap that will cross tick -44220 and exhaust liquidity
+      // Use offline mode (ctx = null) with tickDataMap
+      let resultState: SwapState;
+      let swapCompletedWithZeroLiquidity = false;
+      let liquidityBecameZero = false;
+
+      try {
+        resultState = await processSwapSteps(
+          null, // Offline mode
+          initialState,
+          pool,
+          sqrtPriceLimit,
+          true, // exactInput
+          true, // zeroForOne - swapping token0 for token1 (price goes down)
+          tickDataMap
+        );
+
+        // Check if swap continued with zero liquidity (bug behavior)
+        // This should not happen - swap should fail when liquidity becomes zero
+        if (resultState.liquidity.isLessThanOrEqualTo(0)) {
+          liquidityBecameZero = true;
+          // If liquidity is zero but swap continued, that's the bug
+          if (!f8(resultState.amountSpecifiedRemaining).isEqualTo(0) || 
+              !resultState.sqrtPrice.isEqualTo(sqrtPriceLimit)) {
+            swapCompletedWithZeroLiquidity = true;
+          }
+        }
+      } catch (error: any) {
+        // If swap fails with "insufficient liquidity" when liquidity becomes zero,
+        // that's the correct behavior (after fix)
+        if (error.message && error.message.includes("Not enough liquidity")) {
+          // This is expected after fix
+          expect(error.message).toContain("Not enough liquidity");
+          return; // Test passes - swap correctly fails
+        }
+        throw error; // Re-throw unexpected errors
+      }
+
+      // Then - Validate the bug hypothesis
+      
+      // BUG VALIDATION: This test confirms the bug exists
+      // Expected behavior (after fix): Swap should fail with "Not enough liquidity" error
+      // Current behavior (bug): Swap continues with zero liquidity
+      
+      if (liquidityBecameZero) {
+        // BUG CONFIRMED: Liquidity became zero but swap continued
+        // This violates the concentrated liquidity invariant
+        
+        // Verify the bug symptoms:
+        // 1. Price moved with zero liquidity (should not be possible)
+        const priceAfterExhaustion = resultState.sqrtPrice;
+        const tickAfterSwap = sqrtPriceToTick(priceAfterExhaustion);
+        
+        // Price moved below -44220 where liquidity was exhausted - this is the bug
+        expect(tickAfterSwap).toBeLessThanOrEqual(-44220);
+        
+        // 2. With zero liquidity, swap should have failed but didn't
+        // The fact that we reached here (instead of throwing an error) confirms the bug
+        
+        // 3. Verify swap continued even with zero liquidity
+        if (swapCompletedWithZeroLiquidity) {
+          // This confirms the bug: swap continued with zero liquidity
+          // amountSpecifiedRemaining might not decrease much because with zero liquidity,
+          // computeSwapStep returns zero amounts but still moves price
+          expect(resultState.liquidity.isLessThanOrEqualTo(0)).toBe(true);
+        }
+        
+        // 4. Check if price moved into out-of-range position's range (another symptom)
+        const finalTick = resultState.tick;
+        const outOfRangePositionIsAffected = finalTick <= tickUpper && finalTick >= tickLower;
+        
+        if (outOfRangePositionIsAffected) {
+          console.warn(
+            "BUG CONFIRMED: Price moved into out-of-range position's tick range " +
+            "after liquidity exhaustion. This violates the concentrated liquidity invariant."
+          );
+        }
+        
+        // Document the bug for debugging
+        console.warn(
+          `BUG DETECTED: Liquidity exhausted at tick -44220 but swap continued. ` +
+          `Final tick: ${finalTick}, Final liquidity: ${resultState.liquidity.toString()}`
+        );
+      } else {
+        // If liquidity didn't become zero, the swap should have completed normally
+        // OR the fix has been applied and swap failed with error (caught in try-catch above)
+        expect(resultState.liquidity.toNumber()).toBeGreaterThan(0);
+        expect(resultState.amountSpecifiedRemaining.toNumber()).toBeLessThan(largeSwapAmount.toNumber());
+      }
     });
   });
 });

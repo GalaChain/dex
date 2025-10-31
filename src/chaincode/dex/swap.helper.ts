@@ -166,6 +166,17 @@ export async function processSwapSteps(
           liquidityNet = liquidityNet.times(-1); // Negate if zeroForOne
         }
         state.liquidity = state.liquidity.plus(liquidityNet); // Update liquidity
+        
+        // Validate liquidity remains positive after tick crossing
+        // This prevents swaps from continuing with zero or negative liquidity
+        if (state.liquidity.isLessThan(0)) {
+          throw new ConflictError("Not enough liquidity available in pool");
+        }
+        
+        // If liquidity is exactly zero and there's still amount to swap, fail the swap
+        if (state.liquidity.isEqualTo(0) && !f8(state.amountSpecifiedRemaining).isEqualTo(0)) {
+          throw new ConflictError("Not enough liquidity available in pool");
+        }
       }
       // Move the tick pointer
       state.tick = zeroForOne ? step.tickNext - 1 : step.tickNext;

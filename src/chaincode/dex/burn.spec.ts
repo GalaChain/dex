@@ -688,7 +688,9 @@ describe("Remove Liquidity Test", () => {
     expect(res).toEqual(
       GalaChainResponse.Error(
         new InsufficientLiquidityError(
-          "Pool lacks TEST$Currency$TEST$none tokens to carry out this transaction. Can burn 6.674067425143792338 percentage of this atmost."
+          `Pool token1 lacks TEST$Currency$TEST$none tokens to carry out this transaction. ` +
+            `Can burn 6.674067425143792338 percentage of this atmost. ` +
+            `maximumBurnableLiquidity: 5048.66504442427315231844, position liquidity: 75646`
         )
       )
     );

@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import { TokenBalance, TokenClass, TokenClassKey, TokenInstance, asValidUserAlias } from "@gala-chain/api";
 import { GalaChainContext } from "@gala-chain/chaincode";
 import { currency, fixture, users } from "@gala-chain/test";
@@ -224,7 +223,9 @@ export interface AddLiquidityFixtureResult {
  * @param options - Configuration options for the fixture
  * @returns Fixture with context, contract, tokens, and initialized pool
  */
-export function createAddLiquidityTestFixture(options: AddLiquidityFixtureOptions = {}): AddLiquidityFixtureResult {
+export function createAddLiquidityTestFixture(
+  options: AddLiquidityFixtureOptions = {}
+): AddLiquidityFixtureResult {
   const {
     fee = FEE_TIERS.MEDIUM,
     initialSqrtPrice = new BigNumber("1"),
@@ -541,7 +542,9 @@ export function createSwapTestFixture(options: SwapTestFixtureOptions = {}): Swa
  * @param options - Configuration options for the fixture
  * @returns Fixture with pool containing active liquidity
  */
-export function createSwapTestFixtureWithLiquidity(options: SwapTestFixtureOptions = {}): SwapTestFixtureResult {
+export function createSwapTestFixtureWithLiquidity(
+  options: SwapTestFixtureOptions = {}
+): SwapTestFixtureResult {
   const fee = options.fee ?? FEE_TIERS.MEDIUM;
   const tickSpacing = TICK_SPACINGS[fee] ?? 60;
 
@@ -551,9 +554,9 @@ export function createSwapTestFixtureWithLiquidity(options: SwapTestFixtureOptio
 
   // Calculate word and bit positions for bitmap
   const lowerWord = Math.floor(tickLower / tickSpacing / 256);
-  const lowerBit = ((tickLower / tickSpacing) % 256 + 256) % 256;
+  const lowerBit = (((tickLower / tickSpacing) % 256) + 256) % 256;
   const upperWord = Math.floor(tickUpper / tickSpacing / 256);
-  const upperBit = ((tickUpper / tickSpacing) % 256 + 256) % 256;
+  const upperBit = (((tickUpper / tickSpacing) % 256) + 256) % 256;
 
   const bitmap: Record<string, string> = {};
   bitmap[lowerWord.toString()] = (BigInt(1) << BigInt(lowerBit)).toString();
@@ -561,7 +564,8 @@ export function createSwapTestFixtureWithLiquidity(options: SwapTestFixtureOptio
     bitmap[upperWord.toString()] = (BigInt(1) << BigInt(upperBit)).toString();
   } else {
     bitmap[lowerWord.toString()] = (
-      BigInt(bitmap[lowerWord.toString()]) | (BigInt(1) << BigInt(upperBit))
+      BigInt(bitmap[lowerWord.toString()]) |
+      (BigInt(1) << BigInt(upperBit))
     ).toString();
   }
 

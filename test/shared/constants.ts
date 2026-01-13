@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import { DexFeePercentageTypes } from "../../src/api";
 
 /**
@@ -60,14 +59,12 @@ export const MAX_SQRT_RATIO = "18446050711097703530";
 /**
  * Helper to get minimum usable tick for a given tick spacing
  */
-export const getMinTick = (tickSpacing: number): number =>
-  Math.ceil(MIN_TICK / tickSpacing) * tickSpacing;
+export const getMinTick = (tickSpacing: number): number => Math.ceil(MIN_TICK / tickSpacing) * tickSpacing;
 
 /**
  * Helper to get maximum usable tick for a given tick spacing
  */
-export const getMaxTick = (tickSpacing: number): number =>
-  Math.floor(MAX_TICK / tickSpacing) * tickSpacing;
+export const getMaxTick = (tickSpacing: number): number => Math.floor(MAX_TICK / tickSpacing) * tickSpacing;
 
 /**
  * Array of all fee tiers for parametric testing

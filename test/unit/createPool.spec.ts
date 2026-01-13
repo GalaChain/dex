@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import { GalaChainResponse } from "@gala-chain/api";
 import { users } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
@@ -22,8 +21,8 @@ import { generateKeyFromClassKey } from "../../src/chaincode/dex/dexUtils";
 import {
   ALL_FEE_TIERS,
   FEE_TIERS,
-  MIN_SQRT_RATIO,
   MAX_SQRT_RATIO,
+  MIN_SQRT_RATIO,
   createAlternateTokenFixtures,
   createPoolTestFixture
 } from "../shared";
@@ -91,7 +90,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then
       expect(response.Status).toBe(1);
@@ -126,7 +128,10 @@ describe("CreatePool - Comprehensive Tests", () => {
         dto.sign(users.testUser1.privateKey);
 
         // When
-        const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+        const response = (await contract.CreatePool(
+          ctx,
+          dto
+        )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
         // Then
         expect(response.Status).toBe(1);
@@ -160,7 +165,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then
       expect(response.Status).toBe(0);
@@ -182,7 +190,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then
       expect(response.Status).toBe(0);
@@ -203,7 +214,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then - Zero price is now correctly rejected
       expect(response.Status).toBe(0);
@@ -223,7 +237,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then
       expect(response.Status).toBe(0);
@@ -247,7 +264,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then
       expect(response.Status).toBe(0);
@@ -275,7 +295,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then - Contract requires tokens in sorted order
       expect(response.Status).toBe(0);
@@ -295,7 +318,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then
       expect(response.Status).toBe(1);
@@ -315,7 +341,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then
       expect(response.Status).toBe(1);
@@ -335,7 +364,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then
       expect(response.Status).toBe(1);
@@ -355,7 +387,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then - MIN_SQRT_RATIO is valid and should be accepted
       expect(response.Status).toBe(1);
@@ -375,7 +410,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then - MAX_SQRT_RATIO is valid and should be accepted
       expect(response.Status).toBe(1);
@@ -396,7 +434,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then - Price below MIN_SQRT_RATIO is now correctly rejected
       expect(response.Status).toBe(0);
@@ -417,7 +458,10 @@ describe("CreatePool - Comprehensive Tests", () => {
       dto.sign(users.testUser1.privateKey);
 
       // When
-      const response = (await contract.CreatePool(ctx, dto)) as unknown as GalaChainResponse<CreatePoolResDto>;
+      const response = (await contract.CreatePool(
+        ctx,
+        dto
+      )) as unknown as GalaChainResponse<CreatePoolResDto>;
 
       // Then - Price above MAX_SQRT_RATIO is now correctly rejected
       expect(response.Status).toBe(0);

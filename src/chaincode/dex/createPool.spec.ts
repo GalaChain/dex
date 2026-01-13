@@ -26,7 +26,14 @@ import { currency, fixture, users, writesMap } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
-import { CreatePoolDto, CreatePoolResDto, DexFeeConfig, DexFeePercentageTypes, Pool, TickData } from "../../api/";
+import {
+  CreatePoolDto,
+  CreatePoolResDto,
+  DexFeeConfig,
+  DexFeePercentageTypes,
+  Pool,
+  TickData
+} from "../../api/";
 import { tickToSqrtPrice } from "../../api/utils/dex/tick.helper";
 import { DexV3Contract } from "../DexV3Contract";
 import dexTestUtils from "../test/dex";

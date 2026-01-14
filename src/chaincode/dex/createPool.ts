@@ -15,7 +15,8 @@
 import { ConflictError, ValidationFailedError } from "@gala-chain/api";
 import { GalaChainContext, fetchTokenClass, getObjectByKey, putChainObject } from "@gala-chain/chaincode";
 
-import { CreatePoolDto, CreatePoolResDto, DexFeeConfig, Pool } from "../../api/";
+import { CreatePoolDto, CreatePoolResDto, DexFeeConfig, Pool, TickData } from "../../api/";
+import { tickToSqrtPrice } from "../../api/utils/dex/tick.helper";
 import { generateKeyFromClassKey } from "./dexUtils";
 
 /**
@@ -35,6 +36,21 @@ export async function createPool(ctx: GalaChainContext, dto: CreatePoolDto): Pro
   } else if (token0.localeCompare(token1) === 0) {
     throw new ValidationFailedError(
       `Cannot create pool of same tokens. Token0 ${token0} and Token1 ${token1} must be different.`
+    );
+  }
+
+  // Validate sqrtPrice is greater than zero
+  if (dto.initialSqrtPrice.lte(0)) {
+    throw new ValidationFailedError("initialSqrtPrice must be greater than 0");
+  }
+
+  // Validate sqrtPrice is within valid tick range
+  const MIN_SQRT_RATIO = tickToSqrtPrice(TickData.MIN_TICK);
+  const MAX_SQRT_RATIO = tickToSqrtPrice(TickData.MAX_TICK);
+
+  if (dto.initialSqrtPrice.lt(MIN_SQRT_RATIO) || dto.initialSqrtPrice.gt(MAX_SQRT_RATIO)) {
+    throw new ValidationFailedError(
+      `initialSqrtPrice must be between ${MIN_SQRT_RATIO.toExponential(6)} and ${MAX_SQRT_RATIO.toExponential(6)}`
     );
   }
 

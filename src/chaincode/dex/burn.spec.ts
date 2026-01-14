@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { GalaChainResponse, NotFoundError } from "@gala-chain/api";
+import { GalaChainResponse, NotFoundError, TokenInstanceQueryKey } from "@gala-chain/api";
 import { TokenBalance, TokenClass, TokenClassKey, TokenInstance } from "@gala-chain/api";
 import { currency, transactionSuccess } from "@gala-chain/test";
 import { fixture, users } from "@gala-chain/test";
@@ -26,6 +26,7 @@ import {
   DexOperationResDto,
   DexPositionData,
   DexPositionOwner,
+  GrantSwapAllowanceDto,
   InsufficientLiquidityError,
   Pool,
   SlippageToleranceExceededError,
@@ -694,5 +695,296 @@ describe("Remove Liquidity Test", () => {
         )
       )
     );
+  });
+
+  describe("Burn with Recipient Parameter", () => {
+    it("Should allow burning with recipient parameter when recipient is the same as calling user", async () => {
+      //Given
+      const positionOwner = new DexPositionOwner(users.testUser1.identityKey, pool.genPoolHash());
+      positionOwner.addPosition("75920:76110", "POSITION-ID");
+
+      const positionData = new DexPositionData(
+        pool.genPoolHash(),
+        "POSITION-ID",
+        76110,
+        75920,
+        dexClassKey,
+        currencyClassKey,
+        fee
+      );
+
+      const tickLowerData = new TickData(pool.genPoolHash(), 75920);
+      const tickUpperData = new TickData(pool.genPoolHash(), 76110);
+
+      pool.mint(positionData, tickLowerData, tickUpperData, new BigNumber("75646"));
+
+      const { ctx, contract } = fixture(DexV3Contract)
+        .registeredUsers(users.testUser1)
+        .savedState(
+          currencyClass,
+          currencyInstance,
+          dexInstance,
+          dexClass,
+          pool,
+          positionOwner,
+          positionData,
+          tickLowerData,
+          tickUpperData,
+          currencyPoolBalance,
+          dexPoolBalance
+        );
+
+      const dto = new BurnDto(
+        dexClassKey,
+        currencyClassKey,
+        fee,
+        new BigNumber("346"),
+        75920,
+        76110,
+        new BigNumber("0"),
+        new BigNumber("0"),
+        "POSITION-ID",
+        users.testUser1.identityKey // recipient same as calling user
+      );
+
+      dto.uniqueKey = randomUUID();
+      dto.sign(users.testUser1.privateKey);
+
+      //When
+      const burnRes = await contract.RemoveLiquidity(ctx, dto);
+
+      //Then
+      expect(burnRes.Status).toBe(1);
+      expect(burnRes.Data).toBeDefined();
+      if (burnRes.Data) {
+        expect(burnRes.Data.positionId).toBe("POSITION-ID");
+        expect(burnRes.Data.userAddress).toBe("client|testUser1");
+      }
+    });
+
+    it("Should allow burning with recipient parameter when recipient is different from calling user and has proper allowances", async () => {
+      //Given
+      const positionOwner = new DexPositionOwner(users.testUser1.identityKey, pool.genPoolHash());
+      positionOwner.addPosition("75920:76110", "POSITION-ID");
+
+      const positionData = new DexPositionData(
+        pool.genPoolHash(),
+        "POSITION-ID",
+        76110,
+        75920,
+        dexClassKey,
+        currencyClassKey,
+        fee
+      );
+
+      const tickLowerData = new TickData(pool.genPoolHash(), 75920);
+      const tickUpperData = new TickData(pool.genPoolHash(), 76110);
+
+      pool.mint(positionData, tickLowerData, tickUpperData, new BigNumber("75646"));
+
+      // Create transfer allowances for both tokens
+      const grantAllowanceDto0 = new GrantSwapAllowanceDto();
+      const tokenInstanceQueryKey0 = new TokenInstanceQueryKey();
+      tokenInstanceQueryKey0.collection = dexClassKey.collection;
+      tokenInstanceQueryKey0.category = dexClassKey.category;
+      tokenInstanceQueryKey0.type = dexClassKey.type;
+      tokenInstanceQueryKey0.additionalKey = dexClassKey.additionalKey;
+      tokenInstanceQueryKey0.instance = new BigNumber("0");
+      grantAllowanceDto0.tokenInstance = tokenInstanceQueryKey0;
+      grantAllowanceDto0.quantities = [
+        { user: users.testUser2.identityKey, quantity: new BigNumber("1000") }
+      ];
+      grantAllowanceDto0.uses = new BigNumber(5);
+      grantAllowanceDto0.expires = 0;
+      grantAllowanceDto0.uniqueKey = randomUUID();
+      grantAllowanceDto0.sign(users.testUser1.privateKey);
+
+      const grantAllowanceDto1 = new GrantSwapAllowanceDto();
+      const tokenInstanceQueryKey1 = new TokenInstanceQueryKey();
+      tokenInstanceQueryKey1.collection = currencyClassKey.collection;
+      tokenInstanceQueryKey1.category = currencyClassKey.category;
+      tokenInstanceQueryKey1.type = currencyClassKey.type;
+      tokenInstanceQueryKey1.additionalKey = currencyClassKey.additionalKey;
+      tokenInstanceQueryKey1.instance = new BigNumber("0");
+      grantAllowanceDto1.tokenInstance = tokenInstanceQueryKey1;
+      grantAllowanceDto1.quantities = [
+        { user: users.testUser2.identityKey, quantity: new BigNumber("1000") }
+      ];
+      grantAllowanceDto1.uses = new BigNumber(5);
+      grantAllowanceDto1.expires = 0;
+      grantAllowanceDto1.uniqueKey = randomUUID();
+      grantAllowanceDto1.sign(users.testUser1.privateKey);
+
+      const { ctx, contract } = fixture(DexV3Contract)
+        .registeredUsers(users.testUser1, users.testUser2)
+        .savedState(
+          currencyClass,
+          currencyInstance,
+          dexInstance,
+          dexClass,
+          pool,
+          positionOwner,
+          positionData,
+          tickLowerData,
+          tickUpperData,
+          currencyPoolBalance,
+          dexPoolBalance
+        );
+
+      // Grant allowances first
+      await contract.GrantSwapAllowance(ctx, grantAllowanceDto0);
+      await contract.GrantSwapAllowance(ctx, grantAllowanceDto1);
+
+      const dto = new BurnDto(
+        dexClassKey,
+        currencyClassKey,
+        fee,
+        new BigNumber("346"),
+        75920,
+        76110,
+        new BigNumber("0"),
+        new BigNumber("0"),
+        "POSITION-ID",
+        users.testUser1.identityKey // recipient
+      );
+
+      dto.uniqueKey = randomUUID();
+      dto.sign(users.testUser2.privateKey); // testUser2 is calling on behalf of testUser1
+
+      //When
+      const burnRes = await contract.RemoveLiquidity(ctx, dto);
+
+      //Then
+      expect(burnRes.Status).toBe(1);
+      expect(burnRes.Data).toBeDefined();
+      if (burnRes.Data) {
+        expect(burnRes.Data.positionId).toBe("POSITION-ID");
+        expect(burnRes.Data.userAddress).toBe("client|testUser1");
+        expect(burnRes.Data.userBalanceDelta.token0Balance.owner).toBe("client|testUser1");
+        expect(burnRes.Data.userBalanceDelta.token1Balance.owner).toBe("client|testUser1");
+      }
+    });
+
+    it("Should throw error when trying to burn on behalf of another user without transfer allowances", async () => {
+      //Given
+      const positionOwner = new DexPositionOwner(users.testUser1.identityKey, pool.genPoolHash());
+      positionOwner.addPosition("75920:76110", "POSITION-ID");
+
+      const positionData = new DexPositionData(
+        pool.genPoolHash(),
+        "POSITION-ID",
+        76110,
+        75920,
+        dexClassKey,
+        currencyClassKey,
+        fee
+      );
+
+      const tickLowerData = new TickData(pool.genPoolHash(), 75920);
+      const tickUpperData = new TickData(pool.genPoolHash(), 76110);
+
+      pool.mint(positionData, tickLowerData, tickUpperData, new BigNumber("75646"));
+
+      const { ctx, contract } = fixture(DexV3Contract)
+        .registeredUsers(users.testUser1, users.testUser2)
+        .savedState(
+          currencyClass,
+          currencyInstance,
+          dexInstance,
+          dexClass,
+          pool,
+          positionOwner,
+          positionData,
+          tickLowerData,
+          tickUpperData,
+          currencyPoolBalance,
+          dexPoolBalance
+        );
+
+      const dto = new BurnDto(
+        dexClassKey,
+        currencyClassKey,
+        fee,
+        new BigNumber("346"),
+        75920,
+        76110,
+        new BigNumber("0"),
+        new BigNumber("0"),
+        "POSITION-ID",
+        users.testUser1.identityKey // recipient
+      );
+
+      dto.uniqueKey = randomUUID();
+      dto.sign(users.testUser2.privateKey); // testUser2 is calling on behalf of testUser1 without allowances
+
+      //When
+      const burnRes = await contract.RemoveLiquidity(ctx, dto);
+
+      //Then
+      expect(burnRes.Status).toBe(0);
+      expect(burnRes.Message).toContain(
+        "Recipient has not granted transfer allowances to the calling user for token0"
+      );
+    });
+
+    it("Should throw error when trying to burn on behalf of a user who doesn't own the position", async () => {
+      //Given
+      const positionOwner = new DexPositionOwner(users.testUser1.identityKey, pool.genPoolHash());
+      positionOwner.addPosition("75920:76110", "POSITION-ID");
+
+      const positionData = new DexPositionData(
+        pool.genPoolHash(),
+        "POSITION-ID",
+        76110,
+        75920,
+        dexClassKey,
+        currencyClassKey,
+        fee
+      );
+
+      const tickLowerData = new TickData(pool.genPoolHash(), 75920);
+      const tickUpperData = new TickData(pool.genPoolHash(), 76110);
+
+      pool.mint(positionData, tickLowerData, tickUpperData, new BigNumber("75646"));
+
+      const { ctx, contract } = fixture(DexV3Contract)
+        .registeredUsers(users.testUser1, users.testUser2, users.testUser3)
+        .savedState(
+          currencyClass,
+          currencyInstance,
+          dexInstance,
+          dexClass,
+          pool,
+          positionOwner,
+          positionData,
+          tickLowerData,
+          tickUpperData,
+          currencyPoolBalance,
+          dexPoolBalance
+        );
+
+      const dto = new BurnDto(
+        dexClassKey,
+        currencyClassKey,
+        fee,
+        new BigNumber("346"),
+        75920,
+        76110,
+        new BigNumber("0"),
+        new BigNumber("0"),
+        "POSITION-ID",
+        users.testUser3.identityKey // recipient who doesn't own the position
+      );
+
+      dto.uniqueKey = randomUUID();
+      dto.sign(users.testUser2.privateKey); // testUser2 is calling on behalf of testUser3
+
+      //When
+      const burnRes = await contract.RemoveLiquidity(ctx, dto);
+
+      //Then
+      expect(burnRes.Status).toBe(0);
+      expect(burnRes.Message).toContain("No object with id");
+    });
   });
 });

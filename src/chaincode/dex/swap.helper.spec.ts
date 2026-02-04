@@ -12,6 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { ConflictError } from "@gala-chain/api";
 import { fixture } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
@@ -99,12 +100,12 @@ describe("swap.helper", () => {
       expect(resultState.feeGrowthGlobalX.toNumber()).toBeGreaterThan(0);
     });
 
-    test("should handle swap with no liquidity gracefully", async () => {
-      // Given
+    test("should throw error when swapping with zero liquidity and no initialized ticks", async () => {
+      // Given - one-sided pool scenario (all token1, no token0 liquidity)
       const poolHash = "empty-pool-hash";
       const fee = DexFeePercentageTypes.FEE_0_3_PERCENT;
 
-      // Create a pool with no liquidity
+      // Create a pool with no liquidity and empty bitmap
       const pool = plainToInstance(Pool, {
         token0: "GALA:Unit:none:none",
         token1: "TEST:Unit:none:none",
@@ -114,7 +115,7 @@ describe("swap.helper", () => {
         grossPoolLiquidity: new BigNumber("0"),
         feeGrowthGlobal0: new BigNumber("0"),
         feeGrowthGlobal1: new BigNumber("0"),
-        bitmap: {},
+        bitmap: {}, // Empty bitmap - no initialized ticks
         tickSpacing: 60,
         protocolFees: 0,
         protocolFeesToken0: new BigNumber("0"),
@@ -135,14 +136,64 @@ describe("swap.helper", () => {
 
       const { ctx } = fixture(DexV3Contract);
 
-      // When
-      const resultState = await processSwapSteps(ctx, initialState, pool, new BigNumber("0.9"), true, true);
+      // When & Then
+      // Should throw early due to zero liquidity + no initialized ticks
+      await expect(
+        processSwapSteps(ctx, initialState, pool, new BigNumber("0.9"), true, true)
+      ).rejects.toThrow(ConflictError);
+      await expect(
+        processSwapSteps(ctx, initialState, pool, new BigNumber("0.9"), true, true)
+      ).rejects.toThrow("Not enough liquidity available in pool");
+    });
 
-      // Then
-      // With no liquidity, the swap should hit the price limit without swapping
-      expect(resultState.sqrtPrice.toNumber()).toBe(0.9); // Hit price limit
-      expect(resultState.amountSpecifiedRemaining.toNumber()).toBe(100); // No amount consumed
-      expect(resultState.amountCalculated.toNumber()).toBe(0); // No output
+    test("should prevent infinite loop with one-sided liquidity pool", async () => {
+      // Given - pool with liquidity only at extreme tick (one-sided)
+      // This simulates the DoS scenario: trying to swap token0→token1 when only token1 liquidity exists
+      const poolHash = "one-sided-pool-hash";
+      const fee = DexFeePercentageTypes.FEE_0_3_PERCENT;
+
+      // Pool with liquidity only at a far tick (e.g., all token1 at tick -887000)
+      // Current price is at tick 0, but liquidity is far away
+      const pool = plainToInstance(Pool, {
+        token0: "GALA:Unit:none:none",
+        token1: "TEST:Unit:none:none",
+        fee,
+        sqrtPrice: new BigNumber("1"), // Starting at tick 0
+        liquidity: new BigNumber("0"), // No liquidity at current price
+        grossPoolLiquidity: new BigNumber("0"),
+        feeGrowthGlobal0: new BigNumber("0"),
+        feeGrowthGlobal1: new BigNumber("0"),
+        bitmap: {
+          // Only tick at extreme negative position initialized
+          "-346": "1" // Tick -20760 (346 * 60) initialized, but far from current tick 0
+        },
+        tickSpacing: 60,
+        protocolFees: 0,
+        protocolFeesToken0: new BigNumber("0"),
+        protocolFeesToken1: new BigNumber("0")
+      });
+      pool.genPoolHash = () => poolHash;
+
+      const initialState: SwapState = {
+        amountSpecifiedRemaining: new BigNumber("100"),
+        amountCalculated: new BigNumber("0"),
+        sqrtPrice: new BigNumber("1"),
+        tick: 0,
+        liquidity: new BigNumber("0"), // Zero liquidity at current position
+        feeGrowthGlobalX: new BigNumber("0"),
+        protocolFee: new BigNumber("0")
+      };
+
+      const { ctx } = fixture(DexV3Contract);
+
+      // When & Then
+      // Should hit iteration limit (100) or fail early, preventing DoS
+      await expect(
+        processSwapSteps(ctx, initialState, pool, new BigNumber("0.0001"), true, true)
+      ).rejects.toThrow(ConflictError);
+      await expect(
+        processSwapSteps(ctx, initialState, pool, new BigNumber("0.0001"), true, true)
+      ).rejects.toThrow("Not enough liquidity available in pool");
     });
 
     test("should process swap starting from negative tick", async () => {

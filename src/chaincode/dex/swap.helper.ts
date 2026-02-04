@@ -58,11 +58,32 @@ export async function processSwapSteps(
   zeroForOne: boolean,
   tickDataMap?: Record<string, TickData>
 ): Promise<SwapState> {
+  // Early check: if liquidity is zero, verify there are initialized ticks in swap direction
+  if (state.liquidity.isEqualTo(0)) {
+    const [nextTick, hasInitialized] = nextInitialisedTickWithInSameWord(
+      pool.bitmap,
+      state.tick,
+      pool.tickSpacing,
+      zeroForOne
+    );
+    if (!hasInitialized || nextTick < TickData.MIN_TICK || nextTick > TickData.MAX_TICK) {
+      throw new ConflictError("Not enough liquidity available in pool");
+    }
+  }
+
+  // Safety limit to prevent infinite loops
+  const MAX_ITERATIONS = 100;
+  let iterations = 0;
+
   while (
     // Continue while there's amount left to swap and price hasn't hit the limit
     !f8(state.amountSpecifiedRemaining).isEqualTo(0) &&
     !state.sqrtPrice.isEqualTo(sqrtPriceLimit)
   ) {
+    // Safety check: prevent infinite loops
+    if (++iterations > MAX_ITERATIONS) {
+      throw new ConflictError("Not enough liquidity available in pool");
+    }
     // Initialize step state
     const step: StepComputations = {
       sqrtPriceStart: state.sqrtPrice,

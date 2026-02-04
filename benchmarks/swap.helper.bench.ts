@@ -401,7 +401,7 @@ describe("swap.helper benchmarks", () => {
       });
 
       // Then
-      const swapsPerSecond = (1000 / result.avgTimeMs) || 0;
+      const swapsPerSecond = 1000 / result.avgTimeMs || 0;
       benchmarkResults.push({
         name: "Stress test",
         ticks: tickCount,
@@ -608,7 +608,9 @@ describe("swap.helper benchmarks", () => {
       let tickCount = 0;
 
       console.log(`\n[Near-Max Range Test] Building EVERY tick from ${startTick} to ${endTick}...`);
-      console.log(`[Near-Max Range Test] Expected ticks: ~${Math.floor((endTick - startTick) / tickSpacing)}`);
+      console.log(
+        `[Near-Max Range Test] Expected ticks: ~${Math.floor((endTick - startTick) / tickSpacing)}`
+      );
       const buildStart = performance.now();
 
       for (let tick = startTick; tick <= endTick; tick += tickStep) {
@@ -682,9 +684,13 @@ describe("swap.helper benchmarks", () => {
         );
       }
 
-      console.log(`[Near-Max Range Test] Completed ${swapCount} swaps in ${(totalSwapTime / 1000).toFixed(2)} seconds`);
+      console.log(
+        `[Near-Max Range Test] Completed ${swapCount} swaps in ${(totalSwapTime / 1000).toFixed(2)} seconds`
+      );
       console.log(`[Near-Max Range Test] Total ticks crossed: ${totalTicksCrossed}`);
-      console.log(`[Near-Max Range Test] Avg time per tick: ${(totalSwapTime / totalTicksCrossed).toFixed(4)} ms`);
+      console.log(
+        `[Near-Max Range Test] Avg time per tick: ${(totalSwapTime / totalTicksCrossed).toFixed(4)} ms`
+      );
 
       // Then
       benchmarkResults.push({

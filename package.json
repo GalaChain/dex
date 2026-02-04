@@ -20,7 +20,8 @@
     "test": "jest",
     "test:e2e": "jest --config=e2e/jest.config.js --runInBand",
     "test:e2e-mocked": "env $(grep -v '^#' .dev-env | grep -v '^$' | xargs) CURATORORG_MOCKED_CHAINCODE_DIR=./ jest --config=e2e/jest.config.js --runInBand",
-    "update-snapshot": "jest --updateSnapshot"
+    "update-snapshot": "jest --updateSnapshot",
+    "benchmark": "jest --config=benchmarks/jest.config.js --runInBand"
   },
   "dependencies": {
     "@gala-chain/api": "~2.3.4",

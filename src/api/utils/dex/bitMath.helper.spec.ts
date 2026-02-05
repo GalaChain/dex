@@ -116,3 +116,67 @@ describe("leastSignificantBit", () => {
     expect(result).toBe(10);
   });
 });
+
+describe("bitMath binary search correctness", () => {
+  // Test all boundary values at binary search thresholds
+  const thresholdBits = [0, 1, 2, 4, 8, 16, 32, 64, 128, 255];
+
+  describe("mostSignificantBit at threshold boundaries", () => {
+    thresholdBits.forEach((bit) => {
+      if (bit <= 255) {
+        it(`returns ${bit} for 2^${bit}`, () => {
+          const input = BigInt(1) << BigInt(bit);
+          expect(mostSignificantBit(input)).toBe(bit);
+        });
+      }
+    });
+
+    it("returns correct MSB for value just below threshold (2^128 - 1)", () => {
+      const input = (BigInt(1) << BigInt(128)) - BigInt(1);
+      expect(mostSignificantBit(input)).toBe(127);
+    });
+
+    it("returns correct MSB for value at threshold (2^128)", () => {
+      const input = BigInt(1) << BigInt(128);
+      expect(mostSignificantBit(input)).toBe(128);
+    });
+
+    it("returns correct MSB for value just above threshold (2^128 + 1)", () => {
+      const input = (BigInt(1) << BigInt(128)) + BigInt(1);
+      expect(mostSignificantBit(input)).toBe(128);
+    });
+  });
+
+  describe("leastSignificantBit at threshold boundaries", () => {
+    thresholdBits.forEach((bit) => {
+      if (bit <= 255) {
+        it(`returns ${bit} for 2^${bit}`, () => {
+          const input = BigInt(1) << BigInt(bit);
+          expect(leastSignificantBit(input)).toBe(bit);
+        });
+      }
+    });
+
+    it("returns 0 for all bits set (max 256-bit value)", () => {
+      const input = (BigInt(1) << BigInt(256)) - BigInt(1);
+      expect(leastSignificantBit(input)).toBe(0);
+    });
+
+    it("returns correct LSB for high bits only", () => {
+      // Only bits 200-255 set
+      const input = ((BigInt(1) << BigInt(56)) - BigInt(1)) << BigInt(200);
+      expect(leastSignificantBit(input)).toBe(200);
+    });
+  });
+
+  describe("consistency between MSB and LSB", () => {
+    it("MSB equals LSB for single bit set", () => {
+      for (let bit = 0; bit < 256; bit += 17) {
+        // Sample various positions
+        const input = BigInt(1) << BigInt(bit);
+        expect(mostSignificantBit(input)).toBe(bit);
+        expect(leastSignificantBit(input)).toBe(bit);
+      }
+    });
+  });
+});

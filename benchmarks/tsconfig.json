@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../dist/benchmarks",
+    "module": "commonjs",
+    "types": ["jest", "node"],
+    "rootDir": "..",
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "include": ["**/*.bench.ts", "../src/**/*.ts"]
+}

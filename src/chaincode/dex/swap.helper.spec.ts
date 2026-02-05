@@ -14,12 +14,19 @@
  */
 import { fixture } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
-import { instanceToInstance, plainToInstance } from "class-transformer";
-import dns from "dns";
+import { plainToInstance } from "class-transformer";
 import { monitorEventLoopDelay, performance } from "perf_hooks";
 import { setImmediate } from "timers/promises";
 
-import { DexFeePercentageTypes, Pool, SwapState, TickData, sqrtPriceToTick } from "../../api";
+import {
+  DexFeePercentageTypes,
+  Pool,
+  SwapState,
+  TickData,
+  flipTick,
+  sqrtPriceToTick,
+  tickToSqrtPrice
+} from "../../api";
 import { DexV3Contract } from "../DexV3Contract";
 import { processSwapSteps } from "./swap.helper";
 
@@ -282,152 +289,126 @@ describe("swap.helper", () => {
       expect(resultState.amountCalculated.toNumber()).toBeLessThan(0);
     });
   });
-  test("loop performance", async () => {
-    // Given
-    const poolHash = "loop-pool";
-    const poolWithDustLiquidity = plainToInstance(Pool, {
-      fee: 500,
-      bitmap: {
-        "-2": "0",
-        "-3": "0",
-        "-4": "0",
-        "-5": "0",
-        "-6": "6129982163463555433433388108601236734474956488734408704",
-        "-7": "0",
-        "-8": "0",
-        "-9": "0",
-        "-10": "0",
-        "-11": "0",
-        "-12": "0",
-        "-13": "0",
-        "-14": "0",
-        "-15": "0",
-        "-16": "0",
-        "-17": "0",
-        "-18": "0",
-        "-19": "0",
-        "-20": "0",
-        "-21": "0",
-        "-22": "0",
-        "-23": "0",
-        "-24": "0",
-        "-25": "0",
-        "-26": "8"
-      },
-      token0: "GALA$Unit$none$none",
-      token1: "GOSMI$Unit$none$none",
-      liquidity: "0.034029613108643226",
-      sqrtPrice: "0.86759926423373788029",
-      tickSpacing: 10,
-      protocolFees: 0.1,
-      token0ClassKey: {
-        type: "none",
-        category: "Unit",
-        collection: "GALA",
-        additionalKey: "none"
-      },
-      token1ClassKey: {
-        type: "none",
-        category: "Unit",
-        collection: "GOSMI",
-        additionalKey: "none"
-      },
-      feeGrowthGlobal0: "0",
-      feeGrowthGlobal1: "0.00037637760823854262",
-      grossPoolLiquidity: "1803.22919862700454574",
-      protocolFeesToken0: "0",
-      protocolFeesToken1: "0.0000014231093767904548846723852534735862941902344",
-      maxLiquidityPerTick: "1917565579412846627735051215301243.08110657663841167978"
+  test("event loop yielding during single long-running swap", async () => {
+    // This test verifies that a SINGLE long-running processSwapSteps call
+    // yields to the event loop, preventing CPU starvation. We create a pool
+    // with a massive tick range and minimal liquidity, forcing the function
+    // to traverse thousands of ticks in one call.
+
+    // Given - Create a pool spanning a large tick range with minimal liquidity
+    const poolHash = "event-loop-test-pool";
+    const tickSpacing = 10;
+
+    // Tick range: -50000 to 50000 = 10000 ticks with spacing 10
+    const startTick = -50000;
+    const endTick = 50000;
+
+    const pool = plainToInstance(Pool, {
+      token0: "GALA:Unit:none:none",
+      token1: "TEST:Unit:none:none",
+      fee: DexFeePercentageTypes.FEE_0_05_PERCENT,
+      sqrtPrice: tickToSqrtPrice(startTick),
+      liquidity: new BigNumber("1"), // Minimal liquidity - forces many tick crossings
+      grossPoolLiquidity: new BigNumber("1000000"),
+      feeGrowthGlobal0: new BigNumber("0"),
+      feeGrowthGlobal1: new BigNumber("0"),
+      bitmap: {},
+      tickSpacing,
+      protocolFees: 0,
+      protocolFeesToken0: new BigNumber("0"),
+      protocolFeesToken1: new BigNumber("0")
     });
-    poolWithDustLiquidity.genPoolHash = () => poolHash;
+    pool.genPoolHash = () => poolHash;
 
-    const { ctx } = fixture(DexV3Contract).savedState(poolWithDustLiquidity);
+    // Build tick data map with EVERY tick initialized for maximum density
+    const tickDataMap: Record<string, TickData> = {};
+    let tickCount = 0;
 
-    const state: SwapState = {
-      amountSpecifiedRemaining: new BigNumber("-41.62"),
-      amountCalculated: new BigNumber("0"),
-      sqrtPrice: new BigNumber(poolWithDustLiquidity.sqrtPrice),
-      tick: sqrtPriceToTick(poolWithDustLiquidity.sqrtPrice),
-      liquidity: new BigNumber("0.034029613108643226"),
-      feeGrowthGlobalX: new BigNumber("0"),
-      protocolFee: new BigNumber("500")
-    };
+    for (let tick = startTick; tick <= endTick; tick += tickSpacing) {
+      if (tick < TickData.MIN_TICK || tick > TickData.MAX_TICK) continue;
 
-    const bitmapEntriesStart = Object.keys(poolWithDustLiquidity.bitmap).length;
+      flipTick(pool.bitmap, tick, tickSpacing);
 
-    // When
-    const exactInput = true;
-    const zeroForOne = false;
+      const tickData = new TickData(poolHash, tick);
+      tickData.liquidityNet = new BigNumber("1");
+      tickData.liquidityGross = new BigNumber("1");
+      tickData.initialised = true;
+      tickData.feeGrowthOutside0 = new BigNumber("0");
+      tickData.feeGrowthOutside1 = new BigNumber("0");
 
-    // logic from quoteExactAmount
-    const sqrtPriceLimit = zeroForOne
-      ? new BigNumber("0.000000000000000000054212147")
-      : new BigNumber("18446050999999999999");
+      tickDataMap[tick.toString()] = tickData;
+      tickCount++;
+    }
 
-    const start = performance.eventLoopUtilization();
+    // Massive swap amount that won't be exhausted quickly with minimal liquidity
+    const swapAmount = new BigNumber("1e30");
+    const sqrtPriceLimit = tickToSqrtPrice(endTick + tickSpacing);
+
+    // When - Schedule callbacks BEFORE the single long-running swap
+    // These will only fire if processSwapSteps yields to the event loop
+    let timeoutCallbackCount = 0;
+    let setImmediateCallbackCount = 0;
 
     const h = monitorEventLoopDelay({ resolution: 20 });
     h.enable();
 
-    let timeoutCallbackCount = 0;
-    let dnsLookupCallbackCount = 0;
-
-    setTimeout(() => {
-      timeoutCallbackCount++;
-    }, 0);
-    dns.lookup("1.1.1.1", {}, () => {
-      dnsLookupCallbackCount++;
-    });
-
-    const iterations = 2000;
-
-    for (let i = 0; i < iterations; i++) {
+    // Schedule many callbacks that should fire DURING the swap if we're yielding
+    const probeCount = 1000;
+    for (let i = 0; i < probeCount; i++) {
       setTimeout(() => {
         timeoutCallbackCount++;
       }, 0);
-      dns.lookup("1.1.1.1", {}, () => {
-        dnsLookupCallbackCount++;
-      });
-      const tmpState = i === 0 ? state : instanceToInstance(state);
-      await processSwapSteps(
-        ctx,
-        tmpState,
-        poolWithDustLiquidity,
-        sqrtPriceLimit,
-        exactInput,
-        zeroForOne
-      ).catch((e) => e);
-      setTimeout(() => {
-        timeoutCallbackCount++;
-      }, 0);
-      dns.lookup("1.1.1.1", {}, () => {
-        dnsLookupCallbackCount++;
+      global.setImmediate(() => {
+        setImmediateCallbackCount++;
       });
     }
+    const initialState: SwapState = {
+      amountSpecifiedRemaining: swapAmount,
+      amountCalculated: new BigNumber("0"),
+      sqrtPrice: pool.sqrtPrice,
+      tick: startTick,
+      liquidity: pool.liquidity,
+      feeGrowthGlobalX: new BigNumber("0"),
+      protocolFee: new BigNumber("0")
+    };
 
-    await setImmediate();
+    // Execute a SINGLE long-running swap that traverses thousands of ticks
+    const finalState = await processSwapSteps(
+      null, // offline mode
+      initialState,
+      pool,
+      sqrtPriceLimit,
+      true, // exactInput
+      false, // zeroForOne=false to move price upward
+      tickDataMap
+    );
 
     h.disable();
-    const end = performance.eventLoopUtilization(start);
 
-    // Then
-    const bitmapEntriesEnd = Object.keys(poolWithDustLiquidity.bitmap).length;
+    const ticksCrossed = Math.abs(finalState.tick - startTick) / tickSpacing;
 
-    // started with 25, iterated through to 373!
-    expect(bitmapEntriesStart).toBe(25);
-    expect(bitmapEntriesEnd).toBe(373);
+    const result = {
+      tickCount,
+      ticksCrossed,
+      timeoutCallbackCount,
+      setImmediateCallbackCount
+    };
 
-    console.log(h.min);
-    console.log(h.max);
-    console.log(h.mean);
-    console.log(h.stddev);
-    console.log(h.percentiles);
-    console.log(h.percentile(50));
-    console.log(h.percentile(99));
-    console.log(end.idle);
-    console.log(end.utilization);
+    const expectedResult = {
+      tickCount: 10001,
+      ticksCrossed: 10001,
+      timeoutCallbackCount: probeCount,
+      setImmediateCallbackCount: probeCount
+    };
 
-    expect(timeoutCallbackCount).toBeGreaterThan(iterations);
-    expect(dnsLookupCallbackCount).toBeGreaterThan(iterations);
+    // Then - Verify the swap traversed many ticks and
+    // Critical assertion: callbacks must have fired DURING the single swap
+    // With proper yielding (chunkSize=1), we should see most callbacks fire
+    // during the swap since we yield after every step
+    expect(result).toEqual(expectedResult);
+
+    // Max event loop delay should be bounded (not blocking for entire swap duration)
+    // Without yielding, this would be seconds; with yielding it should be < 100ms
+    expect(h.max).toBeLessThan(100_000_000); // < 100ms
   });
 });

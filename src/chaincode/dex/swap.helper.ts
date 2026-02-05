@@ -294,8 +294,7 @@ async function processStepRecursive(
   // Check if we should yield to the event loop
   if (newStepsInChunk >= chunkSize) {
     // Yield via setImmediate and continue recursively
-    // todo: commenting out to simulate previous behavior
-    // await setImmediateAsync();
+    await setImmediateAsync();
     return processStepRecursive(params, 0);
   }
 

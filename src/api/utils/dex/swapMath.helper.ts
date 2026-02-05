@@ -44,6 +44,12 @@ export function computeSwapStep(
   fee: number,
   zeroForOne: boolean
 ): BigNumber[] {
+  // Zero-liquidity guard: when liquidity is zero, price jumps directly to target
+  // with no actual swap occurring. This allows traversing empty tick ranges.
+  if (liquidity.isZero()) {
+    return [sqrtPriceTarget, new BigNumber(0), new BigNumber(0), new BigNumber(0)];
+  }
+
   //returns
   let amountIn = new BigNumber(0),
     amountOut = new BigNumber(0),

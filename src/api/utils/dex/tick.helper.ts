@@ -121,9 +121,9 @@ export function nextInitialisedTickWithInSameWord(
     const masked = bitmask & mask;
 
     const newPos = mostSignificantBit(masked);
-    const intialized = masked != BigInt(0);
-    const value = intialized ? compressed - (pos - newPos) : compressed - pos;
-    return [value * tickSpacing, intialized];
+    const initialized = masked != BigInt(0);
+    const value = initialized ? compressed - (pos - newPos) : compressed - pos;
+    return [value * tickSpacing, initialized];
   } else {
     compressed = compressed + 1;
     const [word, pos] = position(compressed);
@@ -134,10 +134,10 @@ export function nextInitialisedTickWithInSameWord(
     const mask = ~((BigInt(1) << BigInt(pos)) - BigInt(1));
     const masked = bitmask & mask;
 
-    const intialized = masked != BigInt(0);
+    const initialized = masked != BigInt(0);
     const newPos = leastSignificantBit(masked);
-    const value = intialized ? compressed + newPos - pos : compressed + (2 ** 8 - 1 - pos);
-    return [value * tickSpacing, intialized];
+    const value = initialized ? compressed + newPos - pos : compressed + (2 ** 8 - 1 - pos);
+    return [value * tickSpacing, initialized];
   }
 }
 

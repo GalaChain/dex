@@ -82,6 +82,28 @@ export async function processSwapSteps(
       zeroForOne
     );
 
+    // Zero-liquidity fast-forward: when liquidity is zero and the next tick isn't
+    // initialized, skip multiple 256-tick words to find the next initialized tick.
+    // This prevents O(n) iterations through empty tick ranges.
+    if (state.liquidity.isZero() && !step.initialised) {
+      let searchTick = step.tickNext;
+
+      // Keep searching through bitmap words until we find an initialized tick or hit bounds
+      while (!step.initialised && searchTick >= TickData.MIN_TICK && searchTick <= TickData.MAX_TICK) {
+        [step.tickNext, step.initialised] = nextInitialisedTickWithInSameWord(
+          pool.bitmap,
+          searchTick,
+          pool.tickSpacing,
+          zeroForOne
+        );
+
+        if (!step.initialised) {
+          // Move to the next word boundary
+          searchTick = step.tickNext;
+        }
+      }
+    }
+
     // Reject if next tick is out of bounds
     if (step.tickNext < TickData.MIN_TICK || step.tickNext > TickData.MAX_TICK) {
       throw new ConflictError("Not enough liquidity available in pool");

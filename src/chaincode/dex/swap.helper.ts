@@ -283,7 +283,7 @@ async function processStepRecursive(
   if (needsAsyncTickFetch) {
     await handleTickCrossing(ctx, state, step, pool, zeroForOne, tickDataMap);
     // Async tick fetch already yielded, reset chunk counter
-    newStepsInChunk = 1;
+    newStepsInChunk = chunkSize;
   } else {
     newStepsInChunk = stepsInCurrentChunk + 1;
   }

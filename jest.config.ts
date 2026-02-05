@@ -23,5 +23,5 @@ export default {
     "^.+\\.[tj]s$": ["ts-jest", { tsconfig: "<rootDir>/tsconfig.spec.json" }]
   },
   moduleFileExtensions: ["ts", "js"],
-  modulePathIgnorePatterns: ["lib", "e2e", "ctx", "ext"]
+  modulePathIgnorePatterns: ["lib", "e2e", "ctx", "ext", "benchmarks"]
 };

@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ConflictError, TokenInstanceKey, ValidationFailedError } from "@gala-chain/api";
+import { ConflictError, TokenInstanceKey, ValidationFailedError, asValidUserAlias } from "@gala-chain/api";
 import {
   GalaChainContext,
   fetchOrCreateBalance,
@@ -32,6 +32,7 @@ import {
   sqrtPriceToTick
 } from "../../api/";
 import { roundTokenAmount, validateTokenOrder } from "./dexUtils";
+import { validateOrRejectPrivatePoolAccess } from "./privatePoolUtils";
 import { processSwapSteps } from "./swap.helper";
 
 /**
@@ -55,6 +56,9 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
 
   const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
   const pool = await getObjectByKey(ctx, Pool, key);
+
+  // Check private pool access
+  validateOrRejectPrivatePoolAccess(pool, ctx.callingUser);
 
   // Validate sqrtPriceLimit and input amount
   if (zeroForOne) {
@@ -80,7 +84,7 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
 
   const slot0 = {
     sqrtPrice: new BigNumber(pool.sqrtPrice),
-    tick: sqrtPriceToTick(pool.sqrtPrice),
+    tick: pool.tick ?? sqrtPriceToTick(pool.sqrtPrice),
     liquidity: new BigNumber(pool.liquidity)
   };
 
@@ -108,6 +112,10 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
   //fetch token classes
   const tokenClasses = await Promise.all(tokenInstanceKeys.map((key) => fetchTokenClass(ctx, key)));
 
+  // Determine the seller - this may be different from the caller if swapping on behalf of another user
+  const seller =
+    dto.recipient && dto.recipient !== ctx.callingUser ? asValidUserAlias(dto.recipient) : ctx.callingUser;
+
   for (const [index, amount] of amounts.entries()) {
     if (amount.gt(0)) {
       if (dto.amountInMaximum && amount.gt(dto.amountInMaximum)) {
@@ -117,7 +125,7 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
       }
 
       await transferToken(ctx, {
-        from: ctx.callingUser,
+        from: seller,
         to: poolAlias,
         tokenInstanceKey: tokenInstanceKeys[index],
         quantity: roundTokenAmount(amount, tokenClasses[index].decimals, amount.isPositive()),
@@ -147,7 +155,7 @@ export async function swap(ctx: GalaChainContext, dto: SwapDto): Promise<SwapRes
 
       await transferToken(ctx, {
         from: poolAlias,
-        to: ctx.callingUser,
+        to: seller,
         tokenInstanceKey: tokenInstanceKeys[index],
         quantity: roundedAmount,
         allowancesToUse: [],

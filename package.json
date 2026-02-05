@@ -1,6 +1,6 @@
 {
   "name": "@gala-chain/dex",
-  "version": "1.0.9",
+  "version": "1.0.27",
   "description": "GalaChain DEX Chaincode",
   "main": "lib/src/index.js",
   "types": "lib/src/index.d.ts",
@@ -20,13 +20,15 @@
     "test": "jest",
     "test:e2e": "jest --config=e2e/jest.config.js --runInBand",
     "test:e2e-mocked": "env $(grep -v '^#' .dev-env | grep -v '^$' | xargs) CURATORORG_MOCKED_CHAINCODE_DIR=./ jest --config=e2e/jest.config.js --runInBand",
-    "update-snapshot": "jest --updateSnapshot"
+    "update-snapshot": "jest --updateSnapshot",
+    "benchmark": "jest --config=benchmarks/jest.config.js --runInBand"
   },
   "dependencies": {
     "@gala-chain/api": "~2.3.4",
     "@gala-chain/chaincode": "~2.3.4",
     "@grpc/grpc-js": "1.10.10",
     "@noble/hashes": "^1.8.0",
+    "decimal.js": "^10.6.0",
     "dotenv": "^16.0.1",
     "fabric-contract-api": "2.5.6",
     "fabric-shim": "2.5.6"

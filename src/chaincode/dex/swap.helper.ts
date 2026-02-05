@@ -23,7 +23,7 @@ import {
   SwapState,
   TickData,
   computeSwapStep,
-  f18,
+  f8,
   nextInitialisedTickWithInSameWord,
   sqrtPriceToTick,
   tickToSqrtPrice
@@ -40,26 +40,28 @@ import { fetchOrCreateAndCrossTick } from "./tickData.helper";
  * - Price impact and slippage limits
  * - Exact input vs exact output semantics
  *
- * @param ctx - The GalaChain context for blockchain operations
+ * @param ctx - The GalaChain context for blockchain operations (null for offline mode)
  * @param state - Current swap state including price, liquidity, and remaining amounts
  * @param pool - The liquidity pool being traded against
  * @param sqrtPriceLimit - Maximum price impact allowed (slippage protection)
  * @param exactInput - Whether this is an exact input (true) or exact output (false) swap
  * @param zeroForOne - Swap direction: token0→token1 (true) or token1→token0 (false)
+ * @param tickDataMap - Optional map of tick data for offline calculations
  * @returns Updated swap state after processing all possible steps
  * @throws ConflictError when insufficient liquidity is available
  */
 export async function processSwapSteps(
-  ctx: GalaChainContext,
+  ctx: GalaChainContext | null,
   state: SwapState,
   pool: Pool,
   sqrtPriceLimit: BigNumber,
   exactInput: boolean,
-  zeroForOne: boolean
+  zeroForOne: boolean,
+  tickDataMap?: Record<string, TickData>
 ): Promise<SwapState> {
   while (
     // Continue while there's amount left to swap and price hasn't hit the limit
-    !f18(state.amountSpecifiedRemaining).isEqualTo(0) &&
+    !f8(state.amountSpecifiedRemaining).isEqualTo(0) &&
     !state.sqrtPrice.isEqualTo(sqrtPriceLimit)
   ) {
     // Initialize step state
@@ -78,8 +80,7 @@ export async function processSwapSteps(
       pool.bitmap,
       state.tick,
       pool.tickSpacing,
-      zeroForOne,
-      state.sqrtPrice
+      zeroForOne
     );
 
     // Reject if next tick is out of bounds
@@ -133,13 +134,35 @@ export async function processSwapSteps(
     if (state.sqrtPrice.isEqualTo(step.sqrtPriceNext)) {
       // Handle liquidity change at the tick if initialized
       if (step.initialised) {
-        let liquidityNet = await fetchOrCreateAndCrossTick(
-          ctx,
-          pool.genPoolHash(),
-          step.tickNext,
-          zeroForOne ? state.feeGrowthGlobalX : pool.feeGrowthGlobal0,
-          zeroForOne ? pool.feeGrowthGlobal1 : state.feeGrowthGlobalX
-        );
+        let liquidityNet: BigNumber;
+
+        if (tickDataMap && ctx === null) {
+          // Offline mode: use provided tick data
+          const tickData = tickDataMap[step.tickNext.toString()];
+          if (tickData) {
+            liquidityNet = tickData.tickCross(
+              zeroForOne ? state.feeGrowthGlobalX : pool.feeGrowthGlobal0,
+              zeroForOne ? pool.feeGrowthGlobal1 : state.feeGrowthGlobalX
+            );
+          } else {
+            // Create default tick data if not found in offline map
+            const defaultTick = new TickData(pool.genPoolHash(), step.tickNext);
+            liquidityNet = defaultTick.tickCross(
+              zeroForOne ? state.feeGrowthGlobalX : pool.feeGrowthGlobal0,
+              zeroForOne ? pool.feeGrowthGlobal1 : state.feeGrowthGlobalX
+            );
+          }
+        } else {
+          // Online mode: fetch from chain
+          liquidityNet = await fetchOrCreateAndCrossTick(
+            ctx!,
+            pool.genPoolHash(),
+            step.tickNext,
+            zeroForOne ? state.feeGrowthGlobalX : pool.feeGrowthGlobal0,
+            zeroForOne ? pool.feeGrowthGlobal1 : state.feeGrowthGlobalX
+          );
+        }
+
         if (zeroForOne) {
           liquidityNet = liquidityNet.times(-1); // Negate if zeroForOne
         }

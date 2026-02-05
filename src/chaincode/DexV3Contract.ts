@@ -12,7 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { BatchDto, ChainCallDTO, GalaChainResponse, NotFoundError, UnauthorizedError } from "@gala-chain/api";
+import {
+  BatchDto,
+  ChainCallDTO,
+  FetchAllowancesResponse,
+  GalaChainResponse,
+  NotFoundError,
+  TokenAllowance,
+  UnauthorizedError
+} from "@gala-chain/api";
 import {
   BatchWriteLimitExceededError,
   EVALUATE,
@@ -22,6 +30,7 @@ import {
   GalaTransaction,
   SUBMIT,
   Submit,
+  UnsignedEvaluate,
   getApiMethod
 } from "@gala-chain/chaincode";
 
@@ -36,21 +45,27 @@ import {
   CollectDto,
   CollectProtocolFeesDto,
   CollectProtocolFeesResDto,
+  CompositePoolDto,
   ConfigureDexFeeAddressDto,
   ConfigurePoolDexFeeDto,
   ConfigurePoolDexFeeResDto,
   CreatePoolDto,
   CreatePoolResDto,
   DeauthorizeBatchSubmitterDto,
+  DeleteSwapAllowancesDto,
   DexFeeConfig,
   DexOperationResDto,
   DexPositionData,
   DexPositionOwner,
   FetchBatchSubmitAuthoritiesDto,
+  FetchSwapAllowancesDto,
   FillLimitOrderDto,
   GetAddLiquidityEstimationDto,
   GetAddLiquidityEstimationResDto,
+  GetBitMapResDto,
+  GetCompositePoolDto,
   GetLiquidityResDto,
+  GetPoolBalanceDeltaResDto,
   GetPoolDto,
   GetPositionByIdDto,
   GetPositionDto,
@@ -58,6 +73,10 @@ import {
   GetTickDataDto,
   GetUserPositionsDto,
   GetUserPositionsResDto,
+  GrantBulkSwapAllowanceDto,
+  GrantSwapAllowanceDto,
+  MakePoolPublicDto,
+  ManageWhitelistDto,
   PlaceLimitOrderDto,
   PlaceLimitOrderResDto,
   Pool,
@@ -83,10 +102,15 @@ import {
   configurePoolDexFee,
   createPool,
   deauthorizeBatchSubmitter,
+  deleteSwapAllowances,
   fetchBatchSubmitAuthorities,
+  fetchSwapAllowances,
   fillLimitOrder,
   getAddLiquidityEstimation,
+  getBalanceDelta,
   getBatchSubmitAuthorities,
+  getBitMapChanges,
+  getCompositePool,
   getDexFeesConfigration,
   getLiquidity,
   getPoolData,
@@ -95,6 +119,10 @@ import {
   getRemoveLiquidityEstimation,
   getSlot0,
   getUserPositions,
+  grantBulkSwapAllowance,
+  grantSwapAllowance,
+  makePoolPublic,
+  manageWhitelist,
   placeLimitOrder,
   quoteExactAmount,
   setGlobalLimitOrderConfig,
@@ -130,7 +158,9 @@ export class DexV3Contract extends GalaContract {
    * Creates a new DexV3Contract instance.
    */
   constructor() {
-    super("DexV3Contract", version);
+    super("DexV3Contract", version, {
+      allowNonRegisteredUsers: true
+    });
   }
 
   @GalaTransaction({
@@ -341,6 +371,14 @@ export class DexV3Contract extends GalaContract {
     );
   }
 
+  @UnsignedEvaluate({
+    in: GetCompositePoolDto,
+    out: CompositePoolDto
+  })
+  public async GetCompositePool(ctx: GalaChainContext, dto: GetCompositePoolDto): Promise<CompositePoolDto> {
+    return await getCompositePool(ctx, dto);
+  }
+
   @GalaTransaction({
     type: EVALUATE,
     in: BurnEstimateDto,
@@ -414,6 +452,24 @@ export class DexV3Contract extends GalaContract {
     dto: ConfigureDexFeeAddressDto
   ): Promise<DexFeeConfig> {
     return configureDexFeeAddress(ctx, dto);
+  }
+
+  @GalaTransaction({
+    type: EVALUATE,
+    in: GetPoolDto,
+    out: GetBitMapResDto
+  })
+  public async GetBitMapChanges(ctx: GalaChainContext, dto: GetPoolDto): Promise<GetBitMapResDto> {
+    return getBitMapChanges(ctx, dto);
+  }
+
+  @GalaTransaction({
+    type: EVALUATE,
+    in: GetPoolDto,
+    out: GetPoolBalanceDeltaResDto
+  })
+  public async GetBalanceDelta(ctx: GalaChainContext, dto: GetPoolDto): Promise<GetPoolBalanceDeltaResDto> {
+    return await getBalanceDelta(ctx, dto);
   }
 
   @Submit({
@@ -535,6 +591,85 @@ export class DexV3Contract extends GalaContract {
     return setGlobalLimitOrderConfig(ctx, dto);
   }
 
+  /**
+   * Grants swap allowances for the specified token instance.
+   *
+   * This method allows users to create allowances that can be used for token swaps,
+   * enabling third-party services to execute swaps on behalf of the user.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Swap allowance grant parameters
+   * @returns Array of created TokenAllowance objects
+   */
+  @Submit({
+    in: GrantSwapAllowanceDto
+  })
+  public async GrantSwapAllowance(
+    ctx: GalaChainContext,
+    dto: GrantSwapAllowanceDto
+  ): Promise<TokenAllowance[]> {
+    return grantSwapAllowance(ctx, dto);
+  }
+
+  /**
+   * Grants swap allowances for multiple token instances in a single operation.
+   *
+   * This method allows users to create allowances for multiple tokens at once,
+   * enabling third-party services to execute swaps on behalf of the user across
+   * different token types efficiently.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Bulk swap allowance grant parameters
+   * @returns Array of created TokenAllowance objects
+   */
+  @Submit({
+    in: GrantBulkSwapAllowanceDto
+  })
+  public async GrantBulkSwapAllowance(
+    ctx: GalaChainContext,
+    dto: GrantBulkSwapAllowanceDto
+  ): Promise<TokenAllowance[]> {
+    return grantBulkSwapAllowance(ctx, dto);
+  }
+
+  /**
+   * Fetches swap allowances with pagination support.
+   *
+   * This method allows users to query their swap allowances with various filtering
+   * options and pagination support for large result sets.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Swap allowance query parameters
+   * @returns Paginated response with allowances
+   */
+  @GalaTransaction({
+    type: EVALUATE,
+    in: FetchSwapAllowancesDto
+  })
+  public async FetchSwapAllowances(
+    ctx: GalaChainContext,
+    dto: FetchSwapAllowancesDto
+  ): Promise<FetchAllowancesResponse> {
+    return fetchSwapAllowances(ctx, dto);
+  }
+
+  /**
+   * Deletes swap allowances matching the specified criteria.
+   *
+   * This method allows users to revoke swap allowances that are no longer needed,
+   * providing control over which services can execute swaps on their behalf.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Swap allowance deletion parameters
+   * @returns Number of allowances deleted
+   */
+  @Submit({
+    in: DeleteSwapAllowancesDto
+  })
+  public async DeleteSwapAllowances(ctx: GalaChainContext, dto: DeleteSwapAllowancesDto): Promise<number> {
+    return deleteSwapAllowances(ctx, dto);
+  }
+
   @Submit({
     in: AuthorizeBatchSubmitterDto,
     out: BatchSubmitAuthoritiesResDto,
@@ -569,5 +704,35 @@ export class DexV3Contract extends GalaContract {
     dto: FetchBatchSubmitAuthoritiesDto
   ): Promise<BatchSubmitAuthoritiesResDto> {
     return await getBatchSubmitAuthorities(ctx, dto);
+  }
+
+  /**
+   * Makes a private pool public. Only whitelisted users can make pools public.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Pool identification parameters
+   * @returns void
+   */
+  @Submit({
+    in: MakePoolPublicDto,
+    out: ChainCallDTO
+  })
+  public async MakePoolPublic(ctx: GalaChainContext, dto: MakePoolPublicDto): Promise<void> {
+    return await makePoolPublic(ctx, dto);
+  }
+
+  /**
+   * Manages the whitelist for a private pool. Only whitelisted users can modify the whitelist.
+   *
+   * @param ctx - The GalaChain context
+   * @param dto - Whitelist management parameters
+   * @returns void
+   */
+  @Submit({
+    in: ManageWhitelistDto,
+    out: ChainCallDTO
+  })
+  public async ManageWhitelist(ctx: GalaChainContext, dto: ManageWhitelistDto): Promise<void> {
+    return await manageWhitelist(ctx, dto);
   }
 }

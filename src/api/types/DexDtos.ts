@@ -14,15 +14,18 @@
  */
 import {
   BigNumberProperty,
+  ChainCallDTO,
   EnumProperty,
   IsBigNumber,
   IsUserAlias,
   IsUserRef,
+  StringEnumProperty,
   SubmitCallDTO,
+  TokenBalance,
+  TokenClassKey,
   UserAlias,
   UserRef
 } from "@gala-chain/api";
-import { ChainCallDTO, TokenBalance, TokenClassKey } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
 import { Type } from "class-transformer";
 import {
@@ -43,13 +46,14 @@ import { JSONSchema } from "class-validator-jsonschema";
 
 import { PositionInPool, f18 } from "../utils";
 import { BigNumberIsNegative, BigNumberIsNotNegative, BigNumberIsPositive, IsLessThan } from "../validators";
+import { CompositePoolDto } from "./CompositePoolDto";
+import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { IDexLimitOrderModel } from "./DexLimitOrderModel";
 import { TickData } from "./TickData";
 
-export enum DexFeePercentageTypes {
-  FEE_0_05_PERCENT = 500, // 0.05%
-  FEE_0_3_PERCENT = 3000, // 0.3%
-  FEE_1_PERCENT = 10000 // 1%
+export enum PoolWhitelistOperation {
+  ADD = "ADD",
+  REMOVE = "REMOVE"
 }
 
 export class CreatePoolDto extends SubmitCallDTO {
@@ -70,17 +74,30 @@ export class CreatePoolDto extends SubmitCallDTO {
   @BigNumberProperty()
   public initialSqrtPrice: BigNumber;
 
+  @IsOptional()
+  @IsBoolean()
+  public isPrivate?: boolean = false;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  public whitelist?: string[] = [];
+
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
     fee: DexFeePercentageTypes,
-    initialSqrtPrice: BigNumber
+    initialSqrtPrice: BigNumber,
+    isPrivate?: boolean,
+    whitelist?: string[]
   ) {
     super();
     this.token0 = token0;
     this.token1 = token1;
     this.fee = fee;
     this.initialSqrtPrice = initialSqrtPrice;
+    this.isPrivate = isPrivate ?? false;
+    this.whitelist = whitelist ?? [];
   }
 }
 
@@ -152,12 +169,18 @@ export class QuoteExactAmountDto extends ChainCallDTO {
   @BigNumberProperty()
   public amount: BigNumber;
 
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CompositePoolDto)
+  public compositePool?: CompositePoolDto;
+
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
     fee: DexFeePercentageTypes,
     amount: BigNumber,
-    zeroForOne: boolean
+    zeroForOne: boolean,
+    compositePool?: CompositePoolDto
   ) {
     super();
     this.token0 = token0;
@@ -165,6 +188,9 @@ export class QuoteExactAmountDto extends ChainCallDTO {
     this.fee = fee;
     this.amount = amount;
     this.zeroForOne = zeroForOne;
+    if (compositePool !== undefined) {
+      this.compositePool = compositePool;
+    }
   }
 }
 
@@ -204,6 +230,10 @@ export class SwapDto extends SubmitCallDTO {
   @IsOptional()
   public amountOutMinimum?: BigNumber;
 
+  @IsOptional()
+  @IsUserAlias()
+  public recipient?: UserAlias;
+
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
@@ -212,7 +242,8 @@ export class SwapDto extends SubmitCallDTO {
     zeroForOne: boolean,
     sqrtPriceLimit: BigNumber,
     amountInMaximum?: BigNumber,
-    amountOutMinimum?: BigNumber
+    amountOutMinimum?: BigNumber,
+    recipient?: UserAlias
   ) {
     super();
     this.token0 = token0;
@@ -226,6 +257,9 @@ export class SwapDto extends SubmitCallDTO {
     }
     if (amountOutMinimum !== undefined) {
       this.amountOutMinimum = amountOutMinimum;
+    }
+    if (recipient !== undefined) {
+      this.recipient = recipient;
     }
   }
 }
@@ -1040,6 +1074,10 @@ export class DexOperationResDto extends ChainCallDTO {
   @IsUserRef()
   poolAlias: UserRef;
 
+  @IsNotEmpty()
+  @IsString()
+  positionId: string;
+
   @EnumProperty(DexFeePercentageTypes)
   poolFee: DexFeePercentageTypes;
 
@@ -1051,6 +1089,7 @@ export class DexOperationResDto extends ChainCallDTO {
     userBalanceDelta: UserBalanceResDto,
     amounts: string[],
     poolHash: string,
+    positionId: string,
     poolAlias: UserRef,
     poolFee: DexFeePercentageTypes,
     userAddress: UserRef
@@ -1059,6 +1098,7 @@ export class DexOperationResDto extends ChainCallDTO {
     this.userBalanceDelta = userBalanceDelta;
     this.amounts = amounts;
     this.poolHash = poolHash;
+    this.positionId = positionId;
     this.poolAlias = poolAlias;
     this.poolFee = poolFee;
     this.userAddress = userAddress;
@@ -1100,6 +1140,28 @@ export class CreatePoolResDto extends ChainCallDTO {
     this.poolFee = poolFee;
     this.poolHash = poolHash;
     this.poolAlias = poolAlias;
+  }
+}
+
+export class GetBitMapResDto {
+  bitMap: { [key: string]: any };
+  expectedLiquidity: BigNumber;
+  liquidity: BigNumber;
+}
+
+export class GetPoolBalanceDeltaResDto extends ChainCallDTO {
+  @IsNotEmpty()
+  @IsString()
+  amount0Delta: string;
+
+  @IsNotEmpty()
+  @IsString()
+  amount1Delta: string;
+
+  constructor(amount0Delta: string, amount1Delta: string) {
+    super();
+    this.amount0Delta = amount0Delta;
+    this.amount1Delta = amount1Delta;
   }
 }
 
@@ -1258,5 +1320,65 @@ export class SetGlobalLimitOrderConfigDto extends SubmitCallDTO {
     const data: ISetGlobalLimitOrderConfig = args as ISetGlobalLimitOrderConfig;
     this.limitOrderAdminWallets = data?.limitOrderAdminWallets;
     this.uniqueKey = data?.uniqueKey;
+  }
+}
+
+export class MakePoolPublicDto extends SubmitCallDTO {
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token0: TokenClassKey;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token1: TokenClassKey;
+
+  @EnumProperty(DexFeePercentageTypes)
+  public fee: DexFeePercentageTypes;
+
+  constructor(token0: TokenClassKey, token1: TokenClassKey, fee: DexFeePercentageTypes) {
+    super();
+    this.token0 = token0;
+    this.token1 = token1;
+    this.fee = fee;
+  }
+}
+
+export class ManageWhitelistDto extends SubmitCallDTO {
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token0: TokenClassKey;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => TokenClassKey)
+  public token1: TokenClassKey;
+
+  @EnumProperty(DexFeePercentageTypes)
+  public fee: DexFeePercentageTypes;
+
+  @IsNotEmpty()
+  @IsString()
+  public targetUser: string;
+
+  @IsNotEmpty()
+  @StringEnumProperty(PoolWhitelistOperation)
+  public operation: PoolWhitelistOperation;
+
+  constructor(
+    token0: TokenClassKey,
+    token1: TokenClassKey,
+    fee: DexFeePercentageTypes,
+    targetUser: string,
+    operation: PoolWhitelistOperation
+  ) {
+    super();
+    this.token0 = token0;
+    this.token1 = token1;
+    this.fee = fee;
+    this.targetUser = targetUser;
+    this.operation = operation;
   }
 }

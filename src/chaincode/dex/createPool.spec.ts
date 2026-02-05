@@ -26,7 +26,15 @@ import { currency, fixture, users, writesMap } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
-import { CreatePoolDto, CreatePoolResDto, DexFeeConfig, DexFeePercentageTypes, Pool } from "../../api/";
+import {
+  CreatePoolDto,
+  CreatePoolResDto,
+  DexFeeConfig,
+  DexFeePercentageTypes,
+  Pool,
+  TickData
+} from "../../api/";
+import { tickToSqrtPrice } from "../../api/utils/dex/tick.helper";
 import { DexV3Contract } from "../DexV3Contract";
 import dexTestUtils from "../test/dex";
 import { generateKeyFromClassKey } from "./dexUtils";
@@ -55,8 +63,7 @@ describe("createPool", () => {
         dexInstance,
         dexClass,
         dexBalance
-      )
-      .savedRangeState([]);
+      );
 
     const dto = new CreatePoolDto(
       dexClassKey,
@@ -108,8 +115,7 @@ describe("createPool", () => {
 
     const { ctx, contract, getWrites } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
       .registeredUsers(users.testUser1)
-      .savedState(currencyClass, dexFeeConfig, dexClass)
-      .savedRangeState([]);
+      .savedState(currencyClass, dexFeeConfig, dexClass);
 
     const dto = new CreatePoolDto(
       currencyClassKey,
@@ -136,6 +142,7 @@ describe("createPool", () => {
       new BigNumber("1"),
       dexFeeConfig.protocolFee
     );
+    expectedPool.creator = users.testUser1.identityKey;
 
     const expectedResponse = new CreatePoolResDto(
       currencyClassKey,
@@ -151,5 +158,163 @@ describe("createPool", () => {
     // Then
     expect(response).toEqual(GalaChainResponse.Success(expectedResponse));
     expect(getWrites()).toEqual(writesMap(expectedFeeThresholdUses, expectedPool));
+  });
+
+  describe("sqrtPrice validation", () => {
+    it("should reject sqrtPrice = 0", async () => {
+      const currencyClass: TokenClass = currency.tokenClass();
+      const currencyClassKey: TokenClassKey = currency.tokenClassKey();
+
+      const dexClass: TokenClass = dexTestUtils.tokenClass();
+      const dexClassKey: TokenClassKey = dexTestUtils.tokenClassKey();
+
+      const dexFeeConfig: DexFeeConfig = new DexFeeConfig([asValidUserAlias(users.admin.identityKey)], 0.1);
+
+      const { ctx, contract } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
+        .registeredUsers(users.testUser1)
+        .savedState(currencyClass, dexFeeConfig, dexClass);
+
+      const dto = new CreatePoolDto(
+        dexClassKey,
+        currencyClassKey,
+        DexFeePercentageTypes.FEE_1_PERCENT,
+        new BigNumber(0) // Zero sqrtPrice - should be rejected
+      );
+      dto.uniqueKey = "test-zero";
+      dto.sign(users.testUser1.privateKey);
+
+      // When
+      const response = await contract.CreatePool(ctx, dto);
+
+      // Then - should fail with validation error
+      expect(response.Status).toBe(0);
+      expect(response.Message).toContain("initialSqrtPrice must be greater than 0");
+    });
+
+    it("should reject sqrtPrice below MIN_SQRT_RATIO", async () => {
+      const currencyClass: TokenClass = currency.tokenClass();
+      const currencyClassKey: TokenClassKey = currency.tokenClassKey();
+
+      const dexClass: TokenClass = dexTestUtils.tokenClass();
+      const dexClassKey: TokenClassKey = dexTestUtils.tokenClassKey();
+
+      const dexFeeConfig: DexFeeConfig = new DexFeeConfig([asValidUserAlias(users.admin.identityKey)], 0.1);
+
+      const { ctx, contract } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
+        .registeredUsers(users.testUser1)
+        .savedState(currencyClass, dexFeeConfig, dexClass);
+
+      const belowMinSqrtPrice = new BigNumber("1e-50"); // Way below MIN_SQRT_RATIO
+
+      const dto = new CreatePoolDto(
+        dexClassKey,
+        currencyClassKey,
+        DexFeePercentageTypes.FEE_1_PERCENT,
+        belowMinSqrtPrice
+      );
+      dto.uniqueKey = "test-below-min";
+      dto.sign(users.testUser1.privateKey);
+
+      // When
+      const response = await contract.CreatePool(ctx, dto);
+
+      // Then - should fail with validation error
+      expect(response.Status).toBe(0);
+      expect(response.Message).toContain("initialSqrtPrice must be between");
+    });
+
+    it("should reject sqrtPrice above MAX_SQRT_RATIO", async () => {
+      const currencyClass: TokenClass = currency.tokenClass();
+      const currencyClassKey: TokenClassKey = currency.tokenClassKey();
+
+      const dexClass: TokenClass = dexTestUtils.tokenClass();
+      const dexClassKey: TokenClassKey = dexTestUtils.tokenClassKey();
+
+      const dexFeeConfig: DexFeeConfig = new DexFeeConfig([asValidUserAlias(users.admin.identityKey)], 0.1);
+
+      const { ctx, contract } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
+        .registeredUsers(users.testUser1)
+        .savedState(currencyClass, dexFeeConfig, dexClass);
+
+      const aboveMaxSqrtPrice = new BigNumber("1e50"); // Way above MAX_SQRT_RATIO
+
+      const dto = new CreatePoolDto(
+        dexClassKey,
+        currencyClassKey,
+        DexFeePercentageTypes.FEE_1_PERCENT,
+        aboveMaxSqrtPrice
+      );
+      dto.uniqueKey = "test-above-max";
+      dto.sign(users.testUser1.privateKey);
+
+      // When
+      const response = await contract.CreatePool(ctx, dto);
+
+      // Then - should fail with validation error
+      expect(response.Status).toBe(0);
+      expect(response.Message).toContain("initialSqrtPrice must be between");
+    });
+
+    it("should accept sqrtPrice at exactly MIN_SQRT_RATIO", async () => {
+      const currencyClass: TokenClass = currency.tokenClass();
+      const currencyClassKey: TokenClassKey = currency.tokenClassKey();
+
+      const dexClass: TokenClass = dexTestUtils.tokenClass();
+      const dexClassKey: TokenClassKey = dexTestUtils.tokenClassKey();
+
+      const dexFeeConfig: DexFeeConfig = new DexFeeConfig([asValidUserAlias(users.admin.identityKey)], 0.1);
+
+      const { ctx, contract } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
+        .registeredUsers(users.testUser1)
+        .savedState(currencyClass, dexFeeConfig, dexClass);
+
+      const minSqrtPrice = tickToSqrtPrice(TickData.MIN_TICK);
+
+      const dto = new CreatePoolDto(
+        dexClassKey,
+        currencyClassKey,
+        DexFeePercentageTypes.FEE_1_PERCENT,
+        minSqrtPrice
+      );
+      dto.uniqueKey = "test-min";
+      dto.sign(users.testUser1.privateKey);
+
+      // When
+      const response = await contract.CreatePool(ctx, dto);
+
+      // Then
+      expect(response.Status).toBe(1); // Success
+    });
+
+    it("should accept sqrtPrice at exactly MAX_SQRT_RATIO", async () => {
+      const currencyClass: TokenClass = currency.tokenClass();
+      const currencyClassKey: TokenClassKey = currency.tokenClassKey();
+
+      const dexClass: TokenClass = dexTestUtils.tokenClass();
+      const dexClassKey: TokenClassKey = dexTestUtils.tokenClassKey();
+
+      const dexFeeConfig: DexFeeConfig = new DexFeeConfig([asValidUserAlias(users.admin.identityKey)], 0.1);
+
+      const { ctx, contract } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
+        .registeredUsers(users.testUser1)
+        .savedState(currencyClass, dexFeeConfig, dexClass);
+
+      const maxSqrtPrice = tickToSqrtPrice(TickData.MAX_TICK);
+
+      const dto = new CreatePoolDto(
+        dexClassKey,
+        currencyClassKey,
+        DexFeePercentageTypes.FEE_0_05_PERCENT, // Different fee to avoid duplicate pool
+        maxSqrtPrice
+      );
+      dto.uniqueKey = "test-max";
+      dto.sign(users.testUser1.privateKey);
+
+      // When
+      const response = await contract.CreatePool(ctx, dto);
+
+      // Then
+      expect(response.Status).toBe(1); // Success
+    });
   });
 });

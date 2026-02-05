@@ -87,8 +87,7 @@ describe("createPool", () => {
     // Given
     const { ctx, contract } = fixture<GalaChainContext, DexV3Contract>(DexV3Contract)
       .registeredUsers(users.testUser1)
-      .savedState(pool)
-      .savedRangeState([]);
+      .savedState(pool);
 
     const getPoolDto = new GetPoolDto(token0ClassKey, token1ClassKey, DexFeePercentageTypes.FEE_1_PERCENT);
 
@@ -213,8 +212,8 @@ describe("createPool", () => {
 
     // Then
     expect(result.Data?.amount0.toString()).toBe("1000");
-    expect(result.Data?.amount1.toString()).toBe("1000.000000000020324249");
-    expect(result.Data?.liquidity.toString()).toBe("200510.41647902682527463");
+    expect(result.Data?.amount1.toString()).toBe("999.999999999999999435");
+    expect(result.Data?.liquidity.toString()).toBe("200510.416479002803315438");
   });
 
   test("getAddLiquidityEstimation: should call getAmountForLiquidity with different zeroForOne and tick range", async () => {
@@ -242,8 +241,8 @@ describe("createPool", () => {
     const result = await contract.GetAddLiquidityEstimation(ctx, dto);
 
     // Then
-    expect(result.Data?.amount0.toString()).toBe("999.999999999802640296");
+    expect(result.Data?.amount0.toString()).toBe("999.999999999999979593");
     expect(result.Data?.amount1.toString()).toBe("1000");
-    expect(result.Data?.liquidity.toString()).toBe("2000600.039998005002200282");
+    expect(result.Data?.liquidity.toString()).toBe("2000600.039997999959175626");
   });
 });

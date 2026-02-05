@@ -315,6 +315,28 @@ describe("DexV3Contract:LimitOrder", () => {
     // Then
     expect(response).toEqual(transactionSuccess());
   });
+
+  test("QuoteExactAmount", async () => {
+    // Given
+    const getPoolDto = new GetPoolDto(token0ClassKey, token1ClassKey, DexFeePercentageTypes.FEE_0_3_PERCENT);
+    const poolResponse = await client.dex.GetCompositePool(getPoolDto);
+    const compositePool = poolResponse.Data!;
+
+    const dto = new QuoteExactAmountDto(
+      token0ClassKey,
+      token1ClassKey,
+      DexFeePercentageTypes.FEE_0_3_PERCENT,
+      new BigNumber("1000000000"),
+      true,
+      compositePool
+    );
+
+    // When
+    const response = await client.dex.QuoteExactAmount(dto);
+
+    // Then
+    expect(response).toEqual(transactionSuccess());
+  });
 });
 
 interface DexV3ContractAPI {
@@ -330,6 +352,7 @@ interface DexV3ContractAPI {
   ): Promise<GalaChainResponse<GetAddLiquidityEstimationResDto>>;
   QuoteExactAmount(dto: QuoteExactAmountDto): Promise<GalaChainResponse<QuoteExactAmountResDto>>;
   GetPoolData(dto: GetPoolDto): Promise<GalaChainResponse<Pool>>;
+  GetCompositePool(dto: GetPoolDto): Promise<GalaChainResponse<any>>;
   GetRemoveLiquidityEstimation(
     dto: BurnEstimateDto
   ): Promise<GalaChainResponse<GetRemoveLiqEstimationResDto>>;
@@ -391,6 +414,9 @@ function dexContractAPI(client: ChainClient): DexV3ContractAPI & CommonContractA
     },
     GetPoolData(dto: GetPoolDto) {
       return client.evaluateTransaction("GetPoolData", dto) as Promise<GalaChainResponse<Pool>>;
+    },
+    GetCompositePool(dto: GetPoolDto) {
+      return client.evaluateTransaction("GetCompositePool", dto) as Promise<GalaChainResponse<any>>;
     },
     GetRemoveLiquidityEstimation(dto: BurnEstimateDto) {
       return client.evaluateTransaction("GetRemoveLiquidityEstimation", dto) as Promise<

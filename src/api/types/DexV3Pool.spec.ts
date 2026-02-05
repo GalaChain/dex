@@ -17,7 +17,7 @@ import { BigNumber } from "bignumber.js";
 import { plainToInstance } from "class-transformer";
 
 import { SwapState, tickToSqrtPrice } from "../utils";
-import { DexFeePercentageTypes } from "./DexDtos";
+import { DexFeePercentageTypes } from "./DexFeeTypes";
 import { DexPositionData } from "./DexPositionData";
 import { Pool } from "./DexV3Pool";
 import { TickData } from "./TickData";
@@ -165,7 +165,7 @@ describe("DexV3Pool", () => {
 
     // Then
     expect(validationResult).toEqual([]);
-    expect(amount0).toEqual(new BigNumber("0.00493727582043612206"));
+    expect(amount0).toEqual(new BigNumber("0.00493727582043662347"));
     expect(amount1).toEqual(new BigNumber("0"));
   });
 
@@ -183,8 +183,8 @@ describe("DexV3Pool", () => {
 
     // Then
     expect(validationResult).toEqual([]);
-    expect(amount0).toEqual(new BigNumber("0.00498727207074849864"));
-    expect(amount1).toEqual(new BigNumber("0.0049872720707486"));
+    expect(amount0).toEqual(new BigNumber("0.00498727207074909613"));
+    expect(amount1).toEqual(new BigNumber("0.00498727207074909613"));
   });
 
   test("mint: throws error when liquidity is zero", () => {
@@ -225,7 +225,7 @@ describe("DexV3Pool", () => {
     const [amount0, amount1] = pool.burn(positionData, tickLowerData, tickUpperData, new BigNumber(1));
 
     // Then
-    expect(amount0).toEqual(new BigNumber("0.00493727582043612206"));
+    expect(amount0).toEqual(new BigNumber("0.00493727582043662347"));
     expect(amount1).toEqual(new BigNumber("0"));
   });
 
@@ -250,9 +250,9 @@ describe("DexV3Pool", () => {
     const [amount0, amount1, liquidity] = pool.getAmountForLiquidity(amount, tickLower, tickUpper, true);
 
     // Then
-    expect(amount0.isEqualTo(amount)).toBe(true);
-    expect(amount1.isEqualTo(new BigNumber("999.999999999980893191863136695785480256")));
-    expect(liquidity.isEqualTo(new BigNumber("333850.24970973552810742589")));
+    expect(amount0).toEqual(amount);
+    expect(amount1).toEqual(new BigNumber("999.9999999999999855040699759879468872461742"));
+    expect(liquidity).toEqual(new BigNumber("333850.24970969944403608593"));
   });
 
   test("getAmountForLiquidity: should return only token1 and liquidity when current tick is above range", () => {
@@ -265,9 +265,9 @@ describe("DexV3Pool", () => {
     const [amount0, amount1, liquidity] = pool.getAmountForLiquidity(amount, tickLower, tickUpper, false);
 
     // Then
-    expect(amount0.isEqualTo(new BigNumber("0")));
-    expect(amount1.isEqualTo(amount)).toBe(true);
-    expect(liquidity.isEqualTo(new BigNumber("5010.25916704397590249112")));
+    expect(amount0).toEqual(new BigNumber("0"));
+    expect(amount1).toEqual(amount);
+    expect(liquidity).toEqual(new BigNumber("5010.25916704316960851298"));
   });
 
   test("getAmountForLiquidity: should throw error when token0 is provided but current tick is above range", () => {
@@ -353,8 +353,24 @@ describe("DexV3Pool", () => {
     // Given
     positionData.tokensOwed0 = new BigNumber(10);
     positionData.tokensOwed1 = new BigNumber(10);
+    positionData.liquidity = new BigNumber("1000");
+    positionData.feeGrowthInside0Last = new BigNumber("100");
+    positionData.feeGrowthInside1Last = new BigNumber("100");
 
-    jest.spyOn(pool, "getFeeCollectedEstimation").mockReturnValue([new BigNumber(100), new BigNumber(100)]);
+    // Set up pool with accumulated fees
+    // Since tick is in range (50 is between 1 and 100), feeGrowthInside should match feeGrowthGlobal
+    pool.feeGrowthGlobal0 = new BigNumber("200"); // Fee growth increased by 100
+    pool.feeGrowthGlobal1 = new BigNumber("200");
+    pool.sqrtPrice = tickToSqrtPrice(50);
+
+    // Make sure tick data has zero feeGrowthOutside so feeGrowthInside = feeGrowthGlobal
+    tickLowerData.feeGrowthOutside0 = new BigNumber("0");
+    tickLowerData.feeGrowthOutside1 = new BigNumber("0");
+    tickUpperData.feeGrowthOutside0 = new BigNumber("0");
+    tickUpperData.feeGrowthOutside1 = new BigNumber("0");
+
+    // Expected new fees: (200 - 100) * 1000 = 100,000
+    // Total tokensOwed: 10 + 100,000 = 100,010
 
     // When
     const [amount0, amount1] = pool.collect(
@@ -368,16 +384,29 @@ describe("DexV3Pool", () => {
     // Then
     expect(amount0.isEqualTo(50)).toBe(true);
     expect(amount1.isEqualTo(50)).toBe(true);
-    expect(positionData.tokensOwed0.isEqualTo(60)).toBe(true); // 10 + 100 - 50
-    expect(positionData.tokensOwed1.isEqualTo(60)).toBe(true); // 10 + 100 - 50
+    // After collecting: 10 + 100,000 - 50 = 99,960
+    expect(positionData.tokensOwed0.isEqualTo(99960)).toBe(true);
+    expect(positionData.tokensOwed1.isEqualTo(99960)).toBe(true);
+    // Checkpoint should be updated
+    expect(positionData.feeGrowthInside0Last.isGreaterThanOrEqualTo(200)).toBe(true);
+    expect(positionData.feeGrowthInside1Last.isGreaterThanOrEqualTo(200)).toBe(true);
   });
 
-  test("collect: should throw ConflictError if after estimation tokens owed are still insufficient", () => {
+  test("collect: should throw ConflictError if tokens owed are still insufficient after fee sync", () => {
     // Given
     positionData.tokensOwed0 = new BigNumber(10);
     positionData.tokensOwed1 = new BigNumber(10);
+    positionData.liquidity = new BigNumber("10");
+    positionData.feeGrowthInside0Last = new BigNumber("100");
+    positionData.feeGrowthInside1Last = new BigNumber("100");
 
-    jest.spyOn(pool, "getFeeCollectedEstimation").mockReturnValue([new BigNumber(0), new BigNumber(0)]);
+    // Set up pool with NO new fee growth
+    pool.feeGrowthGlobal0 = new BigNumber("100");
+    pool.feeGrowthGlobal1 = new BigNumber("100");
+    pool.sqrtPrice = tickToSqrtPrice(50);
+
+    // No new fees will accumulate, so tokensOwed stays at 10
+    // Requesting 50 should throw an error
 
     // When
     expect(
@@ -386,7 +415,7 @@ describe("DexV3Pool", () => {
     ).toThrow(new ConflictError("Less balance accumulated"));
   });
 
-  test("getFeeCollectedEstimation: should compute correct tokens owed and update feeGrowthInside values", () => {
+  test("getFeeCollectedEstimation: should compute correct tokens owed without side effects", () => {
     // Given
     pool.sqrtPrice = tickToSqrtPrice(30);
     pool.feeGrowthGlobal0 = new BigNumber("1000");
@@ -412,8 +441,10 @@ describe("DexV3Pool", () => {
     expect(tokensOwed0.toString()).toBe("3000"); // (400 - 100) * 10
     expect(tokensOwed1.toString()).toBe("5000"); // (800 - 300) * 10
 
-    expect(positionData.feeGrowthInside0Last.toString()).toBe("400");
-    expect(positionData.feeGrowthInside1Last.toString()).toBe("800");
+    // FIXED: getFeeCollectedEstimation should NOT modify the position (no side effects)
+    // The checkpoint should remain at its original value
+    expect(positionData.feeGrowthInside0Last.toString()).toBe("100");
+    expect(positionData.feeGrowthInside1Last.toString()).toBe("300");
   });
 
   test("getFeeCollectedEstimation: should return zero if fee growth has not increased", () => {
@@ -458,8 +489,8 @@ describe("DexV3Pool", () => {
     const [amount0, amount1] = pool.burnEstimate(liquidity, tickLower, tickUpper);
 
     // Then
-    expect(amount0.isEqualTo(new BigNumber("4.96239918804087394093"))).toBe(true);
-    expect(amount1.isZero()).toBe(true);
+    expect(amount0).toEqual(new BigNumber("4.96239918804142220093"));
+    expect(amount1).toEqual(new BigNumber("0"));
   });
 
   test("burnEstimate: should estimate both amount0 and amount1 when current tick is inside range", () => {
@@ -474,8 +505,8 @@ describe("DexV3Pool", () => {
     const [amount0, amount1] = pool.burnEstimate(liquidity, tickLower, tickUpper);
 
     // Then
-    expect(amount0.isEqualTo("2.47809825120758119716")).toBe(true);
-    expect(amount1.isEqualTo("2.5155480236664")).toBe(true);
+    expect(amount0).toEqual(new BigNumber("2.4780982512079432954"));
+    expect(amount1).toEqual(new BigNumber("2.515548023666592"));
   });
 
   test("burnEstimate: should estimate only amount1 when current tick is above the range", () => {
@@ -490,8 +521,8 @@ describe("DexV3Pool", () => {
     const [amount0, amount1] = pool.burnEstimate(liquidity, tickLower, tickUpper);
 
     // Then
-    expect(amount0.isZero()).toBe(true);
-    expect(amount1.isEqualTo("5.0373924698248")).toBe(true);
+    expect(amount0).toEqual(new BigNumber("0"));
+    expect(amount1).toEqual(new BigNumber("5.0373924698253654"));
   });
 
   test("swap: should update state and return correct amounts for zeroForOne exact input", () => {

@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 import BigNumber from "bignumber.js";
+import Decimal from "decimal.js";
 
 import { TickData } from "../../types/TickData";
 import {
@@ -22,6 +23,7 @@ import {
   flipTickOrientation,
   getFeeGrowthInside,
   nextInitialisedTickWithInSameWord,
+  position,
   spaceTick,
   sqrtPriceToTick,
   tickSpacingToMaxLiquidityPerTick,
@@ -45,7 +47,7 @@ describe("tick.helper", () => {
   describe("sqrtPriceToTick", () => {
     it("should return correct tick for given sqrtPrice", () => {
       // Given
-      const sqrtPrice = new BigNumber(Math.sqrt(1.0001 ** 200));
+      const sqrtPrice = new BigNumber(new Decimal(1.0001).pow(200).sqrt().toString());
 
       // When
       const tick = sqrtPriceToTick(sqrtPrice);
@@ -85,13 +87,7 @@ describe("tick.helper", () => {
       flipTick(bitmap, tick, tickSpacing);
 
       // When
-      const [nextTick, initialized] = nextInitialisedTickWithInSameWord(
-        bitmap,
-        tick,
-        tickSpacing,
-        true,
-        sqrtPrice
-      );
+      const [nextTick, initialized] = nextInitialisedTickWithInSameWord(bitmap, tick, tickSpacing, true);
 
       // Then
       expect(nextTick).toBe(tick);
@@ -107,13 +103,7 @@ describe("tick.helper", () => {
       flipTick(bitmap, tick, tickSpacing);
 
       // When
-      const [nextTick, initialized] = nextInitialisedTickWithInSameWord(
-        bitmap,
-        tick - 1,
-        tickSpacing,
-        false,
-        sqrtPrice
-      );
+      const [nextTick, initialized] = nextInitialisedTickWithInSameWord(bitmap, tick - 1, tickSpacing, false);
 
       // Then
       expect(nextTick).toBe(tick);
@@ -212,6 +202,31 @@ describe("tick.helper", () => {
     it("should throw if spacing is 0", () => {
       // Given / When / Then
       expect(() => spaceTick(123, 0)).toThrow("Tickspacing cannot be zero");
+    });
+  });
+
+  describe("position function", () => {
+    it("should handle negative ticks correctly using trunc for initial tick and floor for word position", () => {
+      // This test verifies the correct behavior:
+      // - Math.trunc(tick) for the initial tick value
+      // - Math.floor(tick / 256) for calculating wordPos
+
+      // Test cases with expected behavior
+      const testCases = [
+        { tick: -3.1, expectedWord: -1, expectedBit: 253 }, // Math.trunc(-3.1) = -3, word = Math.floor(-3/256) = -1, bit = -3 % 256 = 253
+        { tick: -3.9, expectedWord: -1, expectedBit: 253 }, // Math.trunc(-3.9) = -3, word = Math.floor(-3/256) = -1, bit = -3 % 256 = 253
+        { tick: -259.1, expectedWord: -2, expectedBit: 253 }, // Math.trunc(-259.1) = -259, word = Math.floor(-259/256) = -2, bit = -259 % 256 = 253
+        { tick: 3.1, expectedWord: 0, expectedBit: 3 }, // Math.trunc(3.1) = 3, word = Math.floor(3/256) = 0, bit = 3 % 256 = 3
+        { tick: 3.9, expectedWord: 0, expectedBit: 3 } // Math.trunc(3.9) = 3, word = Math.floor(3/256) = 0, bit = 3 % 256 = 3
+      ];
+
+      testCases.forEach(({ tick, expectedWord, expectedBit }) => {
+        // Call the actual position function
+        const result = position(tick);
+
+        // Verify the correct behavior with Math.trunc for initial tick and Math.floor for word position
+        expect(result).toEqual([expectedWord, expectedBit]);
+      });
     });
   });
 });

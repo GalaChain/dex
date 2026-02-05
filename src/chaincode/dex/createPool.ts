@@ -15,7 +15,8 @@
 import { ConflictError, ValidationFailedError } from "@gala-chain/api";
 import { GalaChainContext, fetchTokenClass, getObjectByKey, putChainObject } from "@gala-chain/chaincode";
 
-import { CreatePoolDto, CreatePoolResDto, DexFeeConfig, Pool } from "../../api/";
+import { CreatePoolDto, CreatePoolResDto, DexFeeConfig, Pool, TickData } from "../../api/";
+import { tickToSqrtPrice } from "../../api/utils/dex/tick.helper";
 import { generateKeyFromClassKey } from "./dexUtils";
 
 /**
@@ -38,6 +39,21 @@ export async function createPool(ctx: GalaChainContext, dto: CreatePoolDto): Pro
     );
   }
 
+  // Validate sqrtPrice is greater than zero
+  if (dto.initialSqrtPrice.lte(0)) {
+    throw new ValidationFailedError("initialSqrtPrice must be greater than 0");
+  }
+
+  // Validate sqrtPrice is within valid tick range
+  const MIN_SQRT_RATIO = tickToSqrtPrice(TickData.MIN_TICK);
+  const MAX_SQRT_RATIO = tickToSqrtPrice(TickData.MAX_TICK);
+
+  if (dto.initialSqrtPrice.lt(MIN_SQRT_RATIO) || dto.initialSqrtPrice.gt(MAX_SQRT_RATIO)) {
+    throw new ValidationFailedError(
+      `initialSqrtPrice must be between ${MIN_SQRT_RATIO.toExponential(6)} and ${MAX_SQRT_RATIO.toExponential(6)}`
+    );
+  }
+
   const key = ctx.stub.createCompositeKey(DexFeeConfig.INDEX_KEY, []);
   let protocolFee = 0.1; // default
   const protocolFeeConfig = await getObjectByKey(ctx, DexFeeConfig, key).catch(() => null);
@@ -45,8 +61,26 @@ export async function createPool(ctx: GalaChainContext, dto: CreatePoolDto): Pro
     protocolFee = protocolFeeConfig.protocolFee;
   }
 
-  // Create pool
-  const pool = new Pool(token0, token1, dto.token0, dto.token1, dto.fee, dto.initialSqrtPrice, protocolFee);
+  // Create pool with private pool settings
+  const isPrivate = dto.isPrivate ?? false;
+  const whitelist = dto.whitelist ?? [];
+  const creator = ctx.callingUser;
+
+  // Ensure creator is in whitelist for private pools
+  const finalWhitelist = isPrivate && !whitelist.includes(creator) ? [creator, ...whitelist] : whitelist;
+
+  const pool = new Pool(
+    token0,
+    token1,
+    dto.token0,
+    dto.token1,
+    dto.fee,
+    dto.initialSqrtPrice,
+    protocolFee,
+    isPrivate,
+    finalWhitelist,
+    creator
+  );
 
   //check if the tokens are valid or not
   await fetchTokenClass(ctx, pool.token0ClassKey);

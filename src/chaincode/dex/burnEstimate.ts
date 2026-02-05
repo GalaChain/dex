@@ -17,8 +17,8 @@ import BigNumber from "bignumber.js";
 
 import { BurnEstimateDto, GetRemoveLiqEstimationResDto, Pool, f18 } from "../../api/";
 import { getTokenDecimalsFromPool, validateTokenOrder } from "./dexUtils";
+import { ensureSufficientLiquidityForBurn } from "./ensureSufficientLiquidityForBurn";
 import { fetchUserPositionInTickRange } from "./position.helper";
-import { fetchOrCreateTickDataPair } from "./tickData.helper";
 
 /**
  * @dev The getRemoveLiquidityEstimation function estimates the amount of tokens a user will receive when removing liquidity from a Decentralized exchange pool within the GalaChain ecosystem. It calculates the expected token amounts based on the user's liquidity position and market conditions.
@@ -35,7 +35,6 @@ export async function getRemoveLiquidityEstimation(
   const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
   const pool = await getObjectByKey(ctx, Pool, key);
 
-  const poolHash = pool.genPoolHash();
   const position = await fetchUserPositionInTickRange(
     ctx,
     pool.genPoolHash(),
@@ -48,13 +47,8 @@ export async function getRemoveLiquidityEstimation(
   const tickLower = parseInt(dto.tickLower.toString()),
     tickUpper = parseInt(dto.tickUpper.toString());
 
-  const { tickUpperData, tickLowerData } = await fetchOrCreateTickDataPair(
-    ctx,
-    poolHash,
-    tickLower,
-    tickUpper
-  );
-  const amounts = pool.burn(position, tickLowerData, tickUpperData, f18(dto.amount));
+  const amounts = pool.burnEstimate(f18(dto.amount), tickLower, tickUpper);
+  await ensureSufficientLiquidityForBurn(ctx, amounts, pool, position);
 
   const [token0Decimal, token1Decimal] = await getTokenDecimalsFromPool(ctx, pool);
 

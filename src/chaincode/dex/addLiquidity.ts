@@ -34,6 +34,7 @@ import {
 import { NegativeAmountError } from "./dexError";
 import { getTokenDecimalsFromPool, roundTokenAmount, validateTokenOrder } from "./dexUtils";
 import { fetchOrCreateDexPosition } from "./position.helper";
+import { validateOrRejectPrivatePoolAccess } from "./privatePoolUtils";
 import { fetchOrCreateTickDataPair } from "./tickData.helper";
 
 /**
@@ -52,6 +53,10 @@ export async function addLiquidity(
 
   const key = ctx.stub.createCompositeKey(Pool.INDEX_KEY, [token0, token1, dto.fee.toString()]);
   const pool = await getObjectByKey(ctx, Pool, key);
+
+  // Check private pool access
+  validateOrRejectPrivatePoolAccess(pool, ctx.callingUser);
+
   const currentSqrtPrice = pool.sqrtPrice;
 
   //create tokenInstanceKeys
@@ -88,6 +93,7 @@ export async function addLiquidity(
     tickUpper,
     tickLower,
     dto.uniqueKey,
+    liquidityProvider,
     dto.positionId
   );
   const { tickUpperData, tickLowerData } = await fetchOrCreateTickDataPair(
@@ -157,6 +163,7 @@ export async function addLiquidity(
     userBalances,
     [roundedToken0Amount.toFixed(), roundedToken1Amount.toFixed()],
     poolHash,
+    position.positionId,
     poolAlias,
     pool.fee,
     ctx.callingUser

@@ -14,6 +14,7 @@
  */
 import { ValidationFailedError } from "@gala-chain/api";
 import BigNumber from "bignumber.js";
+import Decimal from "decimal.js";
 
 import { TickData } from "../../types/TickData";
 import { leastSignificantBit, mostSignificantBit } from "./bitMath.helper";
@@ -29,7 +30,8 @@ const MIN_TICK = -887272,
  *  at the given tick
  */
 export function tickToSqrtPrice(tick: number): BigNumber {
-  return new BigNumber(1.0001 ** (tick / 2));
+  const price = new Decimal(1.0001).pow(tick / 2);
+  return new BigNumber(price.toString());
 }
 
 /**
@@ -39,8 +41,8 @@ export function tickToSqrtPrice(tick: number): BigNumber {
  *  @return tick The greatest tick for which the ratio is less than or equal to the input ratio
  */
 export function sqrtPriceToTick(sqrtPrice: BigNumber): number {
-  const calculatedTick = Number((Math.log(sqrtPrice.toNumber() ** 2) / Math.log(1.0001)).toFixed(0));
-
+  const priceLog = new Decimal(sqrtPrice.toString()).pow(2).ln();
+  const calculatedTick = Number(priceLog.dividedBy(new Decimal(1.0001).ln()).toFixed(0));
   const tickPrice = tickToSqrtPrice(calculatedTick);
 
   const tick = tickPrice.isLessThanOrEqualTo(sqrtPrice) ? calculatedTick : calculatedTick - 1;
@@ -54,10 +56,10 @@ export function sqrtPriceToTick(sqrtPrice: BigNumber): number {
  * @param tick - The tick index.
  * @returns A tuple of [word index, bit position within the word].
  */
-function position(tick: number): [word: number, position: number] {
+export function position(tick: number): [word: number, position: number] {
   tick = Math.trunc(tick);
 
-  const wordPos = Math.trunc(tick / 256); // Equivalent to tick >> 8
+  const wordPos = Math.floor(tick / 256); // Equivalent to tick >> 8
 
   let bitPos = tick % 256; // Equivalent to tick % 256
   if (bitPos < 0) bitPos += 256; // Ensure it's always positive like uint8
@@ -89,19 +91,6 @@ export function flipTick(bitmap: Record<string, string>, tick: number, tickSpaci
   bitmap[word] = newMask.toString();
 }
 
-function isTickInitialized(tick: number, tickSpacing: number, bitmap: Record<string, string>): boolean {
-  tick /= tickSpacing;
-  const [word, pos] = position(tick);
-  const mask = BigInt(1) << BigInt(pos);
-
-  if (bitmap[word] === undefined) return false;
-
-  const currentMask = BigInt(bitmap[word]);
-  const newMask = currentMask ^ mask;
-
-  return newMask == BigInt(0);
-}
-
 /**
  *
  *  @notice Returns the next initialized tick contained in the same word (or adjacent word) as the tick that is either
@@ -116,19 +105,10 @@ export function nextInitialisedTickWithInSameWord(
   bitmap: Record<string, string>,
   tick: number,
   tickSpacing: number,
-  lte: boolean,
-  sqrtPrice: BigNumber
+  lte: boolean
 ): [number, boolean] {
   let compressed = Math.trunc(tick / tickSpacing);
   if (tick < 0 && tick % tickSpacing != 0) compressed--;
-  if (tick == sqrtPriceToTick(sqrtPrice)) {
-    const tickPrice = tickToSqrtPrice(tick);
-    if (lte && tickPrice.lt(sqrtPrice)) {
-      return [tick, isTickInitialized(tick, tickSpacing, bitmap)];
-    } else if (!lte && tickPrice.gt(sqrtPrice)) {
-      return [tick, isTickInitialized(tick, tickSpacing, bitmap)];
-    }
-  }
 
   if (lte) {
     const [word, pos] = position(compressed);

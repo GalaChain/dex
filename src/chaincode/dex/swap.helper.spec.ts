@@ -15,8 +15,18 @@
 import { fixture } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
+import { monitorEventLoopDelay, performance } from "perf_hooks";
+import { setImmediate } from "timers/promises";
 
-import { DexFeePercentageTypes, Pool, SwapState, TickData, sqrtPriceToTick } from "../../api";
+import {
+  DexFeePercentageTypes,
+  Pool,
+  SwapState,
+  TickData,
+  flipTick,
+  sqrtPriceToTick,
+  tickToSqrtPrice
+} from "../../api";
 import { DexV3Contract } from "../DexV3Contract";
 import { processSwapSteps } from "./swap.helper";
 
@@ -278,5 +288,127 @@ describe("swap.helper", () => {
       expect(resultState.amountSpecifiedRemaining.toNumber()).toBeLessThan(1000);
       expect(resultState.amountCalculated.toNumber()).toBeLessThan(0);
     });
+  });
+  test("event loop yielding during single long-running swap", async () => {
+    // This test verifies that a SINGLE long-running processSwapSteps call
+    // yields to the event loop, preventing CPU starvation. We create a pool
+    // with a massive tick range and minimal liquidity, forcing the function
+    // to traverse thousands of ticks in one call.
+
+    // Given - Create a pool spanning a large tick range with minimal liquidity
+    const poolHash = "event-loop-test-pool";
+    const tickSpacing = 10;
+
+    // Tick range: -50000 to 50000 = 10000 ticks with spacing 10
+    const startTick = -50000;
+    const endTick = 50000;
+
+    const pool = plainToInstance(Pool, {
+      token0: "GALA:Unit:none:none",
+      token1: "TEST:Unit:none:none",
+      fee: DexFeePercentageTypes.FEE_0_05_PERCENT,
+      sqrtPrice: tickToSqrtPrice(startTick),
+      liquidity: new BigNumber("1"), // Minimal liquidity - forces many tick crossings
+      grossPoolLiquidity: new BigNumber("1000000"),
+      feeGrowthGlobal0: new BigNumber("0"),
+      feeGrowthGlobal1: new BigNumber("0"),
+      bitmap: {},
+      tickSpacing,
+      protocolFees: 0,
+      protocolFeesToken0: new BigNumber("0"),
+      protocolFeesToken1: new BigNumber("0")
+    });
+    pool.genPoolHash = () => poolHash;
+
+    // Build tick data map with EVERY tick initialized for maximum density
+    const tickDataMap: Record<string, TickData> = {};
+    let tickCount = 0;
+
+    for (let tick = startTick; tick <= endTick; tick += tickSpacing) {
+      if (tick < TickData.MIN_TICK || tick > TickData.MAX_TICK) continue;
+
+      flipTick(pool.bitmap, tick, tickSpacing);
+
+      const tickData = new TickData(poolHash, tick);
+      tickData.liquidityNet = new BigNumber("1");
+      tickData.liquidityGross = new BigNumber("1");
+      tickData.initialised = true;
+      tickData.feeGrowthOutside0 = new BigNumber("0");
+      tickData.feeGrowthOutside1 = new BigNumber("0");
+
+      tickDataMap[tick.toString()] = tickData;
+      tickCount++;
+    }
+
+    // Massive swap amount that won't be exhausted quickly with minimal liquidity
+    const swapAmount = new BigNumber("1e30");
+    const sqrtPriceLimit = tickToSqrtPrice(endTick + tickSpacing);
+
+    // When - Schedule callbacks BEFORE the single long-running swap
+    // These will only fire if processSwapSteps yields to the event loop
+    let timeoutCallbackCount = 0;
+    let setImmediateCallbackCount = 0;
+
+    const h = monitorEventLoopDelay({ resolution: 20 });
+    h.enable();
+
+    // Schedule many callbacks that should fire DURING the swap if we're yielding
+    const probeCount = 1000;
+    for (let i = 0; i < probeCount; i++) {
+      setTimeout(() => {
+        timeoutCallbackCount++;
+      }, 0);
+      global.setImmediate(() => {
+        setImmediateCallbackCount++;
+      });
+    }
+    const initialState: SwapState = {
+      amountSpecifiedRemaining: swapAmount,
+      amountCalculated: new BigNumber("0"),
+      sqrtPrice: pool.sqrtPrice,
+      tick: startTick,
+      liquidity: pool.liquidity,
+      feeGrowthGlobalX: new BigNumber("0"),
+      protocolFee: new BigNumber("0")
+    };
+
+    // Execute a SINGLE long-running swap that traverses thousands of ticks
+    const finalState = await processSwapSteps(
+      null, // offline mode
+      initialState,
+      pool,
+      sqrtPriceLimit,
+      true, // exactInput
+      false, // zeroForOne=false to move price upward
+      tickDataMap
+    );
+
+    h.disable();
+
+    const ticksCrossed = Math.abs(finalState.tick - startTick) / tickSpacing;
+
+    const result = {
+      tickCount,
+      ticksCrossed,
+      timeoutCallbackCount,
+      setImmediateCallbackCount
+    };
+
+    const expectedResult = {
+      tickCount: 10001,
+      ticksCrossed: 10001,
+      timeoutCallbackCount: probeCount,
+      setImmediateCallbackCount: probeCount
+    };
+
+    // Then - Verify the swap traversed many ticks and
+    // Critical assertion: callbacks must have fired DURING the single swap
+    // With proper yielding (chunkSize=1), we should see most callbacks fire
+    // during the swap since we yield after every step
+    expect(result).toEqual(expectedResult);
+
+    // Max event loop delay should be bounded (not blocking for entire swap duration)
+    // Without yielding, this would be seconds; with yielding it should be < 100ms
+    expect(h.max).toBeLessThan(100_000_000); // < 100ms
   });
 });

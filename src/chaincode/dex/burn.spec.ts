@@ -368,6 +368,7 @@ describe("Remove Liquidity Test", () => {
       "NON-EXISTENT"
     );
     dto.uniqueKey = randomUUID();
+    dto.sign(users.testUser1.privateKey);
 
     const { ctx, contract } = fixture(DexV3Contract)
       .registeredUsers(users.testUser1)
@@ -384,8 +385,6 @@ describe("Remove Liquidity Test", () => {
         tickLowerData,
         tickUpperData
       );
-
-    dto.sign(users.testUser1.privateKey);
 
     //When
     const res = await contract.RemoveLiquidity(ctx, dto);

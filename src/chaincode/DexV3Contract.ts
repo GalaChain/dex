@@ -89,7 +89,9 @@ import {
   SwapDto,
   SwapResDto,
   TickData,
-  TransferDexPositionDto
+  TransferDexPositionDto,
+  UpdatePositionFeeGrowthDto,
+  UpdateTickFeeGrowthDto
 } from "../api/";
 import {
   addLiquidity,
@@ -128,7 +130,9 @@ import {
   setGlobalLimitOrderConfig,
   setProtocolFee,
   swap,
-  transferDexPosition
+  transferDexPosition,
+  updatePositionFeeGrowth,
+  updateTickFeeGrowth
 } from "./dex";
 import { getTickData } from "./dex/tickData.helper";
 import {
@@ -470,6 +474,25 @@ export class DexV3Contract extends GalaContract {
   })
   public async GetBalanceDelta(ctx: GalaChainContext, dto: GetPoolDto): Promise<GetPoolBalanceDeltaResDto> {
     return await getBalanceDelta(ctx, dto);
+  }
+
+  @Submit({
+    in: UpdateTickFeeGrowthDto,
+    out: DexPositionOwner
+  })
+  public async UpdateTickFeeGrowth(ctx: GalaChainContext, dto: UpdateTickFeeGrowthDto): Promise<TickData> {
+    return updateTickFeeGrowth(ctx, dto);
+  }
+
+  @Submit({
+    in: UpdatePositionFeeGrowthDto,
+    out: DexPositionOwner
+  })
+  public async UpdatePositionFeeGrowth(
+    ctx: GalaChainContext,
+    dto: UpdatePositionFeeGrowthDto
+  ): Promise<DexPositionData> {
+    return updatePositionFeeGrowth(ctx, dto);
   }
 
   @Submit({

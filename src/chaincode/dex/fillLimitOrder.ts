@@ -1,9 +1,7 @@
-import { ChainError, TokenClass, UnauthorizedError, asValidUserAlias } from "@gala-chain/api";
+import { ChainError, UnauthorizedError, asValidUserAlias } from "@gala-chain/api";
 import {
   GalaChainContext,
   deleteChainObject,
-  fetchTokenClass,
-  getObjectByKey,
   getObjectsByPartialCompositeKey,
   putChainObject
 } from "@gala-chain/chaincode";
@@ -83,7 +81,14 @@ export async function fillLimitOrder(ctx: GalaChainContext, dto: FillLimitOrderD
     // Use sandboxed context to avoid flushes of writes and deletes, and populate
     // the stub with current writes and deletes.
     const sandboxCtx = ctx.createReadOnlyContext(index);
-    sandboxCtx.callingUserData = { alias: asValidUserAlias(owner), roles: [] };
+    sandboxCtx.callingUserData = {
+      alias: asValidUserAlias(owner),
+      roles: [],
+      signedBy: [],
+      signatureQuorum: 0,
+      allowedSigners: [],
+      isMultisig: false
+    };
     sandboxCtx.stub.setWrites(ctx.stub.getWrites());
     sandboxCtx.stub.setDeletes(ctx.stub.getDeletes());
 

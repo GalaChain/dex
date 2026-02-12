@@ -135,7 +135,6 @@ describe("Remove Liquidity Test", () => {
           additionalKey: "client:6337024724eec8c292f0118d",
           quantity: new BigNumber("0.03905535"),
           instanceIds: [],
-          inUseHolds: [],
           lockedHolds: []
         },
         token1Balance: {
@@ -146,7 +145,6 @@ describe("Remove Liquidity Test", () => {
           additionalKey: "none",
           quantity: new BigNumber("68.5329680134"),
           instanceIds: [],
-          inUseHolds: [],
           lockedHolds: []
         }
       }),
@@ -313,7 +311,6 @@ describe("Remove Liquidity Test", () => {
           additionalKey: "client:6337024724eec8c292f0118d",
           quantity: new BigNumber("0.0338630202"),
           instanceIds: [],
-          inUseHolds: [],
           lockedHolds: []
         },
         token1Balance: {
@@ -324,7 +321,6 @@ describe("Remove Liquidity Test", () => {
           additionalKey: "none",
           quantity: new BigNumber("59.4216485665"),
           instanceIds: [],
-          inUseHolds: [],
           lockedHolds: []
         }
       }),
@@ -371,7 +367,7 @@ describe("Remove Liquidity Test", () => {
       new BigNumber(0.5),
       "NON-EXISTENT"
     );
-    dto.sign(users.testUser1.privateKey);
+    dto.uniqueKey = randomUUID();
 
     const { ctx, contract } = fixture(DexV3Contract)
       .registeredUsers(users.testUser1)
@@ -388,7 +384,6 @@ describe("Remove Liquidity Test", () => {
         tickLowerData,
         tickUpperData
       );
-    dto.uniqueKey = randomUUID();
 
     dto.sign(users.testUser1.privateKey);
 
@@ -601,7 +596,6 @@ describe("Remove Liquidity Test", () => {
           additionalKey: "client:6337024724eec8c292f0118d",
           quantity: new BigNumber("0"),
           instanceIds: [],
-          inUseHolds: [],
           lockedHolds: []
         },
         token1Balance: {
@@ -612,7 +606,6 @@ describe("Remove Liquidity Test", () => {
           additionalKey: "none",
           quantity: new BigNumber("0"),
           instanceIds: [],
-          inUseHolds: [],
           lockedHolds: []
         }
       }),

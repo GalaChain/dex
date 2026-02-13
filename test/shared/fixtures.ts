@@ -258,7 +258,6 @@ export function createAddLiquidityTestFixture(
   const user1Token0Balance = plainToInstance(TokenBalance, {
     ...tokens.token0ClassKey,
     owner: users.testUser1.identityKey,
-    inUseHolds: [],
     lockedHolds: [],
     instanceIds: [],
     quantity: userBalance0
@@ -267,7 +266,6 @@ export function createAddLiquidityTestFixture(
   const user1Token1Balance = plainToInstance(TokenBalance, {
     ...tokens.token1ClassKey,
     owner: users.testUser1.identityKey,
-    inUseHolds: [],
     lockedHolds: [],
     instanceIds: [],
     quantity: userBalance1
@@ -465,7 +463,6 @@ export function createSwapTestFixture(options: SwapTestFixtureOptions = {}): Swa
   const poolToken0Balance = plainToInstance(TokenBalance, {
     ...tokens.token0ClassKey,
     owner: poolAlias,
-    inUseHolds: [],
     lockedHolds: [],
     instanceIds: [],
     quantity: poolBalance0
@@ -474,7 +471,6 @@ export function createSwapTestFixture(options: SwapTestFixtureOptions = {}): Swa
   const poolToken1Balance = plainToInstance(TokenBalance, {
     ...tokens.token1ClassKey,
     owner: poolAlias,
-    inUseHolds: [],
     lockedHolds: [],
     instanceIds: [],
     quantity: poolBalance1
@@ -484,7 +480,6 @@ export function createSwapTestFixture(options: SwapTestFixtureOptions = {}): Swa
   const user1Token0Balance = plainToInstance(TokenBalance, {
     ...tokens.token0ClassKey,
     owner: users.testUser1.identityKey,
-    inUseHolds: [],
     lockedHolds: [],
     instanceIds: [],
     quantity: userBalance0
@@ -493,7 +488,6 @@ export function createSwapTestFixture(options: SwapTestFixtureOptions = {}): Swa
   const user1Token1Balance = plainToInstance(TokenBalance, {
     ...tokens.token1ClassKey,
     owner: users.testUser1.identityKey,
-    inUseHolds: [],
     lockedHolds: [],
     instanceIds: [],
     quantity: userBalance1

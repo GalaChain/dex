@@ -676,6 +676,18 @@ describe("DexDtos", () => {
       expect(dto.bookmark).toBe("bookmark-123");
     });
 
+    it("should allow sortBy in GetUserPositionsDto", async () => {
+      // Given
+      const dto = new GetUserPositionsDto(mockUserRef, "bookmark-123", 5, "TOKEN_PAIR");
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.sortBy).toBe("TOKEN_PAIR");
+    });
+
     it("should fail validation with limit out of range", async () => {
       // Given
       const dto = new GetUserPositionsDto(mockUserRef, undefined, 15); // Max is 10

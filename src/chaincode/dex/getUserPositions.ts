@@ -130,7 +130,24 @@ export async function getUserPositions(
   // Add token metadata to response
   const userPositionWithMetadata = await addMetaDataToUserPositions(ctx, userPositions);
 
-  return new GetUserPositionsResDto(userPositionWithMetadata, newBookmark);
+  let sortedPositions = userPositionWithMetadata;
+  if (dto.sortBy === "TOKEN_PAIR") {
+    sortedPositions = userPositionWithMetadata
+      .map((position, index) => ({ position, index }))
+      .sort((a, b) => {
+        const aToken0 = (a.position.token0Symbol || "").toLowerCase();
+        const aToken1 = (a.position.token1Symbol || "").toLowerCase();
+        const bToken0 = (b.position.token0Symbol || "").toLowerCase();
+        const bToken1 = (b.position.token1Symbol || "").toLowerCase();
+
+        if (aToken0 !== bToken0) return aToken0.localeCompare(bToken0);
+        if (aToken1 !== bToken1) return aToken1.localeCompare(bToken1);
+        return a.index - b.index; // Preserve original (chronological) order
+      })
+      .map((item) => item.position);
+  }
+
+  return new GetUserPositionsResDto(sortedPositions, newBookmark);
 }
 
 /**

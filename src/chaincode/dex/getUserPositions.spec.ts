@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TokenClass, TokenClassKey } from "@gala-chain/api";
+import { TokenClass, TokenClassKey, asValidUserAlias } from "@gala-chain/api";
 import { currency, fixture, transactionErrorMessageContains, users } from "@gala-chain/test";
 import BigNumber from "bignumber.js";
 import { plainToInstance } from "class-transformer";
@@ -136,6 +136,217 @@ describe("GetPosition", () => {
     expect(response.Data?.positions[0].poolHash).toStrictEqual(positionData.poolHash);
     expect(response.Data?.positions[1].positionId).toStrictEqual(secondPositionData.positionId);
     expect(response.Data?.positions[1].poolHash).toStrictEqual(secondPositionData.poolHash);
+  });
+
+  test("should sort positions by token pair when sortBy is TOKEN_PAIR", async () => {
+    // Given
+    const fee = DexFeePercentageTypes.FEE_1_PERCENT;
+    const initialSqrtPrice = new BigNumber("1");
+    const authority = asValidUserAlias(users.admin.identityKey);
+
+    const tokenAProps = {
+      collection: "AAA",
+      category: "Unit",
+      type: "none",
+      additionalKey: "none"
+    };
+    const tokenBProps = {
+      collection: "BBB",
+      category: "Unit",
+      type: "none",
+      additionalKey: "none"
+    };
+    const tokenCProps = {
+      collection: "CCC",
+      category: "Unit",
+      type: "none",
+      additionalKey: "none"
+    };
+
+    const tokenAKey = plainToInstance(TokenClassKey, tokenAProps);
+    const tokenBKey = plainToInstance(TokenClassKey, tokenBProps);
+    const tokenCKey = plainToInstance(TokenClassKey, tokenCProps);
+
+    const tokenAClass = plainToInstance(TokenClass, {
+      ...tokenAProps,
+      network: "GC",
+      decimals: 8,
+      maxSupply: new BigNumber("100000"),
+      isNonFungible: false,
+      maxCapacity: new BigNumber("100000"),
+      authorities: [authority],
+      name: "Token A",
+      symbol: "AAA",
+      description: "Test token A",
+      image: "https://app.gala.games/favicon.ico",
+      totalBurned: new BigNumber("0"),
+      totalMintAllowance: new BigNumber("0"),
+      totalSupply: new BigNumber("0")
+    });
+    const tokenBClass = plainToInstance(TokenClass, {
+      ...tokenBProps,
+      network: "GC",
+      decimals: 8,
+      maxSupply: new BigNumber("100000"),
+      isNonFungible: false,
+      maxCapacity: new BigNumber("100000"),
+      authorities: [authority],
+      name: "Token B",
+      symbol: "BBB",
+      description: "Test token B",
+      image: "https://app.gala.games/favicon.ico",
+      totalBurned: new BigNumber("0"),
+      totalMintAllowance: new BigNumber("0"),
+      totalSupply: new BigNumber("0")
+    });
+    const tokenCClass = plainToInstance(TokenClass, {
+      ...tokenCProps,
+      network: "GC",
+      decimals: 8,
+      maxSupply: new BigNumber("100000"),
+      isNonFungible: false,
+      maxCapacity: new BigNumber("100000"),
+      authorities: [authority],
+      name: "Token C",
+      symbol: "CCC",
+      description: "Test token C",
+      image: "https://app.gala.games/favicon.ico",
+      totalBurned: new BigNumber("0"),
+      totalMintAllowance: new BigNumber("0"),
+      totalSupply: new BigNumber("0")
+    });
+
+    const poolAB = new Pool(
+      tokenAKey.toStringKey(),
+      tokenBKey.toStringKey(),
+      tokenAKey,
+      tokenBKey,
+      fee,
+      initialSqrtPrice
+    );
+    const poolAC = new Pool(
+      tokenAKey.toStringKey(),
+      tokenCKey.toStringKey(),
+      tokenAKey,
+      tokenCKey,
+      fee,
+      initialSqrtPrice
+    );
+    const poolCA = new Pool(
+      tokenCKey.toStringKey(),
+      tokenAKey.toStringKey(),
+      tokenCKey,
+      tokenAKey,
+      fee,
+      initialSqrtPrice
+    );
+
+    const positionAB1 = new DexPositionData(
+      poolAB.genPoolHash(),
+      "pos-ab-1",
+      100,
+      0,
+      tokenAKey,
+      tokenBKey,
+      fee
+    );
+    const positionAB2 = new DexPositionData(
+      poolAB.genPoolHash(),
+      "pos-ab-2",
+      100,
+      0,
+      tokenAKey,
+      tokenBKey,
+      fee
+    );
+    const positionAC = new DexPositionData(
+      poolAC.genPoolHash(),
+      "pos-ac",
+      100,
+      0,
+      tokenAKey,
+      tokenCKey,
+      fee
+    );
+    const positionCA = new DexPositionData(
+      poolCA.genPoolHash(),
+      "pos-ca",
+      100,
+      0,
+      tokenCKey,
+      tokenAKey,
+      fee
+    );
+
+    const ownerAB = new DexPositionOwner(users.testUser1.identityKey, poolAB.genPoolHash());
+    ownerAB.addPosition("0:100", positionAB1.positionId);
+    ownerAB.addPosition("0:100", positionAB2.positionId);
+
+    const ownerAC = new DexPositionOwner(users.testUser1.identityKey, poolAC.genPoolHash());
+    ownerAC.addPosition("0:100", positionAC.positionId);
+
+    const ownerCA = new DexPositionOwner(users.testUser1.identityKey, poolCA.genPoolHash());
+    ownerCA.addPosition("0:100", positionCA.positionId);
+
+    const makeTicks = (poolHash: string) => {
+      const lowerTick = plainToInstance(TickData, {
+        poolHash,
+        tick: 0,
+        liquidityGross: new BigNumber("100"),
+        initialised: true,
+        liquidityNet: new BigNumber("100"),
+        feeGrowthOutside0: new BigNumber("0"),
+        feeGrowthOutside1: new BigNumber("0")
+      });
+      const upperTick = plainToInstance(TickData, {
+        ...lowerTick,
+        tick: 100
+      });
+      return [lowerTick, upperTick];
+    };
+
+    const ticks = [
+      ...makeTicks(poolAB.genPoolHash()),
+      ...makeTicks(poolAC.genPoolHash()),
+      ...makeTicks(poolCA.genPoolHash())
+    ];
+
+    const { ctx, contract } = fixture(DexV3Contract)
+      .registeredUsers(users.testUser1)
+      .savedState(
+        poolAB,
+        poolAC,
+        poolCA,
+        ownerAB,
+        ownerAC,
+        ownerCA,
+        positionAB1,
+        positionAB2,
+        positionAC,
+        positionCA,
+        tokenAClass,
+        tokenBClass,
+        tokenCClass,
+        ...ticks
+      );
+
+    const getUserPositionsDto = new GetUserPositionsDto(
+      users.testUser1.identityKey,
+      undefined,
+      10,
+      "TOKEN_PAIR"
+    );
+
+    // When
+    const response = await contract.GetUserPositions(ctx, getUserPositionsDto);
+
+    // Then
+    expect(response.Data?.positions.map((p) => p.positionId)).toEqual([
+      "pos-ab-1",
+      "pos-ab-2",
+      "pos-ac",
+      "pos-ca"
+    ]);
   });
 
   test("should fetch next set of positions based on bookmark", async () => {

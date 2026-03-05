@@ -450,11 +450,16 @@ export class GetUserPositionsDto extends ChainCallDTO {
   @IsString()
   public bookmark?: string;
 
-  constructor(user: UserRef, bookmark?: string, limit = 10) {
+  @IsOptional()
+  @IsString()
+  public sortBy?: string;
+
+  constructor(user: UserRef, bookmark?: string, limit = 10, sortBy?: string) {
     super();
     this.user = user;
     this.bookmark = bookmark;
     this.limit = limit;
+    this.sortBy = sortBy;
   }
 }
 

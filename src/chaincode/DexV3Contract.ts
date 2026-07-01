@@ -158,9 +158,7 @@ export class DexV3Contract extends GalaContract {
    * Creates a new DexV3Contract instance.
    */
   constructor() {
-    super("DexV3Contract", version, {
-      allowNonRegisteredUsers: true
-    });
+    super("DexV3Contract", version);
   }
 
   @GalaTransaction({

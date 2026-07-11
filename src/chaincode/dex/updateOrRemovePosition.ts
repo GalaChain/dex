@@ -22,18 +22,23 @@ import { genTickRange, getUserPositionIds, roundTokenAmount } from "./dexUtils";
  * Deletes a user's position in a specific tick range if it has negligible liquidity and tokens owed.
  *
  * @param ctx - GalaChain context object.
- * @param poolHash - Identifier for the pool.
+ * @param pool - Pool object.
  * @param position - The DexPositionData object representing the position to evaluate and possibly delete.
+ * @param token0Decimal - Decimal places for token0.
+ * @param token1Decimal - Decimal places for token1.
+ * @param positionOwner - The user who owns the position (defaults to calling user).
  */
 export async function updateOrRemovePosition(
   ctx: GalaChainContext,
   pool: Pool,
   position: DexPositionData,
   token0Decimal: number,
-  token1Decimal: number
+  token1Decimal: number,
+  positionOwner?: string
 ) {
   //  Fetch user positions
-  const userPositions = await getUserPositionIds(ctx, ctx.callingUser, pool.genPoolHash());
+  const user = positionOwner || ctx.callingUser;
+  const userPositions = await getUserPositionIds(ctx, user, pool.genPoolHash());
 
   // Fetch the amount of tokens left in the position's liquidity
   const [amount0Req, amount1Req] = pool.burnEstimate(

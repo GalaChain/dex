@@ -12,9 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { NotFoundError, TokenInstanceKey } from "@gala-chain/api";
+import { AllowanceType, NotFoundError, TokenInstanceKey, asValidUserAlias } from "@gala-chain/api";
 import {
   GalaChainContext,
+  fetchAllowancesWithPagination,
   fetchOrCreateBalance,
   getObjectByKey,
   putChainObject,
@@ -44,14 +45,59 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
 
   const poolHash = pool.genPoolHash();
   const poolAlias = pool.getPoolAlias();
+  // Determine the recipient - this may be different from the caller if collecting on behalf of another user
+  const recipient =
+    dto.recipient && dto.recipient !== ctx.callingUser ? asValidUserAlias(dto.recipient) : ctx.callingUser;
+
+  // Security check: Validate that the recipient actually owns the position
+  // This prevents theft by ensuring only the position owner can receive the collected fees
   const position = await fetchUserPositionInTickRange(
     ctx,
     poolHash,
     dto.tickUpper,
     dto.tickLower,
-    dto.positionId
+    dto.positionId,
+    recipient // Pass recipient to check if they own the position
   );
-  if (!position) throw new NotFoundError(`User doesn't hold any positions with this tick range in this pool`);
+  if (!position)
+    throw new NotFoundError(`Recipient does not own any positions with this tick range in this pool`);
+
+  // Additional security check: If collecting on behalf of another user, verify they have granted transfer allowances
+  if (recipient !== ctx.callingUser) {
+    // Check if the recipient has granted transfer allowances to the calling user for token0
+    const token0Allowances = await fetchAllowancesWithPagination(ctx, {
+      grantedTo: ctx.callingUser,
+      grantedBy: recipient,
+      collection: pool.token0ClassKey.collection,
+      category: pool.token0ClassKey.category,
+      type: pool.token0ClassKey.type,
+      additionalKey: pool.token0ClassKey.additionalKey,
+      instance: "0",
+      allowanceType: AllowanceType.Transfer,
+      limit: 1
+    });
+
+    if (!token0Allowances.results || token0Allowances.results.length === 0) {
+      throw new NotFoundError(`Recipient has not granted transfer allowances to the calling user for token0`);
+    }
+
+    // Check if the recipient has granted transfer allowances to the calling user for token1
+    const token1Allowances = await fetchAllowancesWithPagination(ctx, {
+      grantedTo: ctx.callingUser,
+      grantedBy: recipient,
+      collection: pool.token1ClassKey.collection,
+      category: pool.token1ClassKey.category,
+      type: pool.token1ClassKey.type,
+      additionalKey: pool.token1ClassKey.additionalKey,
+      instance: "0",
+      allowanceType: AllowanceType.Transfer,
+      limit: 1
+    });
+
+    if (!token1Allowances.results || token1Allowances.results.length === 0) {
+      throw new NotFoundError(`Recipient has not granted transfer allowances to the calling user for token1`);
+    }
+  }
 
   // Create token instance keys and fetch token decimals
   const tokenInstanceKeys = [pool.token0ClassKey, pool.token1ClassKey].map(TokenInstanceKey.fungibleKey);
@@ -104,7 +150,7 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
 
     await transferToken(ctx, {
       from: poolAlias,
-      to: ctx.callingUser,
+      to: recipient,
       tokenInstanceKey: tokenInstanceKeys[index],
       quantity: index === 0 ? roundedToken0Amount : roundedToken1Amount,
       allowancesToUse: [],
@@ -115,20 +161,12 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
     });
   }
 
-  await updateOrRemovePosition(ctx, pool, position, tokenDecimals[0], tokenDecimals[1]);
+  await updateOrRemovePosition(ctx, pool, position, tokenDecimals[0], tokenDecimals[1], recipient);
   await putChainObject(ctx, pool);
 
   // Return position holder's new token balances
-  const liquidityProviderToken0Balance = await fetchOrCreateBalance(
-    ctx,
-    ctx.callingUser,
-    tokenInstanceKeys[0]
-  );
-  const liquidityProviderToken1Balance = await fetchOrCreateBalance(
-    ctx,
-    ctx.callingUser,
-    tokenInstanceKeys[1]
-  );
+  const liquidityProviderToken0Balance = await fetchOrCreateBalance(ctx, recipient, tokenInstanceKeys[0]);
+  const liquidityProviderToken1Balance = await fetchOrCreateBalance(ctx, recipient, tokenInstanceKeys[1]);
   const userBalances = new UserBalanceResDto(liquidityProviderToken0Balance, liquidityProviderToken1Balance);
 
   return new DexOperationResDto(
@@ -138,6 +176,6 @@ export async function collect(ctx: GalaChainContext, dto: CollectDto): Promise<D
     position.positionId,
     poolAlias,
     pool.fee,
-    ctx.callingUser
+    recipient
   );
 }

@@ -518,6 +518,32 @@ describe("DexDtos", () => {
       expect(dto.positionId).toBe("position-123");
     });
 
+    it("should create valid BurnDto with recipient", async () => {
+      // Given
+      const dto = new BurnDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_3_PERCENT,
+        new BigNumber("1000"),
+        -500,
+        500,
+        new BigNumber("10"),
+        new BigNumber("20"),
+        "position-123",
+        asValidUserAlias("client|user789")
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      if (validationErrors.length > 0) {
+        console.log("Validation errors:", validationErrors);
+      }
+      expect(validationErrors.length).toBe(0);
+      expect(dto.recipient).toEqual(asValidUserAlias("client|user789"));
+    });
+
     it("should fail validation with negative amounts", async () => {
       // Given
       const dto = new BurnDto(
@@ -807,6 +833,28 @@ describe("DexDtos", () => {
       expect(dto.amount0Requested).toEqual(new BigNumber("100"));
       expect(dto.amount1Requested).toEqual(new BigNumber("200"));
     });
+
+    it("should create valid CollectDto with recipient", async () => {
+      // Given
+      const dto = new CollectDto(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_1_PERCENT,
+        new BigNumber("100"),
+        new BigNumber("200"),
+        -400,
+        400,
+        "position-789",
+        asValidUserAlias("client|user456")
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.recipient).toEqual(asValidUserAlias("client|user456"));
+    });
   });
 
   describe("AddLiquidityDTO", () => {
@@ -832,6 +880,30 @@ describe("DexDtos", () => {
       expect(validationErrors.length).toBe(0);
       expect(dto.amount0Desired).toEqual(new BigNumber("1000"));
       expect(dto.amount1Desired).toEqual(new BigNumber("2000"));
+    });
+
+    it("should create valid AddLiquidityDTO with liquidityProvider", async () => {
+      // Given
+      const dto = new AddLiquidityDTO(
+        mockToken0,
+        mockToken1,
+        DexFeePercentageTypes.FEE_0_05_PERCENT,
+        -600,
+        600,
+        new BigNumber("1000"),
+        new BigNumber("2000"),
+        new BigNumber("900"),
+        new BigNumber("1800"),
+        "position-abc",
+        asValidUserAlias("client|user123")
+      );
+
+      // When
+      const validationErrors = await dto.validate();
+
+      // Then
+      expect(validationErrors.length).toBe(0);
+      expect(dto.liquidityProvider).toEqual(asValidUserAlias("client|user123"));
     });
   });
 

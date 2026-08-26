@@ -109,8 +109,18 @@ describe("GetPosition", () => {
 
     pool.protocolFeesToken0 = new BigNumber(0);
     pool.protocolFeesToken1 = new BigNumber(0);
-    dexBal.subtractQuantity(new BigNumber(10), ctx.txUnixTime);
-    currBal.subtractQuantity(new BigNumber(10), ctx.txUnixTime);
+    dexBal.subtractQuantity(
+      new BigNumber(10),
+      ctx.txUnixTime,
+      undefined,
+      asValidUserAlias(users.admin.identityKey)
+    );
+    currBal.subtractQuantity(
+      new BigNumber(10),
+      ctx.txUnixTime,
+      undefined,
+      asValidUserAlias(users.admin.identityKey)
+    );
     userDexBal.addQuantity(new BigNumber(10));
     userCurrBal.addQuantity(new BigNumber(10));
 
@@ -208,8 +218,18 @@ describe("GetPosition", () => {
 
     pool.protocolFeesToken0 = new BigNumber(9000);
     pool.protocolFeesToken1 = new BigNumber(0);
-    dexBal.subtractQuantity(new BigNumber(1000), ctx.txUnixTime);
-    currBal.subtractQuantity(new BigNumber(10), ctx.txUnixTime);
+    dexBal.subtractQuantity(
+      new BigNumber(1000),
+      ctx.txUnixTime,
+      undefined,
+      asValidUserAlias(users.admin.identityKey)
+    );
+    currBal.subtractQuantity(
+      new BigNumber(10),
+      ctx.txUnixTime,
+      undefined,
+      asValidUserAlias(users.admin.identityKey)
+    );
     userDexBal.addQuantity(new BigNumber(1000));
     userCurrBal.addQuantity(new BigNumber(10));
 

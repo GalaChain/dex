@@ -305,6 +305,10 @@ export class BurnDto extends SubmitCallDTO {
   @IsString()
   public positionId?: string;
 
+  @IsOptional()
+  @IsString()
+  public recipient?: string;
+
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
@@ -570,6 +574,10 @@ export class CollectDto extends SubmitCallDTO {
   @IsString()
   public positionId?: string;
 
+  @IsOptional()
+  @IsString()
+  public recipient?: string;
+
   constructor(
     token0: TokenClassKey,
     token1: TokenClassKey,
@@ -636,6 +644,14 @@ export class AddLiquidityDTO extends SubmitCallDTO {
   @IsOptional()
   @IsString()
   public positionId?: string;
+
+  @IsOptional()
+  @IsString()
+  public owner?: string;
+
+  @IsOptional()
+  @IsString()
+  public liquidityProvider?: string;
 
   constructor(
     token0: TokenClassKey,

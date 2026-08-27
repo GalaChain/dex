@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { ChainError, ErrorCode } from "@gala-chain/api";
+import { ChainError, ConflictError, ErrorCode } from "@gala-chain/api";
 import { GalaChainContext, getObjectByKey, putChainObject } from "@gala-chain/chaincode";
 import BigNumber from "bignumber.js";
 
@@ -60,14 +60,31 @@ export async function fetchOrCreateTickDataPair(
 }
 
 /**
- * Fetches an existing tick from the chain or creates it if not found, then crosses the tick.
+ * Fetches an initialised tick from the chain and crosses it.
+ *
+ * The swap loop only reaches this path for a tick it has already identified as
+ * INITIALISED via the pool bitmap (see `needsAsyncTickFetch = ... && step.initialised`).
+ * An initialised tick is, by construction, one that was flipped and persisted during
+ * `addLiquidity` (`updateTick` sets `feeGrowthOutside` relative to the current tick, then
+ * the TickData is written). Its TickData therefore MUST exist.
+ *
+ * SECURITY: do NOT fabricate a default TickData when it is missing. `new TickData(...)`
+ * has `feeGrowthOutside = 0`, and the immediately following `tickCross` sets
+ * `feeGrowthOutside = feeGrowthGlobal - 0 = feeGrowthGlobal`. That injects the pool's
+ * ENTIRE accumulated fee growth into the tick's outside-reference, corrupting the
+ * `getFeeGrowthInside` frame so a position bracketing the tick can back-claim
+ * `feeGrowthGlobal x liquidity` as owed fees that were never earned (observed on mainnet:
+ * a position credited ~102.8M GALA while `feeGrowthGlobal` was flat). A missing TickData
+ * for an initialised tick is a bitmap/storage desync that must fail loudly, not be papered
+ * over with a fabricated tick.
  *
  * @param ctx - The GalaChain context for accessing the ledger.
  * @param poolHash - Unique identifier for the liquidity pool.
- * @param tick - The tick index to fetch or create.
+ * @param tick - The tick index to fetch and cross.
  * @param feeGrowthGlobal0 - Global fee growth for token 0.
  * @param feeGrowthGlobal1 - Global fee growth for token 1.
  * @returns The net change in liquidity after crossing the tick.
+ * @throws ConflictError when an initialised tick has no persisted TickData.
  */
 export async function fetchOrCreateAndCrossTick(
   ctx: GalaChainContext,
@@ -76,12 +93,15 @@ export async function fetchOrCreateAndCrossTick(
   feeGrowthGlobal0: BigNumber,
   feeGrowthGlobal1: BigNumber
 ): Promise<BigNumber> {
-  // Try to get tickLower from chain; fallback to default if not found
   const tickKey = ctx.stub.createCompositeKey(TickData.INDEX_KEY, [poolHash, tick.toString()]);
   const tickData = await getObjectByKey(ctx, TickData, tickKey).catch((e) => {
     const chainError = ChainError.from(e);
     if (chainError.matches(ErrorCode.NOT_FOUND)) {
-      return new TickData(poolHash, tick); // Create default if missing
+      throw new ConflictError(
+        `Cannot cross tick ${tick} for pool ${poolHash}: it is flagged initialised in the ` +
+          `bitmap but has no persisted TickData. Refusing to fabricate a default tick, which ` +
+          `would set feeGrowthOutside = feeGrowthGlobal on cross and corrupt fee accounting.`
+      );
     } else {
       throw chainError;
     }

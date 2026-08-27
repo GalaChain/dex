@@ -51,8 +51,8 @@ describe("tickData.helper", () => {
       expect(liquidityNet.toNumber()).toBe(1000);
     });
 
-    test("should create new tick if not found", async () => {
-      // Given
+    test("should throw when an initialised tick has no persisted TickData (never fabricate)", async () => {
+      // Given: a tick the swap wants to cross, but no TickData was saved for it.
       const poolHash = "test-pool";
       const tick = 200;
 
@@ -61,18 +61,12 @@ describe("tickData.helper", () => {
       const feeGrowthGlobal0 = new BigNumber("100");
       const feeGrowthGlobal1 = new BigNumber("50");
 
-      // When
-      const liquidityNet = await fetchOrCreateAndCrossTick(
-        ctx,
-        poolHash,
-        tick,
-        feeGrowthGlobal0,
-        feeGrowthGlobal1
-      );
-
-      // Then
-      expect(liquidityNet).toBeDefined();
-      expect(liquidityNet.toNumber()).toBe(0); // New tick has zero liquidity
+      // When & Then: fabricating a default TickData (feeGrowthOutside=0) and crossing it
+      // would set feeGrowthOutside=feeGrowthGlobal, letting a position back-claim the pool's
+      // entire fee growth. A missing TickData for a crossed (initialised) tick must throw.
+      await expect(
+        fetchOrCreateAndCrossTick(ctx, poolHash, tick, feeGrowthGlobal0, feeGrowthGlobal1)
+      ).rejects.toThrow(/Refusing to fabricate/);
     });
   });
 
@@ -248,7 +242,7 @@ describe("tickData.helper", () => {
       expect(updatedTick).toBeDefined();
     });
 
-    test("should create and cross very negative tick", async () => {
+    test("should throw when a very negative crossed tick has no persisted TickData", async () => {
       // Given
       const poolHash = "test-pool";
       const tick = -887272; // Near min tick for common tick spacing
@@ -258,18 +252,10 @@ describe("tickData.helper", () => {
       const feeGrowthGlobal0 = new BigNumber("1000000");
       const feeGrowthGlobal1 = new BigNumber("500000");
 
-      // When
-      const liquidityNet = await fetchOrCreateAndCrossTick(
-        ctx,
-        poolHash,
-        tick,
-        feeGrowthGlobal0,
-        feeGrowthGlobal1
-      );
-
-      // Then
-      expect(liquidityNet).toBeDefined();
-      expect(liquidityNet.toNumber()).toBe(0); // New tick has zero liquidity
+      // When & Then: same invariant — never fabricate a missing tick on cross.
+      await expect(
+        fetchOrCreateAndCrossTick(ctx, poolHash, tick, feeGrowthGlobal0, feeGrowthGlobal1)
+      ).rejects.toThrow(/Refusing to fabricate/);
     });
   });
 });

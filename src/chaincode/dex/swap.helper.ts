@@ -150,11 +150,14 @@ async function handleTickCrossing(
         zeroForOne ? pool.feeGrowthGlobal1 : state.feeGrowthGlobalX
       );
     } else {
-      // Create default tick data if not found in offline map
-      const defaultTick = new TickData(pool.genPoolHash(), step.tickNext);
-      liquidityNet = defaultTick.tickCross(
-        zeroForOne ? state.feeGrowthGlobalX : pool.feeGrowthGlobal0,
-        zeroForOne ? pool.feeGrowthGlobal1 : state.feeGrowthGlobalX
+      // SECURITY: the swap only crosses INITIALISED ticks, so the offline caller must
+      // supply every crossable tick in `tickDataMap`. Fabricating a default TickData here
+      // (feeGrowthOutside = 0) and crossing it sets feeGrowthOutside = feeGrowthGlobal,
+      // corrupting the fee-growth frame exactly as the on-chain path did — it would make
+      // quotes/replay diverge from a correctly-accounted swap. Fail instead of fabricating.
+      throw new ConflictError(
+        `Cannot cross tick ${step.tickNext} for pool ${pool.genPoolHash()}: initialised tick ` +
+          `missing from the offline tickDataMap. Provide its TickData rather than fabricating one.`
       );
     }
   } else {

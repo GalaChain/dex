@@ -93,10 +93,17 @@ export async function getBatchSubmitAuthorities(
   return result;
 }
 
+export const DEX_BATCH_SUBMITTER_ROLE = "DEX_BATCH_SUBMITTER";
+
 /**
  * Checks if the calling user is authorized to perform batch submit operations.
+ * Authorized if they hold DEX_BATCH_SUBMITTER, or they are on the authority list.
  */
 export async function isAuthorizedForBatchSubmit(ctx: GalaChainContext): Promise<boolean> {
+  if (ctx.callingUserRoles.includes(DEX_BATCH_SUBMITTER_ROLE)) {
+    return true;
+  }
+
   const authorities = await fetchBatchSubmitAuthorities(ctx);
   return authorities.isAuthorized(ctx.callingUser);
 }

@@ -23,10 +23,12 @@ import {
   FetchBatchSubmitAuthoritiesDto
 } from "../../api";
 import {
+  DEX_BATCH_SUBMITTER_ROLE,
   authorizeBatchSubmitter,
   deauthorizeBatchSubmitter,
   fetchBatchSubmitAuthorities,
-  getBatchSubmitAuthorities
+  getBatchSubmitAuthorities,
+  isAuthorizedForBatchSubmit
 } from "./batchSubmitAuthorizations";
 
 // Mock the utils module
@@ -37,7 +39,7 @@ jest.mock("@gala-chain/chaincode", () => ({
 }));
 
 // Mock context for testing
-const createMockContext = (callingUser: string): GalaChainContext => {
+const createMockContext = (callingUser: string, roles: string[] = []): GalaChainContext => {
   const mockStub = {
     createCompositeKey: (indexKey: string, attributes: string[]) => {
       return `${indexKey}${attributes.join("|")}`;
@@ -48,6 +50,7 @@ const createMockContext = (callingUser: string): GalaChainContext => {
 
   return {
     callingUser,
+    callingUserRoles: roles,
     stub: mockStub as any,
     clientIdentity: {
       getMSPID: () => "CuratorOrg"
@@ -182,6 +185,30 @@ describe("BatchSubmitAuthorizations", () => {
 
       expect(result).toBeInstanceOf(BatchSubmitAuthoritiesResDto);
       expect(result.authorities).toEqual(["user1", "user2"]);
+    });
+  });
+
+  describe("isAuthorizedForBatchSubmit", () => {
+    it("should authorize a user on the authority list", async () => {
+      const ctx = createMockContext("user1");
+      (getObjectByKey as jest.Mock).mockResolvedValue(new BatchSubmitAuthorities(["user1"]));
+
+      expect(await isAuthorizedForBatchSubmit(ctx)).toBe(true);
+      expect(getObjectByKey).toHaveBeenCalled();
+    });
+
+    it("should authorize a user with DEX_BATCH_SUBMITTER without reading the list", async () => {
+      const ctx = createMockContext("user3", [DEX_BATCH_SUBMITTER_ROLE]);
+
+      expect(await isAuthorizedForBatchSubmit(ctx)).toBe(true);
+      expect(getObjectByKey).not.toHaveBeenCalled();
+    });
+
+    it("should reject a user with neither the role nor list membership", async () => {
+      const ctx = createMockContext("user3");
+      (getObjectByKey as jest.Mock).mockResolvedValue(new BatchSubmitAuthorities(["user1"]));
+
+      expect(await isAuthorizedForBatchSubmit(ctx)).toBe(false);
     });
   });
 });

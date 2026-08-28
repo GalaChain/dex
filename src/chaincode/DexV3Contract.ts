@@ -92,6 +92,7 @@ import {
   TransferDexPositionDto
 } from "../api/";
 import {
+  DEX_BATCH_SUBMITTER_ROLE,
   addLiquidity,
   authorizeBatchSubmitter,
   burn,
@@ -170,13 +171,15 @@ export class DexV3Contract extends GalaContract {
     enforceUniqueKey: true
   })
   public async BatchSubmit(ctx: GalaChainContext, batchDto: BatchDto): Promise<GalaChainResponse<unknown>[]> {
-    // Check if the calling user is authorized to submit batches
-    const batchAuthorities = await fetchBatchSubmitAuthorities(ctx);
-    if (!batchAuthorities.isAuthorized(ctx.callingUser)) {
-      throw new UnauthorizedError(
-        `CallingUser ${ctx.callingUser} is not authorized to submit batches. ` +
-          `Authorized users: ${batchAuthorities.getAuthorities().join(", ")}`
-      );
+    // Authority list and DEX_BATCH_SUBMITTER are alternative grants.
+    if (!ctx.callingUserRoles.includes(DEX_BATCH_SUBMITTER_ROLE)) {
+      const batchAuthorities = await fetchBatchSubmitAuthorities(ctx);
+      if (!batchAuthorities.isAuthorized(ctx.callingUser)) {
+        throw new UnauthorizedError(
+          `CallingUser ${ctx.callingUser} is not authorized to submit batches. ` +
+            `Authorized users: ${batchAuthorities.getAuthorities().join(", ")}`
+        );
+      }
     }
 
     const responses: GalaChainResponse<unknown>[] = [];
